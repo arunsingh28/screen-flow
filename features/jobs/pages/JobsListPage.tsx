@@ -93,7 +93,7 @@ const JobsListPage: React.FC = () => {
           <p className="text-muted-foreground">Manage your open roles and candidate pools.</p>
         </div>
         <Button asChild className="gap-2 shadow-md">
-          <Link to={ROUTES.CREATE_JOB}>
+          <Link to={ROUTES.CREATE_JOB} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Create New Job
           </Link>
@@ -132,7 +132,7 @@ const JobsListPage: React.FC = () => {
         {filteredJobs.map((job) => (
           <Card
              key={job.id}
-             className="group hover:border-primary/50 transition-all duration-200 hover:shadow-lg cursor-pointer"
+             className="group hover:border-primary/50 transition-all duration-200 hover:shadow-lg cursor-pointer dark:border-gray-800"
              asChild
           >
             <Link to={getJobDetailsPath(job.id)}>
