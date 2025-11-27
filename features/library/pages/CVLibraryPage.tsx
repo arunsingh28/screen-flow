@@ -1,10 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
-  Filter, 
-  FileText, 
-  Briefcase, 
+import { Link } from 'react-router-dom';
+import {
+  Search,
+  Filter,
+  FileText,
+  Briefcase,
   Download,
   MoreVertical,
   ExternalLink,
@@ -13,24 +14,20 @@ import {
   Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
-import { Candidate } from '../../../types';
-import { cn } from '../../../lib/utils';
-import StatusBadge from '../../../components/shared/StatusBadge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Candidate } from '@/types';
+import { cn } from '@/lib/utils';
+import StatusBadge from '@/components/shared/StatusBadge';
+import { getJobDetailsPath } from '@/config/routes.constants';
 
-interface CVLibraryPageProps {
-  onNavigate: (view: string) => void;
-}
-
-// Extended Candidate interface for Library view to include Source Job info
 interface LibraryCandidate extends Candidate {
   sourceJobId: string;
   sourceJobTitle: string;
 }
 
-const CVLibraryPage: React.FC<CVLibraryPageProps> = ({ onNavigate }) => {
+const CVLibraryPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -171,18 +168,18 @@ const CVLibraryPage: React.FC<CVLibraryPageProps> = ({ onNavigate }) => {
                         </div>
                       </td>
                       <td className="p-4 align-middle">
-                        <div 
+                        <Link
+                          to={getJobDetailsPath(candidate.sourceJobId)}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-medium cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onNavigate('job-details');
                           }}
                           title="View Job Details"
                         >
                           <Briefcase className="h-3 w-3" />
                           {candidate.sourceJobTitle}
                           <ExternalLink className="h-3 w-3 ml-1 opacity-50" />
-                        </div>
+                        </Link>
                       </td>
                       <td className="p-4 align-middle text-muted-foreground text-xs">
                         <div className="flex items-center gap-2">
@@ -224,16 +221,16 @@ const CVLibraryPage: React.FC<CVLibraryPageProps> = ({ onNavigate }) => {
                           {/* Dropdown Menu */}
                           {openMenuId === candidate.id && (
                             <div className="absolute right-0 top-full mt-1 w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-none animate-in fade-in zoom-in-95 z-50">
-                              <button 
+                              <Link
+                                to={getJobDetailsPath(candidate.sourceJobId)}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onNavigate('job-details');
                                 }}
                                 className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                               >
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Profile
-                              </button>
+                              </Link>
                               <button 
                                 className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                               >
