@@ -72,10 +72,6 @@ const ProfilePage: React.FC = () => {
           <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
           <p className="text-muted-foreground">Manage your account information and preferences</p>
         </div>
-        <Button variant="outline" asChild>
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          <Link to={ROUTES.DASHBOARD}>Back to Dashboard</Link>
-        </Button>
       </div>
 
       {/* Profile Header Card */}

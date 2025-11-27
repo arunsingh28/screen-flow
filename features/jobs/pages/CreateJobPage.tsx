@@ -5,18 +5,16 @@ import {
   X, 
   Briefcase, 
   Building, 
-  ArrowRight,
   Info,
   CheckCircle2,
-  AlertCircle,
   File
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { Textarea } from '../../../components/ui/textarea';
-import { cn } from '../../../lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 const CreateJobPage: React.FC = () => {
   const [dragActive, setDragActive] = useState(false);
@@ -84,7 +82,7 @@ const CreateJobPage: React.FC = () => {
         
         {/* Left Column: Job Details & JD */}
         <div className="lg:col-span-1 space-y-6">
-          <Card>
+          <Card className="dark:border-gray-700">
             <CardHeader>
               <CardTitle>Job Details</CardTitle>
               <CardDescription>Define the role requirements</CardDescription>
@@ -131,7 +129,7 @@ const CreateJobPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card>
+           <Card className="dark:border-gray-700">
             <CardHeader>
               <CardTitle>Job Description (JD)</CardTitle>
               <CardDescription>Upload the JD file for AI context</CardDescription>
@@ -139,7 +137,7 @@ const CreateJobPage: React.FC = () => {
             <CardContent>
               {!jdFile ? (
                 <div 
-                  className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="border-2 border-dashed dark:border-gray-700 rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer"
                   onClick={() => jdInputRef.current?.click()}
                 >
                   <input 
@@ -176,7 +174,7 @@ const CreateJobPage: React.FC = () => {
 
         {/* Right Column: Bulk Upload */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="h-full flex flex-col">
+          <Card className="h-full flex flex-col dark:border-gray-700">
             <CardHeader>
               <CardTitle>Candidate CVs</CardTitle>
               <CardDescription>Upload resumes in bulk for screening</CardDescription>
@@ -229,7 +227,7 @@ const CreateJobPage: React.FC = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2">
                     {files.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors group">
+                      <div key={index} className="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg bg-card hover:bg-accent/50 transition-colors group">
                         <div className="flex items-center gap-3 overflow-hidden">
                           <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           <div className="flex flex-col overflow-hidden">
@@ -263,7 +261,7 @@ const CreateJobPage: React.FC = () => {
       </div>
 
       {/* Footer Actions */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 border-t flex justify-end gap-4 z-10">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 border-t dark:border-gray-700 flex justify-end gap-4 z-10">
          <Button variant="outline" size="lg">Cancel</Button>
          <Button 
             size="lg" 
