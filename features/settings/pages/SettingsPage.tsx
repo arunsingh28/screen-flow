@@ -106,7 +106,7 @@ const SettingsPage: React.FC = () => {
         </Card>
 
         {/* Notifications */}
-        <Card>
+        <Card className="dark:border-gray-800">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-primary" />
@@ -114,7 +114,7 @@ const SettingsPage: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
+            <div className="flex items-center justify-between space-x-2 rounded-lg border p-4 dark:border-gray-700">
               <div className="space-y-0.5">
                 <Label className="text-base">Batch Processing Complete</Label>
                 <p className="text-sm text-muted-foreground">

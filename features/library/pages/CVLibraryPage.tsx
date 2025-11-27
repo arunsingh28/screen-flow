@@ -19,7 +19,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Candidate } from '@/types';
 import { cn } from '@/lib/utils';
-import StatusBadge from '@/components/shared/StatusBadge';
 import { getJobDetailsPath } from '@/config/routes.constants';
 
 interface LibraryCandidate extends Candidate {
@@ -115,7 +114,7 @@ const CVLibraryPage: React.FC = () => {
         </p>
       </div>
 
-      <Card>
+      <Card className="dark:border-gray-800">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <CardTitle>All Candidates ({candidates.length})</CardTitle>
@@ -139,11 +138,11 @@ const CVLibraryPage: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border dark:border-gray-700">
             <div className="relative w-full overflow-auto min-h-[400px]">
               <table className="w-full caption-bottom text-sm">
-                <thead className="[&_tr]:border-b">
-                  <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted bg-muted/20">
+                <thead className="[&_tr]:border-b dark:border-gray-700">
+                  <tr className="border-b dark:border-gray-700 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted bg-muted/20">
                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Candidate</th>
                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Applied For (Job)</th>
                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date</th>
@@ -154,7 +153,7 @@ const CVLibraryPage: React.FC = () => {
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
                   {filteredCandidates.map((candidate) => (
-                    <tr key={candidate.id} className="border-b transition-colors hover:bg-muted/50 relative">
+                    <tr key={candidate.id} className="border-b dark:border-gray-700 transition-colors hover:bg-muted/50 relative">
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground font-bold text-sm">
@@ -199,10 +198,10 @@ const CVLibraryPage: React.FC = () => {
                       <td className="p-4 align-middle">
                          <span className={cn(
                             "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 capitalize",
-                            candidate.status === 'new' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200",
-                            candidate.status === 'reviewed' && "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200",
-                            candidate.status === 'interviewing' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200",
-                            candidate.status === 'rejected' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200",
+                            candidate.status === 'new' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-700",
+                            candidate.status === 'reviewed' && "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-700",
+                            candidate.status === 'interviewing' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-700",
+                            candidate.status === 'rejected' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-700",
                          )}>
                            {candidate.status}
                          </span>
@@ -220,7 +219,7 @@ const CVLibraryPage: React.FC = () => {
                           
                           {/* Dropdown Menu */}
                           {openMenuId === candidate.id && (
-                            <div className="absolute right-0 top-full mt-1 w-48 rounded-md border bg-popover p-1 text-popover-foreground shadow-md outline-none animate-in fade-in zoom-in-95 z-50">
+                            <div className="absolute right-0 top-full mt-1 w-48 rounded-md border dark:border-gray-700 bg-popover p-1 text-popover-foreground shadow-md outline-none animate-in fade-in zoom-in-95 z-50">
                               <Link
                                 to={getJobDetailsPath(candidate.sourceJobId)}
                                 onClick={(e) => {

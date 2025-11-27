@@ -168,8 +168,8 @@ const Header: React.FC = () => {
               </Button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 rounded-md border bg-card shadow-lg animate-in fade-in zoom-in-95 duration-200">
-                  <div className="flex items-center justify-between px-4 py-3 border-b">
+                <div className="absolute right-0 mt-2 w-80 rounded-md border dark:border-gray-700 bg-card shadow-lg animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
                     <span className="text-sm font-semibold">Notifications</span>
                     <span className="text-xs text-primary cursor-pointer hover:underline">Mark all read</span>
                   </div>
