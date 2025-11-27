@@ -5,12 +5,11 @@ import {
   Filter, 
   Search, 
   Download,
-  Calendar
 } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
-import { Activity } from '../../../types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Activity } from '@/types';
 import RecentActivityItem from '../../dashboard/components/RecentActivityItem';
 
 const ActivityLogPage: React.FC = () => {
@@ -95,7 +94,7 @@ const ActivityLogPage: React.FC = () => {
         </p>
       </div>
 
-      <Card>
+      <Card className="dark:border-gray-700">
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
