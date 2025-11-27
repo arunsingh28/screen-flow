@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Coins,
-  ArrowLeft,
   TrendingUp,
   Download,
   History,
@@ -16,7 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { CreditPurchaseModal } from '@/components/credits/CreditPurchaseModal';
 import { useCredits } from '@/contexts/CreditContext';
-import { ROUTES } from '@/config/routes.constants';
 import { cn } from '@/lib/utils';
 
 interface Transaction {
@@ -91,6 +88,7 @@ const CreditsPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
+          <Coins className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Credits</h1>
             <p className="text-muted-foreground">Manage your credit balance and view history</p>
@@ -197,7 +195,7 @@ const CreditsPage: React.FC = () => {
       </div>
 
       {/* Transaction History */}
-          <Card className="dark:border-gray-700">
+      <Card className="dark:border-gray-700">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>

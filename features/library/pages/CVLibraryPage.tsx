@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   Search,
   Filter,
-  FileText,
+  FolderOpen,
   Briefcase,
   Download,
   MoreVertical,
@@ -107,11 +107,12 @@ const CVLibraryPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500 min-h-screen" onClick={() => setOpenMenuId(null)}>
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">CV Library</h1>
+      <div className="flex items-center space-x-2 gap-4">
+         <FolderOpen className="h-8 w-8 text-primary" />
+        <div><h1 className="text-3xl font-bold tracking-tight">CV Library</h1>
         <p className="text-muted-foreground">
           Browse and manage all candidates across every recruitment project.
-        </p>
+        </p></div>
       </div>
 
       <Card className="dark:border-gray-800">

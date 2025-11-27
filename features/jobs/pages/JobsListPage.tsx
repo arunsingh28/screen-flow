@@ -88,10 +88,13 @@ const JobsListPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+         <div className="flex items-center gap-6">
+          <Briefcase className="h-8 w-8 text-primary" />
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Recruitment Projects</h1>
           <p className="text-muted-foreground">Manage your open roles and candidate pools.</p>
         </div>
+         </div>
         <Button asChild className="gap-2 shadow-md">
           <Link to={ROUTES.CREATE_JOB} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
