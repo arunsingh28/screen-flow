@@ -5,12 +5,12 @@ import {
   Plus,
   Search,
   Filter,
-  MoreVertical,
   Briefcase,
   Users,
   Calendar,
   MapPin,
-  TrendingUp
+  TrendingUp,
+  Settings
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -150,7 +150,7 @@ const JobsListPage: React.FC = () => {
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
+                <Settings className="h-4 w-4" />
               </Button>
             </CardHeader>
             <CardContent>
@@ -171,7 +171,7 @@ const JobsListPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 text-xs text-muted-foreground border-t pt-4">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground border-t pt-4 dark:border-gray-700">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {format(job.createdAt, 'MMM d, yyyy')}
