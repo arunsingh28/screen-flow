@@ -77,10 +77,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
       </div>
-      
-      <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        <p>&copy; 2024 ScreenFlow AI. Dashboard v1.3</p>
-      </footer>
+
 
       {/* Credit Purchase Modal */}
       <CreditPurchaseModal

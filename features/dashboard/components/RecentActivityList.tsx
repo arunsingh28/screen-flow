@@ -14,7 +14,7 @@ interface RecentActivityListProps {
 
 const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities }) => {
   return (
-    <Card className="h-fit flex flex-col">
+    <Card className="h-fit flex flex-col dark:border-gray-800">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
         <CardDescription>Latest actions performed across the platform</CardDescription>
@@ -32,7 +32,7 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities }) =
           )}
         </div>
       </CardContent>
-      <div className="p-4 pt-0 mt-auto border-t bg-muted/20 rounded-b-lg">
+      <div className="p-4 pt-0 mt-auto border-t bg-muted/20 rounded-b-lg dark:border-gray-800">
         <Button
           variant="ghost"
           className="w-full group mt-2"

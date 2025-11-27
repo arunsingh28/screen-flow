@@ -25,7 +25,7 @@ const ActiveJobsWidget: React.FC = () => {
   ];
 
   return (
-    <Card className="h-full">
+    <Card className="h-full dark:border-gray-800">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="space-y-1">

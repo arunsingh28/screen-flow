@@ -59,7 +59,7 @@ const Header: React.FC = () => {
         <div className="fixed inset-0 z-40 bg-transparent" onClick={closeMenus} />
       )}
 
-      <header className="border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
+      <header className="border-b bg-card/95 backdrop-blur dark:border-gray-700 supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex justify-between items-center">
           {/* Logo */}
           <Link to={ROUTES.DASHBOARD} className="flex items-center space-x-2">
@@ -92,18 +92,34 @@ const Header: React.FC = () => {
           <div className="flex items-center gap-3">
             {/* Credits Display */}
             <div
-              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+              className="hidden lg:flex items-center gap-3 px-1 pr-3 py-0.5 rounded-full border dark:border-gray-800 bg-card/50 hover:bg-accent/50 hover:border-primary/20 transition-all cursor-pointer group shadow-sm"
               onClick={() => setShowCreditModal(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && setShowCreditModal(true)}
             >
-              <CircularProgress value={credits} max={maxCredits} size={10} strokeWidth={3} />
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Credits</span>
-                <span className="text-sm">{credits}</span>
+              <div className="relative flex items-center justify-center">
+                <CircularProgress 
+                  value={credits} 
+                  max={maxCredits} 
+                  size={28} 
+                  strokeWidth={5} 
+                  className="text-[#1fad58] group-hover:text-[#1fad58]/80" 
+                />
+              </div>
+              <div className="flex flex-col items-start -space-y-0.5">
+                <span className="text-[10px] font-sans font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary/80 transition-colors">
+                    Available
+                </span>
+                <span className="text-sm font-bold font-mono tracking-tight text-foreground">
+                  {credits}
+                  <span className="text-muted-foreground/60 font-medium ml-0.5 text-xs">/ {maxCredits}</span>
+                </span>
               </div>
             </div>
 
             {/* Theme Toggle */}
-            <div className="hidden sm:flex bg-muted rounded-full p-1 border">
+            <div className="hidden sm:flex bg-muted rounded-full p-1 border dark:border-gray-700">
               <button 
                 onClick={() => setTheme("light")}
                 className={cn(

@@ -24,7 +24,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const { addCredits, credits, maxCredits } = useCredits();
+  const { addCredits, credits } = useCredits();
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
 
   const packages: CreditPackage[] = [
@@ -73,13 +73,13 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative z-50 w-full max-w-5xl max-h-[90vh] overflow-y-auto mx-4">
-        <Card className="p-6">
+      <div className="relative z-50 w-full max-w-5xl max-h-[90vh] overflow-y-auto mx-4 animate-in zoom-in-95 duration-200">
+        <Card className="p-6 bg-background shadow-xl border-border">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -104,15 +104,15 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
               <div
                 key={pkg.id}
                 className={cn(
-                  "relative rounded-lg border-2 transition-all duration-200 hover:shadow-lg",
+                  "relative rounded-lg border-2 transition-all duration-200 hover:shadow-lg bg-card",
                   pkg.popular
-                    ? "border-primary shadow-md"
+                    ? "border-primary shadow-md ring-1 ring-primary/20"
                     : "border-border hover:border-primary/50"
                 )}
               >
                 {pkg.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                    <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                       <Sparkles className="h-3 w-3" />
                       POPULAR
                     </span>
@@ -122,7 +122,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                 <div className="p-6">
                   {/* Icon */}
                   <div className={cn(
-                    "w-12 h-12 rounded-lg flex items-center justify-center mb-4",
+                    "w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors",
                     pkg.popular
                       ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground"
@@ -135,7 +135,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                     <div className="flex items-baseline gap-2">
                       <span className="text-4xl font-bold">{pkg.credits}</span>
                       {pkg.bonus && (
-                        <span className="text-sm font-semibold text-green-600">
+                        <span className="text-sm font-semibold text-green-600 dark:text-green-400">
                           +{pkg.bonus} bonus
                         </span>
                       )}
@@ -153,8 +153,8 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                   <ul className="space-y-3 mb-6">
                     {pkg.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span>{feature}</span>
+                        <Check className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">{feature}</span>
                       </li>
                     ))}
                   </ul>

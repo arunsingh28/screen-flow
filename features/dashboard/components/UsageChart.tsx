@@ -18,7 +18,7 @@ interface UsageChartProps {
 
 const UsageChart: React.FC<UsageChartProps> = ({ data }) => {
   return (
-    <Card className="w-full">
+    <Card className="w-full dark:border-gray-800">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <div className="space-y-1">
           <CardTitle>Activity Overview</CardTitle>
