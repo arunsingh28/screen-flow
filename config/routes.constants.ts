@@ -7,6 +7,7 @@ export const ROUTES = {
   SEARCH: '/search',
   LIBRARY: '/library',
   ACTIVITY_LOG: '/activity',
+  PROFILE: '/profile',
 } as const;
 
 export const getJobDetailsPath = (id: string | number) => `/jobs/${id}`;

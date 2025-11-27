@@ -8,6 +8,7 @@ import SettingsPage from '@/features/settings/pages/SettingsPage';
 import CVLibraryPage from '@/features/library/pages/CVLibraryPage';
 import SearchPage from '@/features/search/pages/SearchPage';
 import ActivityLogPage from '@/features/activity/pages/ActivityLogPage';
+import ProfilePage from '@/features/profile/pages/ProfilePage';
 
 export const routes: RouteObject[] = [
   {
@@ -41,5 +42,9 @@ export const routes: RouteObject[] = [
   {
     path: ROUTES.ACTIVITY_LOG,
     element: <ActivityLogPage />,
+  },
+  {
+    path: ROUTES.PROFILE,
+    element: <ProfilePage />,
   },
 ];

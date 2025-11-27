@@ -175,13 +175,14 @@ const Header: React.FC = () => {
                     <p className="text-xs text-muted-foreground">jane.doe@screenflow.ai</p>
                   </div>
                   <div className="p-1">
-                    <button 
+                    <Link
+                      to={ROUTES.PROFILE}
                       className="flex w-full items-center px-3 py-2 text-sm text-foreground hover:bg-muted rounded-sm"
-                      onClick={() => alert("Profile Clicked")}
+                      onClick={() => setShowUserMenu(false)}
                     >
                       <User className="mr-2 h-4 w-4 text-muted-foreground" />
                       Profile
-                    </button>
+                    </Link>
                     <Link
                       to={ROUTES.SETTINGS}
                       className="flex w-full items-center px-3 py-2 text-sm text-foreground hover:bg-muted rounded-sm"
