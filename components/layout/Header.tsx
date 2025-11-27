@@ -15,7 +15,6 @@ import {
   Briefcase,
   Sparkles,
   User,
-  Check,
   Coins
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -96,10 +95,10 @@ const Header: React.FC = () => {
               className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
               onClick={() => setShowCreditModal(true)}
             >
-              <CircularProgress value={credits} max={maxCredits} size={32} strokeWidth={3} />
+              <CircularProgress value={credits} max={maxCredits} size={10} strokeWidth={3} />
               <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground">Credits</span>
-                <span className="text-sm font-bold">{credits}</span>
+                <span className="text-sm">{credits}</span>
               </div>
             </div>
 

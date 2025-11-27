@@ -11,7 +11,6 @@ import StatsCard from '../components/StatsCard';
 import RecentActivityList from '../components/RecentActivityList';
 import UsageChart from '../components/UsageChart';
 import ActiveJobsWidget from '../components/ActiveJobsWidget';
-import { CreditWidget } from '@/components/credits/CreditWidget';
 import { CreditPurchaseModal } from '@/components/credits/CreditPurchaseModal';
 
 const DashboardPage: React.FC = () => {
@@ -73,11 +72,8 @@ const DashboardPage: React.FC = () => {
 
         {/* Right Column (Sidebar: Credits & Activity Feed) - Spans 1 column */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Credit Widget */}
-          <CreditWidget onPurchaseClick={() => setShowCreditModal(true)} />
-
-          {/* Recent Activity Feed */}
           <RecentActivityList activities={recentActivities} />
+
         </div>
 
       </div>
