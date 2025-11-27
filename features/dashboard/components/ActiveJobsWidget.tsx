@@ -1,13 +1,11 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Briefcase, ChevronRight, Users, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
-import { Button } from '../../../components/ui/button';
-import { cn } from '../../../lib/utils';
-
-interface ActiveJobsWidgetProps {
-  onNavigate: (view: string) => void;
-}
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { ROUTES, getJobDetailsPath } from '@/config/routes.constants';
 
 interface ActiveJob {
   id: string;
@@ -18,7 +16,7 @@ interface ActiveJob {
   highMatch: number;
 }
 
-const ActiveJobsWidget: React.FC<ActiveJobsWidgetProps> = ({ onNavigate }) => {
+const ActiveJobsWidget: React.FC = () => {
   // Dummy data
   const jobs: ActiveJob[] = [
     { id: '1', title: 'Senior Frontend Engineer', department: 'Engineering', applicants: 45, new: 5, highMatch: 12 },
@@ -34,23 +32,23 @@ const ActiveJobsWidget: React.FC<ActiveJobsWidgetProps> = ({ onNavigate }) => {
             <CardTitle>Active Pipelines</CardTitle>
             <CardDescription>Status of your open roles</CardDescription>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="text-xs"
-            onClick={() => onNavigate('jobs-list')}
+            asChild
           >
-            View All
+            <Link to={ROUTES.JOBS_LIST}>View All</Link>
           </Button>
         </div>
       </CardHeader>
       <CardContent className="px-2">
         <div className="space-y-1">
           {jobs.map((job) => (
-            <div 
-              key={job.id} 
+            <Link
+              key={job.id}
+              to={getJobDetailsPath(job.id)}
               className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border"
-              onClick={() => onNavigate('job-details')}
             >
               <div className="flex items-start gap-3">
                 <div className="mt-1 h-8 w-8 rounded bg-primary/10 flex items-center justify-center text-primary">
@@ -73,16 +71,16 @@ const ActiveJobsWidget: React.FC<ActiveJobsWidgetProps> = ({ onNavigate }) => {
                  </div>
                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100" />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
         <div className="mt-4 px-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full text-xs h-8 border-dashed"
-              onClick={() => onNavigate('create-job')}
+              asChild
             >
-                + Create New Job
+              <Link to={ROUTES.CREATE_JOB}>+ Create New Job</Link>
             </Button>
         </div>
       </CardContent>

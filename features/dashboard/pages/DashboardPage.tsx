@@ -1,22 +1,18 @@
 
 import React from 'react';
-import { 
-  FileText, 
-  Search, 
-  TrendingUp, 
+import {
+  FileText,
+  Search,
+  TrendingUp,
   Clock,
 } from 'lucide-react';
-import { useDashboardData } from '../../../hooks/useDashboardData';
+import { useDashboardData } from '@/hooks/useDashboardData';
 import StatsCard from '../components/StatsCard';
 import RecentActivityList from '../components/RecentActivityList';
 import UsageChart from '../components/UsageChart';
 import ActiveJobsWidget from '../components/ActiveJobsWidget';
 
-interface DashboardPageProps {
-  onNavigate: (view: string) => void;
-}
-
-const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
+const DashboardPage: React.FC = () => {
   const { stats, recentActivities, chartData } = useDashboardData();
 
   return (
@@ -63,7 +59,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="lg:col-span-2 space-y-6 flex flex-col">
           {/* Active Jobs Widget - Prioritized First */}
           <div className="min-h-[300px]">
-            <ActiveJobsWidget onNavigate={onNavigate} />
+            <ActiveJobsWidget />
           </div>
 
           {/* Usage Chart */}
@@ -71,12 +67,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <UsageChart data={chartData} />
           </div>
         </div>
-        
+
         {/* Right Column (Sidebar: Activity Feed) - Spans 1 column */}
         <div className="lg:col-span-1 h-full">
           {/* Recent Activity Feed - Takes full height now */}
           <div className="h-full">
-             <RecentActivityList activities={recentActivities} onNavigate={onNavigate} />
+             <RecentActivityList activities={recentActivities} />
           </div>
         </div>
 

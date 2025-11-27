@@ -1,28 +1,26 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Briefcase, 
-  Users, 
+import { Link } from 'react-router-dom';
+import {
+  Plus,
+  Search,
+  Filter,
+  MoreVertical,
+  Briefcase,
+  Users,
   Calendar,
   MapPin,
   TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
-import { Job } from '../../../types';
-import { cn } from '../../../lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Job } from '@/types';
+import { cn } from '@/lib/utils';
+import { ROUTES, getJobDetailsPath } from '@/config/routes.constants';
 
-interface JobsListPageProps {
-  onNavigate: (view: string) => void;
-}
-
-const JobsListPage: React.FC<JobsListPageProps> = ({ onNavigate }) => {
+const JobsListPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
 
@@ -94,9 +92,11 @@ const JobsListPage: React.FC<JobsListPageProps> = ({ onNavigate }) => {
           <h1 className="text-3xl font-bold tracking-tight">Recruitment Projects</h1>
           <p className="text-muted-foreground">Manage your open roles and candidate pools.</p>
         </div>
-        <Button onClick={() => onNavigate('create-job')} className="gap-2 shadow-md">
-          <Plus className="h-4 w-4" />
-          Create New Job
+        <Button asChild className="gap-2 shadow-md">
+          <Link to={ROUTES.CREATE_JOB}>
+            <Plus className="h-4 w-4" />
+            Create New Job
+          </Link>
         </Button>
       </div>
 
@@ -130,11 +130,12 @@ const JobsListPage: React.FC<JobsListPageProps> = ({ onNavigate }) => {
       {/* Job Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredJobs.map((job) => (
-          <Card 
-             key={job.id} 
+          <Card
+             key={job.id}
              className="group hover:border-primary/50 transition-all duration-200 hover:shadow-lg cursor-pointer"
-             onClick={() => onNavigate('job-details')}
+             asChild
           >
+            <Link to={getJobDetailsPath(job.id)}>
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
               <div className="space-y-1">
                 <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium capitalize", getStatusColor(job.status))}>
@@ -182,18 +183,18 @@ const JobsListPage: React.FC<JobsListPageProps> = ({ onNavigate }) => {
               </div>
 
               <div className="mt-4 pt-2">
-                 <Button 
-                    variant="secondary" 
+                 <Button
+                    variant="secondary"
                     className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                     onClick={(e) => {
                        e.stopPropagation();
-                       onNavigate('job-details');
                     }}
                  >
                     View Candidates
                  </Button>
               </div>
             </CardContent>
+            </Link>
           </Card>
         ))}
 

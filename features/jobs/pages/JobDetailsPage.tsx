@@ -1,10 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  ArrowLeft, 
-  MoreVertical, 
-  Briefcase, 
-  Users, 
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  MoreVertical,
+  Briefcase,
+  Users,
   FileText,
   Settings,
   Download,
@@ -13,20 +14,19 @@ import {
   PauseCircle,
   Filter
 } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Input } from '../../../components/ui/input';
-import { Job, Candidate, MatchingConfig } from '../../../types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Job, Candidate, MatchingConfig } from '@/types';
 import CandidateRow from '../components/CandidateRow';
 import CVPreviewModal from '../components/CVPreviewModal';
-import MatchingConfigPanel from '../../../components/shared/MatchingConfigPanel';
-import { cn } from '../../../lib/utils';
+import MatchingConfigPanel from '@/components/shared/MatchingConfigPanel';
+import { cn } from '@/lib/utils';
+import { ROUTES } from '@/config/routes.constants';
 
-interface JobDetailsPageProps {
-  onBack: () => void;
-}
-
-const JobDetailsPage: React.FC<JobDetailsPageProps> = ({ onBack }) => {
+const JobDetailsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'candidates' | 'config' | 'jd'>('candidates');
   const [selectedCandidates, setSelectedCandidates] = useState<Set<string>>(new Set());
   const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null);
@@ -141,7 +141,7 @@ const JobDetailsPage: React.FC<JobDetailsPageProps> = ({ onBack }) => {
       
       {/* Top Navigation / Breadcrumb */}
       <div className="flex items-center gap-2 text-muted-foreground text-sm">
-        <span className="cursor-pointer hover:text-foreground" onClick={onBack}>Jobs</span>
+        <Link to={ROUTES.JOBS_LIST} className="cursor-pointer hover:text-foreground">Jobs</Link>
         <span>/</span>
         <span className="text-foreground font-medium">{job.title}</span>
       </div>

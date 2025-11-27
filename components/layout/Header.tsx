@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { 
-  Settings, 
-  FolderOpen, 
+import { NavLink, Link, useLocation } from 'react-router-dom';
+import {
+  Settings,
+  FolderOpen,
   LayoutDashboard,
   Sun,
   Moon,
@@ -16,26 +17,23 @@ import {
   User,
   Check
 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { useTheme } from '../theme-provider';
-import { cn } from '../../lib/utils';
+import { Button } from '@/components/ui/button';
+import { useTheme } from '@/components/theme-provider';
+import { cn } from '@/lib/utils';
+import { ROUTES } from '@/config/routes.constants';
 
-interface HeaderProps {
-  currentView: string;
-  onNavigate: (view: string) => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
+const Header: React.FC = () => {
+  const location = useLocation();
   const { setTheme, theme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'jobs-list', label: 'Jobs', icon: Briefcase },
-    { id: 'search', label: 'AI Search', icon: Sparkles },
-    { id: 'library', label: 'CV Library', icon: FolderOpen },
+    { path: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
+    { path: ROUTES.JOBS_LIST, label: 'Jobs', icon: Briefcase },
+    { path: ROUTES.SEARCH, label: 'AI Search', icon: Sparkles },
+    { path: ROUTES.LIBRARY, label: 'CV Library', icon: FolderOpen },
   ];
 
   const notifications = [
@@ -43,11 +41,6 @@ const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
     { id: 2, title: 'New High Match', desc: 'Sarah Connor matches 92% for Frontend Lead.', time: '1h ago', unread: true },
     { id: 3, title: 'System Update', desc: 'Scheduled maintenance tonight at 2 AM.', time: '5h ago', unread: false },
   ];
-
-  const handleNavClick = (viewId: string) => {
-    onNavigate(viewId);
-    setIsMobileMenuOpen(false);
-  };
 
   const closeMenus = () => {
     setShowUserMenu(false);
@@ -64,30 +57,29 @@ const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
       <header className="border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex justify-between items-center">
           {/* Logo */}
-          <div 
-            className="flex items-center space-x-2 cursor-pointer" 
-            onClick={() => onNavigate('dashboard')}
-          >
+          <Link to={ROUTES.DASHBOARD} className="flex items-center space-x-2">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xl">
               S
             </div>
             <span className="text-xl font-bold tracking-tight hidden sm:inline-block">QuikHR</span>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => (
-              <button 
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={cn(
-                  "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-                  currentView === item.id ? "text-primary" : "text-muted-foreground"
-                )}
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )
+                }
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
-              </button>
+              </NavLink>
             ))}
           </nav>
           
@@ -190,16 +182,14 @@ const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                       <User className="mr-2 h-4 w-4 text-muted-foreground" />
                       Profile
                     </button>
-                    <button 
+                    <Link
+                      to={ROUTES.SETTINGS}
                       className="flex w-full items-center px-3 py-2 text-sm text-foreground hover:bg-muted rounded-sm"
-                      onClick={() => {
-                        onNavigate('settings');
-                        setShowUserMenu(false);
-                      }}
+                      onClick={() => setShowUserMenu(false)}
                     >
                       <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
                       Settings
-                    </button>
+                    </Link>
                   </div>
                   <div className="p-1 border-t">
                     <button 
@@ -235,32 +225,38 @@ const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
           <div className="md:hidden border-t bg-card p-4 shadow-lg animate-in slide-in-from-top-5">
             <nav className="flex flex-col space-y-3">
               {navItems.map((item) => (
-                <button 
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
-                    currentView === item.id 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )
+                  }
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
-                </button>
+                </NavLink>
               ))}
-              <button 
-                  onClick={() => handleNavClick('settings')}
-                  className={cn(
+              <NavLink
+                to={ROUTES.SETTINGS}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  cn(
                     "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
-                    currentView === 'settings' 
-                      ? "bg-primary/10 text-primary" 
+                    isActive
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <Settings className="h-4 w-4" />
-                  Settings
-              </button>
+                  )
+                }
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </NavLink>
               <div className="border-t my-2 pt-2">
                  <div className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-muted-foreground">
                     <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center text-xs">
