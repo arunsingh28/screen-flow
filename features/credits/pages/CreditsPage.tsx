@@ -96,10 +96,6 @@ const CreditsPage: React.FC = () => {
             <p className="text-muted-foreground">Manage your credit balance and view history</p>
           </div>
         </div>
-        <Button variant="outline" asChild>
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          <Link to={ROUTES.DASHBOARD}>Back to Dashboard</Link>
-        </Button>
       </div>
 
       {/* Credit Overview */}

@@ -202,10 +202,10 @@ const Header: React.FC = () => {
               </div>
 
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 rounded-md border bg-card shadow-lg animate-in fade-in zoom-in-95 duration-200">
-                  <div className="px-4 py-3 border-b">
-                    <p className="text-sm font-medium">Jane Doe</p>
-                    <p className="text-xs text-muted-foreground">jane.doe@screenflow.ai</p>
+                <div className="absolute right-0 mt-2 w-56 rounded-md border dark:border-gray-800 bg-card shadow-lg animate-in fade-in zoom-in-95 duration-200">
+                  <div className="px-4 py-3 border-b dark:border-gray-700">
+                    <p className="text-sm font-medium">Arun Pratap Singh</p>
+                    <p className="text-xs text-muted-foreground">arun.pratap@gmail.com</p>
                   </div>
                   <div className="p-1">
                     <Link
@@ -233,9 +233,9 @@ const Header: React.FC = () => {
                       Settings
                     </Link>
                   </div>
-                  <div className="p-1 border-t">
+                  <div className="p-1 border-t dark:border-gray-700">
                     <button 
-                      className="flex w-full items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-sm"
+                      className="flex w-full items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-sm"
                       onClick={() => alert("Logged Out")}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
