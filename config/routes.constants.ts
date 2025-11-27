@@ -8,6 +8,7 @@ export const ROUTES = {
   LIBRARY: '/library',
   ACTIVITY_LOG: '/activity',
   PROFILE: '/profile',
+  CREDITS: '/credits',
 } as const;
 
 export const getJobDetailsPath = (id: string | number) => `/jobs/${id}`;
