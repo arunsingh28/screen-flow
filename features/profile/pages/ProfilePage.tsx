@@ -63,11 +63,6 @@ const ProfilePage: React.FC = () => {
     setIsEditing(false);
   };
 
-  const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'preferences', label: 'Preferences', icon: Bell },
-  ] as const;
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
@@ -84,7 +79,7 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* Profile Header Card */}
-   <Card className="dark:border-gray-800">
+      <Card className="dark:border-gray-800">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Avatar */}
@@ -139,27 +134,6 @@ const ProfilePage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Tabs */}
-      <div className="border-b dark:border-gray-700">
-        <div className="flex gap-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "pb-3 text-sm font-medium border-b-2  transition-colors flex items-center gap-2",
-                activeTab === tab.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Profile Tab */}
       {activeTab === 'profile' && (
@@ -276,101 +250,6 @@ const ProfilePage: React.FC = () => {
                     className="bg-muted"
                   />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Security Tab */}
-      {activeTab === 'security' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Security Settings</CardTitle>
-            <CardDescription>Manage your password and security preferences</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input id="currentPassword" type="password" placeholder="Enter current password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input id="newPassword" type="password" placeholder="Enter new password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input id="confirmPassword" type="password" placeholder="Confirm new password" />
-            </div>
-
-            <div className="pt-4 border-t dark:border-gray-700">
-              <h3 className="text-sm font-semibold mb-4">Two-Factor Authentication</h3>
-              <div className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
-                <div>
-                  <p className="font-medium">Enable 2FA</p>
-                  <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
-                </div>
-                <Button variant="outline">Enable</Button>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button>Update Password</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Preferences Tab */}
-      {activeTab === 'preferences' && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Choose what notifications you want to receive</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { label: 'Email Notifications', desc: 'Receive email updates about your activity' },
-                { label: 'Push Notifications', desc: 'Receive push notifications in your browser' },
-                { label: 'New Candidate Alerts', desc: 'Get notified when new candidates apply' },
-                { label: 'High Match Alerts', desc: 'Get notified about high-match candidates' },
-                { label: 'Weekly Reports', desc: 'Receive weekly summary reports via email' },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
-                  <div>
-                    <p className="font-medium">{item.label}</p>
-                    <p className="text-sm text-muted-foreground">{item.desc}</p>
-                  </div>
-                  <input type="checkbox" className="h-5 w-5 rounded border-gray-300 accent-primary" defaultChecked={idx < 3} />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Display Preferences</CardTitle>
-              <CardDescription>Customize how you view the application</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
-                <select id="language" className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                  <option>German</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="timezone">Timezone</Label>
-                <select id="timezone" className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <option>Pacific Time (PT)</option>
-                  <option>Mountain Time (MT)</option>
-                  <option>Central Time (CT)</option>
-                  <option>Eastern Time (ET)</option>
-                </select>
               </div>
             </CardContent>
           </Card>

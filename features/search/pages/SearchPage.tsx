@@ -111,7 +111,7 @@ const SearchPage: React.FC = () => {
 
       {/* Header / Top Bar */}
       <div className="border-b px-6 py-4 flex items-center justify-between bg-card/50 backdrop-blur dark:border-gray-700">
-        <div>
+        <div className="container mx-auto">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             AI Talent Scout
