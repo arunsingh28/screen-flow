@@ -15,19 +15,25 @@ import {
   Briefcase,
   Sparkles,
   User,
-  Check
+  Check,
+  Coins
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
+import { useCredits } from '@/contexts/CreditContext';
+import { CircularProgress } from '@/components/ui/circular-progress';
+import { CreditPurchaseModal } from '@/components/credits/CreditPurchaseModal';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/routes.constants';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const { setTheme, theme } = useTheme();
+  const { credits, maxCredits } = useCredits();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showCreditModal, setShowCreditModal] = useState(false);
 
   const navItems = [
     { path: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
@@ -85,6 +91,18 @@ const Header: React.FC = () => {
           
           {/* Right Actions */}
           <div className="flex items-center gap-3">
+            {/* Credits Display */}
+            <div
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+              onClick={() => setShowCreditModal(true)}
+            >
+              <CircularProgress value={credits} max={maxCredits} size={32} strokeWidth={3} />
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Credits</span>
+                <span className="text-sm font-bold">{credits}</span>
+              </div>
+            </div>
+
             {/* Theme Toggle */}
             <div className="hidden sm:flex bg-muted rounded-full p-1 border">
               <button 
@@ -184,6 +202,14 @@ const Header: React.FC = () => {
                       Profile
                     </Link>
                     <Link
+                      to={ROUTES.CREDITS}
+                      className="flex w-full items-center px-3 py-2 text-sm text-foreground hover:bg-muted rounded-sm"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <Coins className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Credits
+                    </Link>
+                    <Link
                       to={ROUTES.SETTINGS}
                       className="flex w-full items-center px-3 py-2 text-sm text-foreground hover:bg-muted rounded-sm"
                       onClick={() => setShowUserMenu(false)}
@@ -277,6 +303,12 @@ const Header: React.FC = () => {
           </div>
         )}
       </header>
+
+      {/* Credit Purchase Modal */}
+      <CreditPurchaseModal
+        isOpen={showCreditModal}
+        onClose={() => setShowCreditModal(false)}
+      />
     </>
   );
 };

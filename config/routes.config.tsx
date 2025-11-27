@@ -9,6 +9,7 @@ import CVLibraryPage from '@/features/library/pages/CVLibraryPage';
 import SearchPage from '@/features/search/pages/SearchPage';
 import ActivityLogPage from '@/features/activity/pages/ActivityLogPage';
 import ProfilePage from '@/features/profile/pages/ProfilePage';
+import CreditsPage from '@/features/credits/pages/CreditsPage';
 
 export const routes: RouteObject[] = [
   {
@@ -46,5 +47,9 @@ export const routes: RouteObject[] = [
   {
     path: ROUTES.PROFILE,
     element: <ProfilePage />,
+  },
+  {
+    path: ROUTES.CREDITS,
+    element: <CreditsPage />,
   },
 ];
