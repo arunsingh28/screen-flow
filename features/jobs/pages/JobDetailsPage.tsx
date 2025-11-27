@@ -25,8 +25,6 @@ import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/routes.constants';
 
 const JobDetailsPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'candidates' | 'config' | 'jd'>('candidates');
   const [selectedCandidates, setSelectedCandidates] = useState<Set<string>>(new Set());
   const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null);
@@ -181,7 +179,7 @@ const JobDetailsPage: React.FC = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b">
+      <div className="border-b dark:border-gray-700">
          <div className="flex gap-6">
             <button 
                onClick={() => setActiveTab('candidates')}
@@ -229,18 +227,18 @@ const JobDetailsPage: React.FC = () => {
                   {selectedCandidates.size > 0 && (
                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5">
                         <span className="text-sm text-muted-foreground">{selectedCandidates.size} selected</span>
-                        <Button variant="destructive" size="sm" className="h-9 gap-2">
+                        <Button variant="destructive" size="sm" className="gap-2">
                            <Trash className="h-4 w-4" /> Delete
                         </Button>
                      </div>
                   )}
                </div>
 
-               <div className="rounded-md border bg-card">
+               <div className="rounded-md border bg-card dark:border-gray-700">
                   <div className="relative w-full overflow-auto">
                      <table className="w-full caption-bottom text-sm">
                         <thead className="[&_tr]:border-b">
-                           <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                           <tr className="border-b dark:border-gray-700 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                               <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[50px]">
                                  <input 
                                     type="checkbox" 
@@ -276,7 +274,7 @@ const JobDetailsPage: React.FC = () => {
 
          {/* Configuration Tab */}
          {activeTab === 'config' && (
-            <div className="max-w-4xl">
+            <div className="space-y-6">
                <MatchingConfigPanel 
                   config={localConfig} 
                   onConfigChange={handleConfigChange}
@@ -291,7 +289,7 @@ const JobDetailsPage: React.FC = () => {
 
          {/* JD Tab */}
          {activeTab === 'jd' && (
-            <Card>
+            <Card className="dark:border-gray-700">
                <CardHeader>
                   <CardTitle>Job Description Text</CardTitle>
                   <CardDescription>The source text used for AI analysis.</CardDescription>

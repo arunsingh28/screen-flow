@@ -24,7 +24,7 @@ const MatchingConfigPanel: React.FC<MatchingConfigPanelProps> = ({
   return (
     <Card className={compact ? "border-0 shadow-none" : "border-primary/20 shadow-md"}>
       {!compact && (
-        <CardHeader className="bg-primary/5 pb-8 border-b">
+        <CardHeader className="bg-primary/5 pb-8 border-b dark:border-gray-700">
           <div className="flex items-center gap-2 text-primary">
             <BrainCircuit className="h-6 w-6" />
             <CardTitle>{title}</CardTitle>
@@ -61,7 +61,7 @@ const MatchingConfigPanel: React.FC<MatchingConfigPanelProps> = ({
               </p>
             </div>
 
-            <div className="flex items-center justify-between space-x-2 rounded-lg border p-4 bg-muted/20">
+            <div className="flex items-center justify-between space-x-2 rounded-lg border p-4 bg-muted/20 dark:border-gray-700">
               <div className="space-y-0.5">
                 <Label className="text-base font-medium">Strict Keyword Mode</Label>
                 <p className="text-xs text-muted-foreground">

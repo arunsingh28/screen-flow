@@ -22,7 +22,7 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
 
   return (
     <tr className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      "border-b dark:border-gray-700 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
       isSelected && "bg-muted/40"
     )}>
       <td className="p-4 w-[50px]">
