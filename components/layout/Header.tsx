@@ -198,7 +198,7 @@ const Header: React.FC = () => {
                   setShowNotifications(false);
                 }}
               >
-                  JD
+                  AS
               </div>
 
               {showUserMenu && (
@@ -302,9 +302,9 @@ const Header: React.FC = () => {
               <div className="border-t my-2 pt-2">
                  <div className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-muted-foreground">
                     <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center text-xs">
-                        JD
+                       APS
                     </div>
-                    <span>Jane Doe</span>
+                    <span>Arun Ptatap Singh</span>
                  </div>
                  <button 
                     className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md transition-colors"
