@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FileText,
   Search,
@@ -11,9 +11,12 @@ import StatsCard from '../components/StatsCard';
 import RecentActivityList from '../components/RecentActivityList';
 import UsageChart from '../components/UsageChart';
 import ActiveJobsWidget from '../components/ActiveJobsWidget';
+import { CreditWidget } from '@/components/credits/CreditWidget';
+import { CreditPurchaseModal } from '@/components/credits/CreditPurchaseModal';
 
 const DashboardPage: React.FC = () => {
   const { stats, recentActivities, chartData } = useDashboardData();
+  const [showCreditModal, setShowCreditModal] = useState(false);
 
   return (
     <main className="container mx-auto px-4 py-6 space-y-6 animate-in fade-in duration-500">
@@ -68,12 +71,13 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column (Sidebar: Activity Feed) - Spans 1 column */}
-        <div className="lg:col-span-1 h-full">
-          {/* Recent Activity Feed - Takes full height now */}
-          <div className="h-full">
-             <RecentActivityList activities={recentActivities} />
-          </div>
+        {/* Right Column (Sidebar: Credits & Activity Feed) - Spans 1 column */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Credit Widget */}
+          <CreditWidget onPurchaseClick={() => setShowCreditModal(true)} />
+
+          {/* Recent Activity Feed */}
+          <RecentActivityList activities={recentActivities} />
         </div>
 
       </div>
@@ -81,6 +85,12 @@ const DashboardPage: React.FC = () => {
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
         <p>&copy; 2024 ScreenFlow AI. Dashboard v1.3</p>
       </footer>
+
+      {/* Credit Purchase Modal */}
+      <CreditPurchaseModal
+        isOpen={showCreditModal}
+        onClose={() => setShowCreditModal(false)}
+      />
     </main>
   );
 };
