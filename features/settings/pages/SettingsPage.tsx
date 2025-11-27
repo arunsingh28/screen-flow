@@ -31,7 +31,7 @@ const SettingsPage: React.FC = () => {
 
       <div className="grid gap-8">
         {/* Profile Settings */}
-        <Card>
+          <Card className="dark:border-gray-700">
           <CardHeader>
             <div className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
@@ -55,13 +55,13 @@ const SettingsPage: React.FC = () => {
               <Input id="email" type="email" defaultValue="jane.doe@company.com" placeholder="Enter your email" />
             </div>
           </CardContent>
-          <CardFooter className="border-t px-6 py-4">
+          <CardFooter className="border-t px-6 py-4 dark:border-gray-700">
             <Button variant="outline" onClick={handleSave} disabled={loading}>Save Profile</Button>
           </CardFooter>
         </Card>
 
         {/* Appearance Settings */}
-        <Card>
+                 <Card className="dark:border-gray-700">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Monitor className="h-5 w-5 text-primary" />
@@ -127,7 +127,7 @@ const SettingsPage: React.FC = () => {
         </Card>
 
          {/* Security */}
-         <Card>
+                   <Card className="dark:border-gray-700">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />

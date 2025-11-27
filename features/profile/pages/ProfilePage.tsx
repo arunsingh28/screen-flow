@@ -5,7 +5,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Briefcase,
   Calendar,
   Edit2,
   Save,
@@ -13,8 +12,7 @@ import {
   Camera,
   Shield,
   Bell,
-  Globe,
-  Lock,
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,12 +78,13 @@ const ProfilePage: React.FC = () => {
           <p className="text-muted-foreground">Manage your account information and preferences</p>
         </div>
         <Button variant="outline" asChild>
+          <ArrowLeft className="h-5 w-5 mr-2" />
           <Link to={ROUTES.DASHBOARD}>Back to Dashboard</Link>
         </Button>
       </div>
 
       {/* Profile Header Card */}
-      <Card>
+   <Card className="dark:border-gray-800">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Avatar */}
@@ -94,7 +93,7 @@ const ProfilePage: React.FC = () => {
                 {profile.firstName[0]}{profile.lastName[0]}
               </div>
               <button className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors">
-                <Camera className="h-5 w-5" />
+                <Camera className="h-5 w-5 dark:text-gray-50" />
               </button>
             </div>
 
@@ -142,14 +141,14 @@ const ProfilePage: React.FC = () => {
       </Card>
 
       {/* Tabs */}
-      <div className="border-b">
+      <div className="border-b dark:border-gray-700">
         <div className="flex gap-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+                "pb-3 text-sm font-medium border-b-2  transition-colors flex items-center gap-2",
                 activeTab === tab.id
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -165,7 +164,7 @@ const ProfilePage: React.FC = () => {
       {/* Profile Tab */}
       {activeTab === 'profile' && (
         <div className="space-y-6">
-          <Card>
+          <Card className="dark:border-gray-800">
             <CardHeader>
               <CardTitle>Personal Information</CardTitle>
               <CardDescription>Update your personal details and contact information</CardDescription>
@@ -251,7 +250,7 @@ const ProfilePage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:border-gray-800">
             <CardHeader>
               <CardTitle>Work Information</CardTitle>
               <CardDescription>Your role and department details</CardDescription>
@@ -304,9 +303,9 @@ const ProfilePage: React.FC = () => {
               <Input id="confirmPassword" type="password" placeholder="Confirm new password" />
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t dark:border-gray-700">
               <h3 className="text-sm font-semibold mb-4">Two-Factor Authentication</h3>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
                 <div>
                   <p className="font-medium">Enable 2FA</p>
                   <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
@@ -338,7 +337,7 @@ const ProfilePage: React.FC = () => {
                 { label: 'High Match Alerts', desc: 'Get notified about high-match candidates' },
                 { label: 'Weekly Reports', desc: 'Receive weekly summary reports via email' },
               ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={idx} className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
                   <div>
                     <p className="font-medium">{item.label}</p>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>

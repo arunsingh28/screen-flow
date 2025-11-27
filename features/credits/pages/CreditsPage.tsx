@@ -91,22 +91,21 @@ const CreditsPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link to={ROUTES.DASHBOARD}>
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Credits</h1>
             <p className="text-muted-foreground">Manage your credit balance and view history</p>
           </div>
         </div>
+        <Button variant="outline" asChild>
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          <Link to={ROUTES.DASHBOARD}>Back to Dashboard</Link>
+        </Button>
       </div>
 
       {/* Credit Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Balance Card */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 dark:border-gray-700">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Coins className="h-5 w-5 text-primary" />
@@ -159,7 +158,7 @@ const CreditsPage: React.FC = () => {
 
         {/* Quick Stats */}
         <div className="space-y-6">
-          <Card>
+          <Card className="dark:border-gray-700">
             <CardHeader>
               <CardTitle className="text-base">Usage Summary</CardTitle>
             </CardHeader>
@@ -179,7 +178,7 @@ const CreditsPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="dark:border-gray-700">
             <CardHeader>
               <CardTitle className="text-base">Credit Info</CardTitle>
             </CardHeader>
@@ -202,7 +201,7 @@ const CreditsPage: React.FC = () => {
       </div>
 
       {/* Transaction History */}
-      <Card>
+          <Card className="dark:border-gray-700">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -223,7 +222,7 @@ const CreditsPage: React.FC = () => {
             {transactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className={cn(
