@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Briefcase, ChevronRight, Users, TrendingUp } from 'lucide-react';
+import { Briefcase, ChevronRight, Users, TrendingUp, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ROUTES, getJobDetailsPath } from '@/config/routes.constants';
+import { jobsApi } from '@/services/jobs.service';
 
 interface ActiveJob {
   id: string;
@@ -17,12 +18,38 @@ interface ActiveJob {
 }
 
 const ActiveJobsWidget: React.FC = () => {
-  // Dummy data
-  const jobs: ActiveJob[] = [
-    { id: '1', title: 'Senior Frontend Engineer', department: 'Engineering', applicants: 45, new: 5, highMatch: 12 },
-    { id: '2', title: 'Product Manager', department: 'Product', applicants: 89, new: 14, highMatch: 24 },
-    { id: '3', title: 'UX Designer', department: 'Design', applicants: 120, new: 0, highMatch: 45 },
-  ];
+  const [jobs, setJobs] = useState<ActiveJob[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await jobsApi.getJobs(1, 5); // Fetch top 5
+        const mappedJobs = data.batches.map((batch: any) => ({
+          id: batch.id,
+          title: batch.title,
+          department: batch.department || 'General',
+          applicants: batch.total_cvs,
+          new: 0, // 'New' logic not yet implemented in backend
+          highMatch: batch.processed_cvs // Using processed as proxy
+        }));
+        setJobs(mappedJobs);
+      } catch (error) {
+        console.error("Failed to fetch active jobs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  if (loading) {
+    return (
+      <Card className="h-full dark:border-gray-800 flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full dark:border-gray-800">
@@ -44,44 +71,50 @@ const ActiveJobsWidget: React.FC = () => {
       </CardHeader>
       <CardContent className="px-2">
         <div className="space-y-1">
-          {jobs.map((job) => (
-            <Link
-              key={job.id}
-              to={getJobDetailsPath(job.id)}
-              className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border"
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-1 h-8 w-8 rounded bg-primary/10 flex items-center justify-center text-primary">
-                  <Briefcase className="h-4 w-4" />
+          {jobs.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              No active jobs found.
+            </div>
+          ) : (
+            jobs.map((job) => (
+              <Link
+                key={job.id}
+                to={getJobDetailsPath(job.id)}
+                className="group flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 h-8 w-8 rounded bg-primary/10 flex items-center justify-center text-primary">
+                    <Briefcase className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold group-hover:text-primary transition-colors">{job.title}</h4>
+                    <p className="text-xs text-muted-foreground">{job.department}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-semibold group-hover:text-primary transition-colors">{job.title}</h4>
-                  <p className="text-xs text-muted-foreground">{job.department}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-6">
-                 <div className="hidden sm:flex flex-col items-center">
+
+                <div className="flex items-center gap-6">
+                  <div className="hidden sm:flex flex-col items-center">
                     <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" /> Total</span>
                     <span className="font-bold text-sm">{job.applicants}</span>
-                 </div>
-                 <div className="flex flex-col items-end">
-                    <span className="text-xs text-green-600 font-medium flex items-center gap-1"><TrendingUp className="h-3 w-3" /> {job.highMatch} High</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs text-green-600 font-medium flex items-center gap-1"><TrendingUp className="h-3 w-3" /> {job.highMatch} Processed</span>
                     {job.new > 0 && <span className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-1.5 rounded-full">+{job.new} New</span>}
-                 </div>
-                 <ChevronRight className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100" />
-              </div>
-            </Link>
-          ))}
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100" />
+                </div>
+              </Link>
+            ))
+          )}
         </div>
         <div className="mt-4 px-2">
-            <Button
-              variant="outline"
-              className="w-full text-xs h-8 border-dashed"
-              asChild
-            >
-              <Link to={ROUTES.CREATE_JOB}>+ Create New Job</Link>
-            </Button>
+          <Button
+            variant="outline"
+            className="w-full text-xs h-8 border-dashed"
+            asChild
+          >
+            <Link to={ROUTES.CREATE_JOB}>+ Create New Job</Link>
+          </Button>
         </div>
       </CardContent>
     </Card>

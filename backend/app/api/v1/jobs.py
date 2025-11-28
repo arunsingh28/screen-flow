@@ -15,7 +15,26 @@ from app.schemas.job import (
     CVResponse,
     BulkUploadResponse,
     FileUploadResponse,
+    CVUploadRequest,
+    CVUploadResponse,
+    CVUploadConfirmation,
 )
+from app.models.activity import Activity
+from pydantic import BaseModel
+from datetime import datetime
+from uuid import UUID
+
+class ActivityResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    job_id: Optional[UUID]
+    cv_id: Optional[UUID]
+    activity_type: str
+    description: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 from app.api.deps import get_current_user
 from app.services.s3_service import s3_service
 
@@ -42,29 +61,43 @@ async def create_cv_batch(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Create a new CV batch"""
+    """Create a new Job (CV batch)"""
     new_batch = CVBatch(
         user_id=current_user.id,
-        batch_name=batch_data.batch_name,
+        title=batch_data.title,
+        department=batch_data.department,
+        location=batch_data.location,
+        description=batch_data.description,
+        job_description_text=batch_data.job_description_text,
         tags=batch_data.tags,
     )
 
     db.add(new_batch)
     db.commit()
     db.refresh(new_batch)
+    
+    # Log Activity
+    from app.models.activity import Activity, ActivityType
+    activity = Activity(
+        user_id=current_user.id,
+        job_id=new_batch.id,
+        activity_type=ActivityType.JOB_CREATED,
+        description=f"Created job: {new_batch.title}"
+    )
+    db.add(activity)
+    db.commit()
 
     return CVBatchResponse.from_orm(new_batch)
 
 
-@router.post("/batches/{batch_id}/upload", response_model=BulkUploadResponse)
-async def upload_cvs_to_batch(
+@router.post("/batches/{batch_id}/upload-request", response_model=CVUploadResponse)
+async def request_cv_upload(
     batch_id: UUID,
-    files: List[UploadFile] = File(...),
+    upload_request: CVUploadRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Upload multiple CV files to a batch"""
-    # Get batch and verify ownership
+    """Request a presigned URL for direct S3 upload"""
     batch = db.query(CVBatch).filter(
         CVBatch.id == batch_id,
         CVBatch.user_id == current_user.id
@@ -73,76 +106,119 @@ async def upload_cvs_to_batch(
     if not batch:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Batch not found"
+            detail="Job not found"
         )
 
-    uploaded_files = []
-    failed_count = 0
+    # Generate S3 key
+    s3_key = s3_service.generate_s3_key(
+        user_id=str(current_user.id),
+        file_type="cvs",
+        original_filename=upload_request.filename,
+        batch_id=str(batch_id)
+    )
 
-    for file in files:
-        try:
-            # Validate file
-            validate_file(file)
+    # Generate Presigned URL
+    try:
+        presigned_url = s3_service.generate_presigned_url(
+            s3_key=s3_key,
+            filename=upload_request.filename,
+            expiration=3600,
+            client_method='put_object',
+            content_type=upload_request.content_type
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate upload URL: {str(e)}"
+        )
 
-            # Generate S3 key
-            s3_key = s3_service.generate_s3_key(
-                user_id=str(current_user.id),
-                file_type="cvs",
-                original_filename=file.filename,
-                batch_id=str(batch_id)
-            )
+    # Create CV record (Status: UPLOADING)
+    # Note: We don't increment batch.total_cvs yet, only on confirmation
+    cv = CV(
+        batch_id=batch_id,
+        user_id=current_user.id,
+        filename=upload_request.filename,
+        s3_key=s3_key,
+        file_size_bytes=upload_request.file_size_bytes,
+        status=CVStatus.QUEUED, # Setting to QUEUED immediately for simplicity, or add UPLOADING status
+        source=CVSource.MANUAL_UPLOAD,
+    )
+    
+    # Check if we need to add UPLOADING to CVStatus enum. 
+    # For now, let's use QUEUED but maybe we should add a new status if strict tracking is needed.
+    # Given the user wants "processing ... disable state", QUEUED is fine as initial state.
+    
+    db.add(cv)
+    db.commit()
+    db.refresh(cv)
 
-            # Upload to S3
-            upload_result = s3_service.upload_file(
-                file_obj=file.file,
-                s3_key=s3_key,
-                content_type=file.content_type or "application/pdf",
-                metadata={
-                    "user_id": str(current_user.id),
-                    "batch_id": str(batch_id),
-                    "original_filename": file.filename,
-                }
-            )
+    return CVUploadResponse(
+        cv_id=cv.id,
+        presigned_url=presigned_url,
+        s3_key=s3_key
+    )
 
-            # Create CV record
-            cv = CV(
-                batch_id=batch_id,
-                user_id=current_user.id,
-                filename=file.filename,
-                s3_key=upload_result["s3_key"],
-                file_size_bytes=upload_result["file_size"],
-                status=CVStatus.QUEUED,
-                source=CVSource.MANUAL_UPLOAD,
-            )
-            db.add(cv)
 
-            uploaded_files.append(FileUploadResponse(
-                message="Success",
-                cv_id=cv.id,
-                filename=file.filename,
-                s3_key=upload_result["s3_key"],
-                file_size_bytes=upload_result["file_size"],
-                status=CVStatus.QUEUED,
-            ))
+@router.post("/batches/{batch_id}/upload-complete", response_model=CVUploadConfirmation)
+async def confirm_cv_upload(
+    batch_id: UUID,
+    confirmation: CVUploadConfirmation,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Confirm that a CV has been uploaded to S3"""
+    cv = db.query(CV).filter(
+        CV.id == confirmation.cv_id,
+        CV.batch_id == batch_id,
+        CV.user_id == current_user.id
+    ).first()
 
-        except Exception as e:
-            failed_count += 1
-            print(f"Failed to upload {file.filename}: {str(e)}")
+    if not cv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV record not found"
+        )
 
-    # Update batch statistics
-    batch.total_cvs = len(uploaded_files)
-    if len(uploaded_files) == len(files):
-        batch.status = BatchStatus.COMPLETED
+    # Update status (e.g. trigger processing queue here if using async worker)
+    # For now, we just confirm it's queued for processing
+    cv.status = CVStatus.QUEUED 
+    
+    # Update batch stats
+    batch = cv.batch
+    batch.total_cvs += 1
+    
+    # Log Activity
+    from app.models.activity import Activity, ActivityType
+    activity = Activity(
+        user_id=current_user.id,
+        job_id=batch_id,
+        cv_id=cv.id,
+        activity_type=ActivityType.CV_UPLOADED,
+        description=f"Uploaded CV: {cv.filename}"
+    )
+    db.add(activity)
+    
     db.commit()
 
-    return BulkUploadResponse(
-        message=f"Successfully uploaded {len(uploaded_files)} CVs",
-        batch_id=batch_id,
-        batch_name=batch.batch_name,
-        uploaded_count=len(uploaded_files),
-        failed_count=failed_count,
-        files=uploaded_files
+    return CVUploadConfirmation(
+        cv_id=cv.id,
+        status=cv.status
     )
+
+
+@router.get("/activities", response_model=List[ActivityResponse])
+async def get_activities(
+    skip: int = 0,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get recent activities for the current user"""
+    activities = db.query(Activity).filter(
+        Activity.user_id == current_user.id
+    ).order_by(Activity.created_at.desc()).offset(skip).limit(limit).all()
+    
+    return activities
 
 
 @router.get("/batches", response_model=CVBatchListResponse)
@@ -319,3 +395,6 @@ async def delete_cv(
     db.commit()
 
     return None
+
+
+

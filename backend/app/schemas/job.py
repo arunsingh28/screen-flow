@@ -4,18 +4,27 @@ from typing import Optional, List
 from app.models.job import BatchStatus, CVStatus, CVSource, SearchStatus
 
 
-# CV Batch Schemas
+# CV Batch Schemas (Job Schemas)
 class CVBatchCreate(BaseModel):
-    """Schema for creating a CV batch"""
-    batch_name: str = Field(..., min_length=1, max_length=200)
+    """Schema for creating a Job (CV Batch)"""
+    title: str = Field(..., min_length=1, max_length=200)
+    department: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    job_description_text: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
 
 
 class CVBatchResponse(BaseModel):
-    """Schema for CV batch response"""
+    """Schema for Job response"""
     id: UUID4
     user_id: UUID4
-    batch_name: str
+    title: str
+    department: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    job_description_text: Optional[str] = None
+    is_active: bool
     tags: List[str]
     total_cvs: int
     processed_cvs: int
@@ -26,6 +35,27 @@ class CVBatchResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# S3 Direct Upload Schemas
+class CVUploadRequest(BaseModel):
+    """Request schema for getting a presigned URL"""
+    filename: str
+    content_type: str = "application/pdf"
+    file_size_bytes: int
+
+
+class CVUploadResponse(BaseModel):
+    """Response schema with presigned URL"""
+    cv_id: UUID4
+    presigned_url: str
+    s3_key: str
+
+
+class CVUploadConfirmation(BaseModel):
+    """Confirmation schema after S3 upload"""
+    cv_id: UUID4
+    status: CVStatus = CVStatus.QUEUED
 
 
 # CV Schemas
@@ -50,7 +80,7 @@ class CVResponse(BaseModel):
 
 
 class CVDetailResponse(CVBatchResponse):
-    """Schema for CV batch with all CVs"""
+    """Schema for Job with all CVs"""
     cvs: List[CVResponse] = []
 
     class Config:

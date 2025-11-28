@@ -1,86 +1,61 @@
 
-import React, { useState, useMemo } from 'react';
-import { 
-  History, 
-  Filter, 
-  Search, 
+import React, { useState, useEffect } from 'react';
+import {
+  History,
+  Filter,
+  Search,
   Download,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Activity } from '@/types';
 import RecentActivityItem from '../../dashboard/components/RecentActivityItem';
+import { jobsApi } from '@/services/jobs.service';
 
 const ActivityLogPage: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Generate extended dummy data for the full log
-  const allActivities: Activity[] = useMemo(() => [
-    {
-      id: '1',
-      type: 'upload',
-      description: 'Uploaded 45 CVs in batch "Engineering Q1 2024"',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      status: 'completed',
-    },
-    {
-      id: '2',
-      type: 'search',
-      description: 'Searched for "Senior React Developer"',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      status: 'completed',
-    },
-    {
-      id: '3',
-      type: 'upload',
-      description: 'Uploaded 23 CVs in batch "Design Team"',
-      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      status: 'processing',
-    },
-    {
-      id: '4',
-      type: 'search',
-      description: 'Searched for "Product Manager with AI experience"',
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      status: 'completed',
-    },
-    {
-      id: '5',
-      type: 'delete',
-      description: 'Deleted 3 CVs from library',
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      status: 'completed',
-    },
-    {
-      id: '6',
-      type: 'complete',
-      description: 'AI Analysis completed for "UX Designer" role',
-      timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-      status: 'completed',
-    },
-    {
-      id: '7',
-      type: 'search',
-      description: 'Searched for "DevOps Engineer"',
-      timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      status: 'completed',
-    },
-    {
-      id: '8',
-      type: 'upload',
-      description: 'Uploaded 12 CVs manually',
-      timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
-      status: 'failed',
-    },
-  ], []);
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoading(true);
+        const data = await jobsApi.getActivities();
+        // Map backend response to frontend Activity type
+        const mappedActivities: Activity[] = data.map((item: any) => ({
+          id: item.id,
+          type: item.activity_type.toLowerCase() === 'job_created' ? 'upload' : 'complete', // Simple mapping for now
+          description: item.description,
+          timestamp: new Date(item.created_at),
+          status: 'completed',
+        }));
+        setActivities(mappedActivities);
+      } catch (error) {
+        console.error("Failed to fetch activities:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchActivities();
+  }, []);
 
-  const filteredActivities = allActivities.filter(activity => {
+  const filteredActivities = activities.filter(activity => {
     const matchesType = filterType === 'all' || activity.type === filterType;
     const matchesSearch = activity.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesType && matchesSearch;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
@@ -102,29 +77,29 @@ const ActivityLogPage: React.FC = () => {
               <CardDescription>Showing {filteredActivities.length} events</CardDescription>
             </div>
             <div className="flex gap-2">
-               <div className="relative w-full md:w-[300px]">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search activity..." 
-                    className="pl-9"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-               </div>
-               <select 
-                  className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-               >
-                  <option value="all">All Events</option>
-                  <option value="upload">Uploads</option>
-                  <option value="search">Searches</option>
-                  <option value="delete">Deletions</option>
-                  <option value="complete">System Tasks</option>
-               </select>
-               <Button variant="outline" className="gap-2">
-                  <Download className="h-4 w-4" /> Export
-               </Button>
+              <div className="relative w-full md:w-[300px]">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search activity..."
+                  className="pl-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="all">All Events</option>
+                <option value="upload">Uploads</option>
+                <option value="search">Searches</option>
+                <option value="delete">Deletions</option>
+                <option value="complete">System Tasks</option>
+              </select>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" /> Export
+              </Button>
             </div>
           </div>
         </CardHeader>

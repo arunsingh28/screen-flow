@@ -21,3 +21,4 @@ class User(Base):
     cv_batches = relationship("CVBatch", back_populates="user", cascade="all, delete-orphan")
     cvs = relationship("CV", back_populates="user", cascade="all, delete-orphan")
     job_searches = relationship("JobSearch", back_populates="user", cascade="all, delete-orphan")
+    activities = relationship("Activity", back_populates="user", cascade="all, delete-orphan")

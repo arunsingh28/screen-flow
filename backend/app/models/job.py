@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Enum as SQLEnum, Integer, ARRAY
+from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Enum as SQLEnum, Integer, ARRAY, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -35,14 +35,29 @@ class SearchStatus(str, enum.Enum):
 
 # Models
 class CVBatch(Base):
-    """CV Batches for organizing uploaded CVs"""
+    """CV Batches (Jobs) for organizing uploaded CVs"""
     __tablename__ = "cv_batches"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
 
-    # Batch details
-    batch_name = Column(String, nullable=False)
+    # Job Details
+    title = Column(String, nullable=False)  # Previously batch_name
+    department = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    description = Column(Text, nullable=True)  # Internal notes
+    job_description_text = Column(Text, nullable=True)  # Full JD text
+    is_active = Column(Boolean, default=True)
+
+    # Legacy/Compatibility (can map batch_name to title)
+    @property
+    def batch_name(self):
+        return self.title
+    
+    @batch_name.setter
+    def batch_name(self, value):
+        self.title = value
+
     tags = Column(ARRAY(String), default=[])
 
     # Statistics

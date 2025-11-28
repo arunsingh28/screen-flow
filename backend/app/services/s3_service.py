@@ -94,16 +94,20 @@ class S3Service:
     def generate_presigned_url(
         self,
         s3_key: str,
+        client_method: str = 'get_object',
         expiration: Optional[int] = None,
-        filename: Optional[str] = None
+        filename: Optional[str] = None,
+        content_type: Optional[str] = None
     ) -> str:
         """
-        Generate presigned URL for downloading file
+        Generate presigned URL for downloading or uploading file
 
         Args:
             s3_key: S3 object key
+            client_method: 'get_object' for download, 'put_object' for upload
             expiration: URL expiration in seconds (default from settings)
-            filename: Optional filename for Content-Disposition header
+            filename: Optional filename for Content-Disposition header (downloads only)
+            content_type: Optional content type for uploads
         """
         try:
             expiration = expiration or settings.S3_PRESIGNED_URL_EXPIRATION
@@ -113,12 +117,16 @@ class S3Service:
                 'Key': s3_key,
             }
 
-            # Add Content-Disposition if filename provided
-            if filename:
+            # Add Content-Disposition if filename provided (only for downloads)
+            if filename and client_method == 'get_object':
                 params['ResponseContentDisposition'] = f'inline; filename="{filename}"'
+            
+            # Add Content-Type if provided (important for uploads)
+            if content_type and client_method == 'put_object':
+                params['ContentType'] = content_type
 
             url = self.s3_client.generate_presigned_url(
-                'get_object',
+                client_method,
                 Params=params,
                 ExpiresIn=expiration
             )

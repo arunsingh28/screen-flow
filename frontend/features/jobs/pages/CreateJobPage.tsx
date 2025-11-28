@@ -1,13 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Upload, 
-  FileText, 
-  X, 
-  Briefcase, 
-  Building, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Upload,
+  FileText,
+  X,
+  Briefcase,
+  Building,
   Info,
   CheckCircle2,
-  File
+  File,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,11 +18,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { parseFile } from '@/lib/fileParser';
+import { jobsApi } from '@/services/jobs.service';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ROUTES } from '@/config/routes.constants';
 
 const CreateJobPage: React.FC = () => {
+  const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [jdFile, setJdFile] = useState<File | null>(null);
+  const [jdText, setJdText] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; failed: number }>({ current: 0, total: 0, failed: 0 });
+  const [error, setError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const jdInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,6 +41,7 @@ const CreateJobPage: React.FC = () => {
   const [jobTitle, setJobTitle] = useState('');
   const [department, setDepartment] = useState('');
   const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -42,7 +57,7 @@ const CreateJobPage: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const newFiles = Array.from(e.dataTransfer.files);
       setFiles(prev => [...prev, ...newFiles]);
@@ -56,14 +71,93 @@ const CreateJobPage: React.FC = () => {
     }
   };
 
-  const handleJdUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleJdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setJdFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setJdFile(file);
+      setIsParsing(true);
+
+      try {
+        const text = await parseFile(file);
+        setJdText(text);
+        alert("JD Parsed Successfully: The job description text has been extracted from the file.");
+      } catch (error) {
+        console.error("Failed to parse JD:", error);
+        alert("Parsing Failed: Could not extract text from the file. Please try copy-pasting manually.");
+      } finally {
+        setIsParsing(false);
+      }
     }
   };
 
   const removeFile = (index: number) => {
     setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (!jobTitle || !jdText) {
+      setError("Please fill in the Job Title and Job Description.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    setUploadProgress({ current: 0, total: files.length, failed: 0 });
+
+    try {
+      // 1. Create Job
+      const jobData = {
+        title: jobTitle,
+        department: department,
+        location: location,
+        description: description,
+        job_description_text: jdText,
+        tags: []
+      };
+
+      const job = await jobsApi.createJob(jobData);
+      const jobId = job.id;
+
+      // 2. Upload Files
+      let successCount = 0;
+      let failedCount = 0;
+
+      for (const file of files) {
+        try {
+          // Request Upload URL
+          const { cv_id, presigned_url } = await jobsApi.requestUpload(
+            jobId,
+            file.name,
+            file.size,
+            file.type || 'application/pdf'
+          );
+
+          // Upload to S3
+          await jobsApi.uploadToS3(presigned_url, file);
+
+          // Confirm Upload
+          await jobsApi.confirmUpload(jobId, cv_id);
+
+          successCount++;
+        } catch (err) {
+          console.error(`Failed to upload ${file.name}:`, err);
+          failedCount++;
+        }
+        setUploadProgress(prev => ({ ...prev, current: prev.current + 1, failed: failedCount }));
+      }
+
+      // 3. Navigate
+      if (failedCount > 0) {
+        alert(`Job created, but ${failedCount} files failed to upload. Redirecting to job page.`);
+      }
+
+      navigate(`/jobs/${jobId}`);
+
+    } catch (err: any) {
+      console.error("Job creation failed:", err);
+      setError(err.response?.data?.detail || "Failed to create job. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -79,7 +173,7 @@ const CreateJobPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Left Column: Job Details & JD */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="dark:border-gray-700">
@@ -91,36 +185,36 @@ const CreateJobPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="title">Job Title <span className="text-red-500">*</span></Label>
                 <div className="relative">
-                   <Briefcase className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                   <Input 
-                      id="title" 
-                      placeholder="e.g. Senior Frontend Engineer" 
-                      className="pl-9"
-                      value={jobTitle}
-                      onChange={(e) => setJobTitle(e.target.value)}
-                   />
+                  <Briefcase className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="title"
+                    placeholder="e.g. Senior Frontend Engineer"
+                    className="pl-9"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <div className="relative">
-                   <Building className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                   <Input 
-                      id="department" 
-                      placeholder="e.g. Engineering" 
-                      className="pl-9"
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                   />
+                  <Building className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="department"
+                    placeholder="e.g. Engineering"
+                    className="pl-9"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description">Short Description</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder="Internal notes about this hiring round..." 
+                <Textarea
+                  id="description"
+                  placeholder="Internal notes about this hiring round..."
                   className="resize-none"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -129,29 +223,63 @@ const CreateJobPage: React.FC = () => {
             </CardContent>
           </Card>
 
-           <Card className="dark:border-gray-700">
+          <Card className="dark:border-gray-700">
             <CardHeader>
               <CardTitle>Job Description (JD)</CardTitle>
-              <CardDescription>Upload the JD file for AI context</CardDescription>
+              <CardDescription>Paste the JD text or upload a file to extract content</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="jdText">Full Job Description</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {jdText ? `${jdText.length} characters` : '0 characters'}
+                  </span>
+                </div>
+                <Textarea
+                  id="jdText"
+                  placeholder="Paste the full job description here..."
+                  className="min-h-[200px] font-mono text-sm"
+                  value={jdText}
+                  onChange={(e) => setJdText(e.target.value)}
+                />
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-slate-200 dark:border-slate-700" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or import from file</span>
+                </div>
+              </div>
+
               {!jdFile ? (
-                <div 
+                <div
                   className="border-2 border-dashed dark:border-gray-700 rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer"
                   onClick={() => jdInputRef.current?.click()}
                 >
-                  <input 
+                  <input
                     ref={jdInputRef}
-                    type="file" 
-                    className="hidden" 
-                    accept=".pdf,.doc,.docx,.txt"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.docx,.txt"
                     onChange={handleJdUpload}
                   />
                   <div className="flex flex-col items-center gap-2">
                     <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                      <FileText className="h-6 w-6" />
+                      {isParsing ? (
+                        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <FileText className="h-6 w-6" />
+                      )}
                     </div>
-                    <div className="text-sm font-medium">Click to upload JD</div>
+                    <div className="text-sm font-medium">
+                      {isParsing ? 'Extracting text...' : 'Click to upload JD'}
+                    </div>
                     <div className="text-xs text-muted-foreground">PDF, DOCX, TXT</div>
                   </div>
                 </div>
@@ -163,7 +291,7 @@ const CreateJobPage: React.FC = () => {
                     </div>
                     <span className="text-sm truncate font-medium">{jdFile.name}</span>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setJdFile(null)} className="h-8 w-8 text-muted-foreground hover:text-red-500">
+                  <Button variant="ghost" size="icon" onClick={() => { setJdFile(null); setJdText(''); }} className="h-8 w-8 text-muted-foreground hover:text-red-500">
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -181,11 +309,11 @@ const CreateJobPage: React.FC = () => {
             </CardHeader>
             <CardContent className="flex-1 flex flex-col space-y-4">
               {/* Drag Drop Zone */}
-              <div 
+              <div
                 className={cn(
                   "border-2 border-dashed rounded-xl p-10 transition-all text-center cursor-pointer",
-                  dragActive 
-                    ? "border-primary bg-primary/5 scale-[1.01]" 
+                  dragActive
+                    ? "border-primary bg-primary/5 scale-[1.01]"
                     : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
                 )}
                 onDragEnter={handleDrag}
@@ -194,11 +322,11 @@ const CreateJobPage: React.FC = () => {
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
               >
-                <input 
+                <input
                   ref={fileInputRef}
-                  type="file" 
-                  multiple 
-                  className="hidden" 
+                  type="file"
+                  multiple
+                  className="hidden"
                   accept=".pdf,.doc,.docx"
                   onChange={handleFileInput}
                 />
@@ -224,7 +352,7 @@ const CreateJobPage: React.FC = () => {
                       Clear all
                     </Button>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2">
                     {files.map((file, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg bg-card hover:bg-accent/50 transition-colors group">
@@ -235,9 +363,9 @@ const CreateJobPage: React.FC = () => {
                             <span className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
                           </div>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => removeFile(index)}
                           className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500"
                         >
@@ -250,10 +378,10 @@ const CreateJobPage: React.FC = () => {
               )}
 
               {files.length === 0 && (
-                 <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/50 space-y-2 py-10">
-                    <Info className="h-8 w-8" />
-                    <p>No files selected yet</p>
-                 </div>
+                <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/50 space-y-2 py-10">
+                  <Info className="h-8 w-8" />
+                  <p>No files selected yet</p>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -261,16 +389,35 @@ const CreateJobPage: React.FC = () => {
       </div>
 
       {/* Footer Actions */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 border-t dark:border-gray-700 flex justify-end gap-4 z-10">
-         <Button variant="outline" size="lg">Cancel</Button>
-         <Button 
-            size="lg" 
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 border-t dark:border-gray-700 flex flex-col gap-4 z-10">
+        {error && (
+          <Alert variant="destructive" className="mx-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <div className="flex justify-end gap-4 px-4">
+          <Button variant="outline" size="lg" onClick={() => navigate(ROUTES.JOBS_LIST)}>Cancel</Button>
+          <Button
+            size="lg"
             className="bg-primary hover:bg-primary/90 gap-2 shadow-lg shadow-blue-500/20"
-            disabled={!jobTitle || files.length === 0}
-         >
-            <CheckCircle2 className="h-4 w-4" />
-            Create Job & Analyze {files.length > 0 && `(${files.length})`}
-         </Button>
+            disabled={!jobTitle || files.length === 0 || isSubmitting}
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Create Job & Analyze {files.length > 0 && `(${files.length})`}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
