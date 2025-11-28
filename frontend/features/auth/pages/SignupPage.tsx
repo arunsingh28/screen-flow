@@ -13,8 +13,9 @@ export default function SignupPage() {
     const [companyName, setCompanyName] = useState('');
     const { mutate: signup, isPending, isError, error } = useSignup();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        e.stopPropagation();
         signup({ email, password, company_name: companyName });
     };
 

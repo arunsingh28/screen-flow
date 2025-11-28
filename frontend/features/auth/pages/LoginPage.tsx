@@ -12,8 +12,9 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const { mutate: login, isPending, isError, error } = useLogin();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        e.stopPropagation();
         login({ email, password });
     };
 
@@ -83,9 +84,9 @@ export default function LoginPage() {
                                 >
                                     Password
                                 </label>
-                                <a href="#" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+                                <Link to={ROUTES.FORGOT_PASSWORD} className="text-sm font-medium text-primary-600 hover:text-primary-500">
                                     Forgot password?
-                                </a>
+                                </Link>
                             </div>
                             <Input
                                 id="password"
