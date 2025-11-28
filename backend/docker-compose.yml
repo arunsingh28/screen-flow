@@ -37,19 +37,22 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: screenflow-api
-    environment:
-      - DATABASE_URL=postgresql://screenflow:screenflow_dev_password@postgres:5432/screenflow_db
-      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     volumes:
       - ./app:/app/app
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    stdin_open: true
+    tty: true
 
 volumes:
   postgres_data:
