@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
+import { useLogout } from '@/hooks/useAuth';
 import { useCredits } from '@/contexts/CreditContext';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { CreditPurchaseModal } from '@/components/credits/CreditPurchaseModal';
@@ -29,10 +30,18 @@ const Header: React.FC = () => {
   const location = useLocation();
   const { setTheme, theme } = useTheme();
   const { credits, maxCredits } = useCredits();
+  const { mutate: logout } = useLogout();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
+    setIsMobileMenuOpen(false);
+  };
+
 
   const navItems = [
     { path: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
@@ -87,7 +96,7 @@ const Header: React.FC = () => {
               </NavLink>
             ))}
           </nav>
-          
+
           {/* Right Actions */}
           <div className="flex items-center gap-3">
             {/* Credits Display */}
@@ -99,17 +108,17 @@ const Header: React.FC = () => {
               onKeyDown={(e) => e.key === 'Enter' && setShowCreditModal(true)}
             >
               <div className="relative flex items-center justify-center">
-                <CircularProgress 
-                  value={credits} 
-                  max={maxCredits} 
-                  size={28} 
-                  strokeWidth={5} 
-                  className="text-[#1fad58] group-hover:text-[#1fad58]/80" 
+                <CircularProgress
+                  value={credits}
+                  max={maxCredits}
+                  size={28}
+                  strokeWidth={5}
+                  className="text-[#1fad58] group-hover:text-[#1fad58]/80"
                 />
               </div>
               <div className="flex flex-col items-start -space-y-0.5">
                 <span className="text-[10px] font-sans font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary/80 transition-colors">
-                    Available
+                  Available
                 </span>
                 <span className="text-sm font-bold font-mono tracking-tight text-foreground">
                   {credits}
@@ -120,7 +129,7 @@ const Header: React.FC = () => {
 
             {/* Theme Toggle */}
             <div className="hidden sm:flex bg-muted rounded-full p-1 border dark:border-gray-700">
-              <button 
+              <button
                 onClick={() => setTheme("light")}
                 className={cn(
                   "p-1.5 rounded-full transition-all",
@@ -130,7 +139,7 @@ const Header: React.FC = () => {
               >
                 <Sun className="h-4 w-4" />
               </button>
-              <button 
+              <button
                 onClick={() => setTheme("system")}
                 className={cn(
                   "p-1.5 rounded-full transition-all",
@@ -140,7 +149,7 @@ const Header: React.FC = () => {
               >
                 <Laptop className="h-4 w-4" />
               </button>
-              <button 
+              <button
                 onClick={() => setTheme("dark")}
                 className={cn(
                   "p-1.5 rounded-full transition-all",
@@ -154,9 +163,9 @@ const Header: React.FC = () => {
 
             {/* Notification Bell */}
             <div className="relative z-50">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="text-muted-foreground relative"
                 onClick={() => {
                   setShowNotifications(!showNotifications);
@@ -178,9 +187,9 @@ const Header: React.FC = () => {
                       <div key={notif.id} className="px-4 py-3 hover:bg-muted/50 cursor-pointer flex gap-3">
                         <div className={cn("mt-1 h-2 w-2 rounded-full flex-shrink-0", notif.unread ? "bg-blue-500" : "bg-transparent")} />
                         <div>
-                           <p className={cn("text-sm", notif.unread ? "font-medium text-foreground" : "text-muted-foreground")}>{notif.title}</p>
-                           <p className="text-xs text-muted-foreground line-clamp-1">{notif.desc}</p>
-                           <p className="text-[10px] text-muted-foreground mt-1">{notif.time}</p>
+                          <p className={cn("text-sm", notif.unread ? "font-medium text-foreground" : "text-muted-foreground")}>{notif.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{notif.desc}</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">{notif.time}</p>
                         </div>
                       </div>
                     ))}
@@ -191,14 +200,14 @@ const Header: React.FC = () => {
 
             {/* User Avatar & Dropdown */}
             <div className="relative z-50 hidden sm:block">
-              <div 
+              <div
                 className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center font-medium shadow-sm cursor-pointer hover:opacity-90 transition-opacity ring-2 ring-background"
                 onClick={() => {
                   setShowUserMenu(!showUserMenu);
                   setShowNotifications(false);
                 }}
               >
-                  AS
+                AS
               </div>
 
               {showUserMenu && (
@@ -234,9 +243,9 @@ const Header: React.FC = () => {
                     </Link>
                   </div>
                   <div className="p-1 border-t dark:border-gray-700">
-                    <button 
+                    <button
                       className="flex w-full items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-sm"
-                      onClick={() => alert("Logged Out")}
+                      onClick={handleLogout}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       Log out
@@ -247,9 +256,9 @@ const Header: React.FC = () => {
             </div>
 
             {/* Mobile Menu Toggle */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="md:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
@@ -300,19 +309,19 @@ const Header: React.FC = () => {
                 Settings
               </NavLink>
               <div className="border-t my-2 pt-2">
-                 <div className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-muted-foreground">
-                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center text-xs">
-                       APS
-                    </div>
-                    <span>Arun Ptatap Singh</span>
-                 </div>
-                 <button 
-                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md transition-colors"
-                    onClick={() => alert("Logged Out")}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
-                 </button>
+                <div className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-muted-foreground">
+                  <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center text-xs">
+                    APS
+                  </div>
+                  <span>Arun Ptatap Singh</span>
+                </div>
+                <button
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md transition-colors"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
               </div>
             </nav>
           </div>
