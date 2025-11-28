@@ -52,38 +52,80 @@ backend/
 
 ```bash
 cd backend
+
+# Copy environment variables
 cp .env.example .env
 ```
 
 ### 2. Start All Services
 
+**Option A: Using the helper script (Recommended)**
 ```bash
-docker-compose up -d
+./dev.sh start
+```
+
+**Option B: Using Docker Compose directly**
+```bash
+docker compose up -d
+```
+
+**Option C: Using Makefile**
+```bash
+make up
 ```
 
 This will start:
 - **PostgreSQL** on port 5432
 - **Redis** on port 6379
-- **FastAPI** on port 8000
+- **FastAPI** on port 8000 (with hot-reload enabled!)
 
-### 3. Check Service Health
+### 3. View Logs (See Changes Immediately!)
+
+**View all logs:**
+```bash
+docker compose logs -f
+```
+
+**View API logs only:**
+```bash
+docker compose logs -f api
+# OR
+make logs-api
+```
+
+**View recent logs:**
+```bash
+docker compose logs --tail=100 api
+```
+
+### 4. Check Service Health
 
 ```bash
 # Check running containers
-docker-compose ps
-
-# View logs
-docker-compose logs -f api
+docker compose ps
 
 # Check API health
 curl http://localhost:8000/health
+
+# Or open in browser
+open http://localhost:8000/health
 ```
 
-### 4. Access API Documentation
+### 5. Access API Documentation
 
 - **Swagger UI:** http://localhost:8000/api/v1/docs
 - **ReDoc:** http://localhost:8000/api/v1/redoc
 - **OpenAPI JSON:** http://localhost:8000/api/v1/openapi.json
+
+### 6. Hot Reload Development
+
+The API container is configured with **hot-reload** enabled! Any changes you make to files in the `app/` directory will automatically restart the server.
+
+**Try it:**
+1. Edit any file in `app/` (e.g., `app/main.py`)
+2. Watch the logs: `docker compose logs -f api`
+3. You'll see the server restart automatically
+4. Changes are immediately available at http://localhost:8000
 
 ## Local Development (Without Docker)
 
@@ -315,6 +357,82 @@ print(secrets.token_urlsafe(32))
 
 ## Troubleshooting
 
+### API Not Starting / Can't Access http://localhost:8000
+
+**1. Check if services are running:**
+```bash
+docker compose ps
+```
+
+**2. View API logs to see errors:**
+```bash
+docker compose logs api
+# Or for real-time logs
+docker compose logs -f api
+```
+
+**3. Common issues:**
+
+**Missing .env file:**
+```bash
+# Check if .env exists
+ls -la .env
+
+# If not, create it
+cp .env.example .env
+```
+
+**Wrong database URL in .env:**
+Make sure your `.env` file uses `postgres` as hostname (not `localhost`):
+```env
+DATABASE_URL=postgresql://screenflow:screenflow_dev_password@postgres:5432/screenflow_db
+REDIS_URL=redis://redis:6379/0
+```
+
+**Container crashed:**
+```bash
+# Restart the API container
+docker compose restart api
+
+# Or rebuild if there are code issues
+docker compose up -d --build api
+```
+
+**4. Full reset (if nothing works):**
+```bash
+# Stop everything
+docker compose down -v
+
+# Rebuild and start
+docker compose up -d --build
+
+# Watch logs
+docker compose logs -f
+```
+
+### Can't See Logs
+
+**To see all logs in real-time:**
+```bash
+docker compose logs -f
+```
+
+**To see only API logs:**
+```bash
+docker compose logs -f api
+```
+
+**To see last 100 lines:**
+```bash
+docker compose logs --tail=100 api
+```
+
+**Using Make commands:**
+```bash
+make logs        # All services
+make logs-api    # API only
+```
+
 ### Port Already in Use
 
 ```bash
@@ -323,30 +441,70 @@ lsof -i :8000
 
 # Kill the process
 kill -9 <PID>
+
+# Or use a different port in docker-compose.yml
+# Change "8000:8000" to "8001:8000"
 ```
 
 ### Database Connection Issues
 
 ```bash
 # Check if PostgreSQL is running
-docker-compose ps postgres
+docker compose ps postgres
 
 # View PostgreSQL logs
-docker-compose logs postgres
+docker compose logs postgres
 
 # Restart PostgreSQL
-docker-compose restart postgres
+docker compose restart postgres
+
+# Test connection
+docker compose exec postgres psql -U screenflow -d screenflow_db
 ```
 
 ### Redis Connection Issues
 
 ```bash
 # Check Redis status
-docker-compose exec redis redis-cli ping
+docker compose exec redis redis-cli ping
 # Should return: PONG
 
 # View Redis logs
-docker-compose logs redis
+docker compose logs redis
+
+# Restart Redis
+docker compose restart redis
+```
+
+### Hot Reload Not Working
+
+If you make changes but don't see them:
+
+1. **Check logs to see if server reloaded:**
+   ```bash
+   docker compose logs -f api
+   ```
+   You should see: `Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)`
+
+2. **Volume mounting issue - rebuild:**
+   ```bash
+   docker compose down
+   docker compose up -d --build
+   ```
+
+3. **Make sure you're editing files in `app/` directory:**
+   Only files in `app/`, `alembic/`, and `alembic.ini` trigger reload
+
+### Import Errors / Module Not Found
+
+```bash
+# Rebuild the container to reinstall dependencies
+docker compose down
+docker compose up -d --build
+
+# Or install new package
+docker compose exec api pip install <package-name>
+# Then add to requirements.txt
 ```
 
 ## Next Steps
