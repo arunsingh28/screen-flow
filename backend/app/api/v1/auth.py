@@ -1,15 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserWithToken, Token, UserResponse
-from app.core.security import verify_password, get_password_hash, create_access_token
+from app.core.security import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    create_refresh_token,
+    decode_access_token
+)
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=UserWithToken, status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
+def register(user_data: UserCreate, response: Response, db: Session = Depends(get_db)):
     """Register a new user."""
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
@@ -38,8 +44,20 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    # Create access token
-    access_token = create_access_token(data={"user_id": new_user.id, "email": new_user.email})
+    # Create tokens
+    user_id_str = str(new_user.id)
+    access_token = create_access_token(data={"user_id": user_id_str, "email": new_user.email})
+    refresh_token = create_refresh_token(data={"user_id": user_id_str})
+
+    # Set refresh token as HttpOnly cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=7 * 24 * 60 * 60
+    )
 
     return UserWithToken(
         user=UserResponse.from_orm(new_user),
@@ -48,7 +66,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=UserWithToken)
-def login(credentials: UserLogin, db: Session = Depends(get_db)):
+def login(credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
     """Authenticate user and return JWT token."""
     # Find user by email
     user = db.query(User).filter(User.email == credentials.email).first()
@@ -65,10 +83,68 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect email or password"
         )
 
-    # Create access token
-    access_token = create_access_token(data={"user_id": user.id, "email": user.email})
+    # Create tokens
+    user_id_str = str(user.id)
+    access_token = create_access_token(data={"user_id": user_id_str, "email": user.email})
+    refresh_token = create_refresh_token(data={"user_id": user_id_str})
+
+    # Set refresh token as HttpOnly cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=7 * 24 * 60 * 60
+    )
 
     return UserWithToken(
         user=UserResponse.from_orm(user),
         token=Token(access_token=access_token)
     )
+
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(request: Request, db: Session = Depends(get_db)):
+    """Refresh access token using refresh token from cookie."""
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token not found"
+        )
+
+    # Decode refresh token
+    payload = decode_access_token(refresh_token)
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
+
+    # Verify user exists
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+
+    # Create new access token
+    access_token = create_access_token(data={"user_id": user_id, "email": user.email})
+
+    return Token(access_token=access_token)
+
+
+@router.post("/logout")
+def logout(response: Response):
+    """Logout user by clearing refresh token cookie."""
+    response.delete_cookie(key="refresh_token")
+    return {"message": "Successfully logged out"}

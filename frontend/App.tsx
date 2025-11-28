@@ -1,22 +1,22 @@
 import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
-import Header from '@/components/layout/Header';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/components/theme-provider';
 import { CreditProvider } from '@/contexts/CreditContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { queryClient } from '@/lib/react-query';
 import { routes } from '@/config/routes.config';
 
 function RootLayout() {
   return (
-    <AuthProvider>
-      <CreditProvider initialCredits={100}>
-        <ThemeProvider defaultTheme="system" storageKey="screenflow-ui-theme">
-          <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-            <Header />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CreditProvider initialCredits={100}>
+          <ThemeProvider defaultTheme="system" storageKey="screenflow-ui-theme">
             <Outlet />
-          </div>
-        </ThemeProvider>
-      </CreditProvider>
-    </AuthProvider>
+          </ThemeProvider>
+        </CreditProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

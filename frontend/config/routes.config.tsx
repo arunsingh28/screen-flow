@@ -16,6 +16,7 @@ import ForgotPasswordPage from '@/features/auth/pages/ForgotPasswordPage';
 import AuthLayout from '@/components/layout/AuthLayout';
 import PublicRoute from '@/components/auth/PublicRoute';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import MainLayout from '@/components/layout/MainLayout';
 
 export const routes: RouteObject[] = [
   // Auth Routes
@@ -42,43 +43,52 @@ export const routes: RouteObject[] = [
   },
   // Protected Routes
   {
-    element: <ProtectedRoute><DashboardPage /></ProtectedRoute>,
-    path: ROUTES.DASHBOARD,
-  },
-  {
-    element: <ProtectedRoute><JobsListPage /></ProtectedRoute>,
-    path: ROUTES.JOBS_LIST,
-  },
-  {
-    element: <ProtectedRoute><JobDetailsPage /></ProtectedRoute>,
-    path: ROUTES.JOB_DETAILS,
-  },
-  {
-    element: <ProtectedRoute><CreateJobPage /></ProtectedRoute>,
-    path: ROUTES.CREATE_JOB,
-  },
-  {
-    element: <ProtectedRoute><SettingsPage /></ProtectedRoute>,
-    path: ROUTES.SETTINGS,
-  },
-  {
-    element: <ProtectedRoute><SearchPage /></ProtectedRoute>,
-    path: ROUTES.SEARCH,
-  },
-  {
-    element: <ProtectedRoute><CVLibraryPage /></ProtectedRoute>,
-    path: ROUTES.LIBRARY,
-  },
-  {
-    element: <ProtectedRoute><ActivityLogPage /></ProtectedRoute>,
-    path: ROUTES.ACTIVITY_LOG,
-  },
-  {
-    element: <ProtectedRoute><ProfilePage /></ProtectedRoute>,
-    path: ROUTES.PROFILE,
-  },
-  {
-    element: <ProtectedRoute><CreditsPage /></ProtectedRoute>,
-    path: ROUTES.CREDITS,
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: ROUTES.DASHBOARD,
+        element: <DashboardPage />,
+      },
+      {
+        path: ROUTES.JOBS_LIST,
+        element: <JobsListPage />,
+      },
+      {
+        path: ROUTES.JOB_DETAILS,
+        element: <JobDetailsPage />,
+      },
+      {
+        path: ROUTES.CREATE_JOB,
+        element: <CreateJobPage />,
+      },
+      {
+        path: ROUTES.SETTINGS,
+        element: <SettingsPage />,
+      },
+      {
+        path: ROUTES.SEARCH,
+        element: <SearchPage />,
+      },
+      {
+        path: ROUTES.LIBRARY,
+        element: <CVLibraryPage />,
+      },
+      {
+        path: ROUTES.ACTIVITY_LOG,
+        element: <ActivityLogPage />,
+      },
+      {
+        path: ROUTES.PROFILE,
+        element: <ProfilePage />,
+      },
+      {
+        path: ROUTES.CREDITS,
+        element: <CreditsPage />,
+      },
+    ],
   },
 ];
