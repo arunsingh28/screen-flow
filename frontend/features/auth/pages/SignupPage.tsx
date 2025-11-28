@@ -4,8 +4,8 @@ import { useSignup } from '@/hooks/useAuth';
 import { ROUTES } from '@/config/routes.constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { formatAuthError } from '@/lib/errorUtils';
 
 export default function SignupPage() {
     const [email, setEmail] = useState('');
@@ -32,6 +32,29 @@ export default function SignupPage() {
                     Get started with ScreenFlow to revolutionize your hiring process today.
                 </p>
             </div>
+
+            {/* Error Message Display */}
+            {isError && (
+                <Alert variant="destructive" className="mb-6">
+                    <svg
+                        className="h-5 w-5 text-red-600 flex-shrink-0"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                    >
+                        <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                            clipRule="evenodd"
+                        />
+                    </svg>
+                    <div className="flex-1">
+                        <AlertDescription className="font-medium">
+                            {formatAuthError(error)}
+                        </AlertDescription>
+                    </div>
+                </Alert>
+            )}
 
             <div className="grid gap-6">
                 <form onSubmit={handleSubmit}>
