@@ -1,36 +1,33 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
-import os
-import shutil
 from pathlib import Path
+from uuid import UUID
 
 from app.database import get_db
 from app.models.user import User
-from app.models.job import Job, CV, JobStatus, CVStatus
+from app.models.job import CVBatch, CV, BatchStatus, CVStatus, CVSource
 from app.schemas.job import (
-    JobCreate,
-    JobUpdate,
-    JobResponse,
-    JobDetailResponse,
-    JobListResponse,
+    CVBatchCreate,
+    CVBatchResponse,
+    CVDetailResponse,
+    CVBatchListResponse,
+    CVResponse,
     BulkUploadResponse,
     FileUploadResponse,
 )
 from app.api.deps import get_current_user
+from app.services.s3_service import s3_service
 
 router = APIRouter()
 
 # File upload settings
-UPLOAD_DIR = Path("/tmp/screenflow/uploads")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx"}
 
 
-def save_uploaded_file(file: UploadFile, user_id: int, job_id: int, file_type: str = "cv") -> dict:
-    """Save uploaded file and return file info"""
-    # Check file extension
+def validate_file(file: UploadFile) -> None:
+    """Validate uploaded file"""
     file_ext = Path(file.filename).suffix.lower()
     if file_ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -38,217 +35,287 @@ def save_uploaded_file(file: UploadFile, user_id: int, job_id: int, file_type: s
             detail=f"File type {file_ext} not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
 
-    # Create user directory
-    user_dir = UPLOAD_DIR / f"user_{user_id}" / f"job_{job_id}" / file_type
-    user_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate unique filename
-    file_path = user_dir / file.filename
-    counter = 1
-    while file_path.exists():
-        stem = Path(file.filename).stem
-        file_path = user_dir / f"{stem}_{counter}{file_ext}"
-        counter += 1
-
-    # Save file
-    try:
-        with file_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-    finally:
-        file.file.close()
-
-    return {
-        "file_name": file.filename,
-        "file_path": str(file_path),
-        "file_size": file_path.stat().st_size,
-    }
-
-
-@router.post("/", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
-async def create_job(
-    job_data: JobCreate,
+@router.post("/batches", response_model=CVBatchResponse, status_code=status.HTTP_201_CREATED)
+async def create_cv_batch(
+    batch_data: CVBatchCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Create a new job"""
-    new_job = Job(
+    """Create a new CV batch"""
+    new_batch = CVBatch(
         user_id=current_user.id,
-        title=job_data.title,
-        department=job_data.department,
-        location=job_data.location,
-        description=job_data.description,
-        status=JobStatus.DRAFT,
+        batch_name=batch_data.batch_name,
+        tags=batch_data.tags,
     )
 
-    db.add(new_job)
+    db.add(new_batch)
     db.commit()
-    db.refresh(new_job)
+    db.refresh(new_batch)
 
-    return JobResponse.from_orm(new_job)
-
-
-@router.post("/{job_id}/upload-jd", response_model=FileUploadResponse)
-async def upload_job_description(
-    job_id: int,
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Upload Job Description file for a job"""
-    # Get job and verify ownership
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
-
-    # Save file
-    file_info = save_uploaded_file(file, current_user.id, job_id, "jd")
-
-    # Update job with JD info
-    job.jd_file_name = file_info["file_name"]
-    job.jd_file_path = file_info["file_path"]
-    job.jd_file_size = file_info["file_size"]
-
-    db.commit()
-
-    return FileUploadResponse(
-        message="Job description uploaded successfully",
-        **file_info
-    )
+    return CVBatchResponse.from_orm(new_batch)
 
 
-@router.post("/{job_id}/upload-cvs", response_model=BulkUploadResponse)
-async def upload_cvs(
-    job_id: int,
+@router.post("/batches/{batch_id}/upload", response_model=BulkUploadResponse)
+async def upload_cvs_to_batch(
+    batch_id: UUID,
     files: List[UploadFile] = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Upload multiple CV files for a job"""
-    # Get job and verify ownership
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+    """Upload multiple CV files to a batch"""
+    # Get batch and verify ownership
+    batch = db.query(CVBatch).filter(
+        CVBatch.id == batch_id,
+        CVBatch.user_id == current_user.id
+    ).first()
+
+    if not batch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Batch not found"
+        )
 
     uploaded_files = []
     failed_count = 0
 
     for file in files:
         try:
-            # Save file
-            file_info = save_uploaded_file(file, current_user.id, job_id, "cv")
+            # Validate file
+            validate_file(file)
+
+            # Generate S3 key
+            s3_key = s3_service.generate_s3_key(
+                user_id=str(current_user.id),
+                file_type="cvs",
+                original_filename=file.filename,
+                batch_id=str(batch_id)
+            )
+
+            # Upload to S3
+            upload_result = s3_service.upload_file(
+                file_obj=file.file,
+                s3_key=s3_key,
+                content_type=file.content_type or "application/pdf",
+                metadata={
+                    "user_id": str(current_user.id),
+                    "batch_id": str(batch_id),
+                    "original_filename": file.filename,
+                }
+            )
 
             # Create CV record
             cv = CV(
-                job_id=job_id,
+                batch_id=batch_id,
                 user_id=current_user.id,
-                file_name=file_info["file_name"],
-                file_path=file_info["file_path"],
-                file_size=file_info["file_size"],
+                filename=file.filename,
+                s3_key=upload_result["s3_key"],
+                file_size_bytes=upload_result["file_size"],
                 status=CVStatus.QUEUED,
+                source=CVSource.MANUAL_UPLOAD,
             )
             db.add(cv)
 
             uploaded_files.append(FileUploadResponse(
                 message="Success",
-                **file_info
+                cv_id=cv.id,
+                filename=file.filename,
+                s3_key=upload_result["s3_key"],
+                file_size_bytes=upload_result["file_size"],
+                status=CVStatus.QUEUED,
             ))
 
         except Exception as e:
             failed_count += 1
             print(f"Failed to upload {file.filename}: {str(e)}")
 
-    # Update job candidate count
-    job.candidate_count = len(uploaded_files)
+    # Update batch statistics
+    batch.total_cvs = len(uploaded_files)
+    if len(uploaded_files) == len(files):
+        batch.status = BatchStatus.COMPLETED
     db.commit()
 
     return BulkUploadResponse(
         message=f"Successfully uploaded {len(uploaded_files)} CVs",
-        job_id=job_id,
+        batch_id=batch_id,
+        batch_name=batch.batch_name,
         uploaded_count=len(uploaded_files),
         failed_count=failed_count,
         files=uploaded_files
     )
 
 
-@router.get("/", response_model=JobListResponse)
-async def list_jobs(
+@router.get("/batches", response_model=CVBatchListResponse)
+async def list_cv_batches(
     page: int = 1,
     page_size: int = 10,
-    status: Optional[JobStatus] = None,
+    status: Optional[BatchStatus] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """List all jobs for the current user"""
-    query = db.query(Job).filter(Job.user_id == current_user.id)
+    """List all CV batches for the current user"""
+    query = db.query(CVBatch).filter(CVBatch.user_id == current_user.id)
 
     # Filter by status if provided
     if status:
-        query = query.filter(Job.status == status)
+        query = query.filter(CVBatch.status == status)
 
     # Get total count
     total = query.count()
 
     # Paginate
-    jobs = query.order_by(Job.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    batches = query.order_by(CVBatch.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
-    return JobListResponse(
-        jobs=[JobResponse.from_orm(job) for job in jobs],
+    return CVBatchListResponse(
+        batches=[CVBatchResponse.from_orm(batch) for batch in batches],
         total=total,
         page=page,
         page_size=page_size
     )
 
 
-@router.get("/{job_id}", response_model=JobDetailResponse)
-async def get_job(
-    job_id: int,
+@router.get("/batches/{batch_id}", response_model=CVDetailResponse)
+async def get_cv_batch(
+    batch_id: UUID,
+    include_download_urls: bool = True,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get a specific job with all CVs"""
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+    """Get a specific CV batch with all CVs"""
+    batch = db.query(CVBatch).filter(
+        CVBatch.id == batch_id,
+        CVBatch.user_id == current_user.id
+    ).first()
 
-    return JobDetailResponse.from_orm(job)
+    if not batch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Batch not found"
+        )
+
+    # Convert to response and add presigned URLs
+    response = CVDetailResponse.from_orm(batch)
+
+    if include_download_urls:
+        for cv in response.cvs:
+            try:
+                cv.download_url = s3_service.generate_presigned_url(
+                    s3_key=cv.s3_key,
+                    filename=cv.filename
+                )
+            except Exception as e:
+                print(f"Failed to generate presigned URL for {cv.filename}: {str(e)}")
+                cv.download_url = None
+
+    return response
 
 
-@router.put("/{job_id}", response_model=JobResponse)
-async def update_job(
-    job_id: int,
-    job_data: JobUpdate,
+@router.get("/cvs/{cv_id}/download-url")
+async def get_cv_download_url(
+    cv_id: UUID,
+    expiration: int = 3600,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update a job"""
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+    """Get presigned URL for downloading a CV"""
+    cv = db.query(CV).filter(
+        CV.id == cv_id,
+        CV.user_id == current_user.id
+    ).first()
 
-    # Update fields
-    update_data = job_data.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(job, field, value)
+    if not cv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV not found"
+        )
 
+    try:
+        download_url = s3_service.generate_presigned_url(
+            s3_key=cv.s3_key,
+            expiration=expiration,
+            filename=cv.filename
+        )
+
+        return {
+            "download_url": download_url,
+            "expires_in": expiration,
+            "filename": cv.filename
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate download URL: {str(e)}"
+        )
+
+
+@router.delete("/batches/{batch_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_cv_batch(
+    batch_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a CV batch and all associated CVs"""
+    batch = db.query(CVBatch).filter(
+        CVBatch.id == batch_id,
+        CVBatch.user_id == current_user.id
+    ).first()
+
+    if not batch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Batch not found"
+        )
+
+    # Get all S3 keys for deletion
+    s3_keys = [cv.s3_key for cv in batch.cvs]
+
+    # Delete from S3
+    if s3_keys:
+        try:
+            s3_service.delete_files(s3_keys)
+        except Exception as e:
+            print(f"Failed to delete files from S3: {str(e)}")
+            # Continue with database deletion even if S3 deletion fails
+
+    # Delete batch (CVs will be deleted due to cascade)
+    db.delete(batch)
     db.commit()
-    db.refresh(job)
 
-    return JobResponse.from_orm(job)
+    return None
 
 
-@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_job(
-    job_id: int,
+@router.delete("/cvs/{cv_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_cv(
+    cv_id: UUID,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Delete a job and all associated CVs"""
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
-    if not job:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+    """Delete a single CV"""
+    cv = db.query(CV).filter(
+        CV.id == cv_id,
+        CV.user_id == current_user.id
+    ).first()
 
-    # Delete job (CVs will be deleted due to cascade)
-    db.delete(job)
+    if not cv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV not found"
+        )
+
+    # Delete from S3
+    try:
+        s3_service.delete_file(cv.s3_key)
+    except Exception as e:
+        print(f"Failed to delete file from S3: {str(e)}")
+
+    # Update batch statistics
+    batch = cv.batch
+    if batch:
+        batch.total_cvs = max(0, batch.total_cvs - 1)
+
+    # Delete CV
+    db.delete(cv)
     db.commit()
 
     return None
