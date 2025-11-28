@@ -7,6 +7,17 @@ from app.schemas.user import (
     TokenData,
     UserWithToken,
 )
+from app.schemas.job import (
+    JobBase,
+    JobCreate,
+    JobUpdate,
+    JobResponse,
+    JobDetailResponse,
+    JobListResponse,
+    CVResponse,
+    FileUploadResponse,
+    BulkUploadResponse,
+)
 
 __all__ = [
     "UserBase",
@@ -16,4 +27,13 @@ __all__ = [
     "Token",
     "TokenData",
     "UserWithToken",
+    "JobBase",
+    "JobCreate",
+    "JobUpdate",
+    "JobResponse",
+    "JobDetailResponse",
+    "JobListResponse",
+    "CVResponse",
+    "FileUploadResponse",
+    "BulkUploadResponse",
 ]
