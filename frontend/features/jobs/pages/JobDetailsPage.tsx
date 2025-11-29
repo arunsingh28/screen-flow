@@ -12,7 +12,8 @@ import {
    PauseCircle,
    Filter,
    Loader2,
-   RefreshCw
+   RefreshCw,
+   Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Candidate, MatchingConfig } from '@/types';
 import CandidateRow from '../components/CandidateRow';
 import CVPreviewModal from '../components/CVPreviewModal';
+import UploadCVModal from '../components/UploadCVModal';
 import MatchingConfigPanel from '@/components/shared/MatchingConfigPanel';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/routes.constants';
@@ -39,6 +41,8 @@ const JobDetailsPage: React.FC = () => {
    const [activeTab, setActiveTab] = useState<'candidates' | 'config' | 'jd'>('candidates');
    const [selectedCandidates, setSelectedCandidates] = useState<Set<string>>(new Set());
    const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null);
+
+   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
    // Local config state (mock for now as backend doesn't support config yet)
    const [localConfig, setLocalConfig] = useState<MatchingConfig>({
@@ -179,6 +183,9 @@ const JobDetailsPage: React.FC = () => {
                      <><PlayCircle className="h-4 w-4 mr-2" /> Reopen Job</>
                   )}
                </Button>
+               <Button variant="outline" onClick={() => setIsUploadModalOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" /> Upload CVs
+               </Button>
                <Button variant="default" className="gap-2">
                   <Download className="h-4 w-4" /> Export Report
                </Button>
@@ -234,8 +241,24 @@ const JobDetailsPage: React.FC = () => {
                      {selectedCandidates.size > 0 && (
                         <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5">
                            <span className="text-sm text-muted-foreground">{selectedCandidates.size} selected</span>
-                           <Button variant="destructive" size="sm" className="gap-2">
-                              <Users className="h-4 w-4" /> Bulk Action
+                           <Button
+                              variant="destructive"
+                              size="sm"
+                              className="gap-2"
+                              onClick={async () => {
+                                 if (confirm(`Are you sure you want to delete ${selectedCandidates.size} candidates?`)) {
+                                    try {
+                                       await jobsApi.deleteCVs(Array.from(selectedCandidates));
+                                       setSelectedCandidates(new Set());
+                                       fetchJobDetails();
+                                    } catch (err) {
+                                       console.error("Failed to delete candidates:", err);
+                                       alert("Failed to delete candidates");
+                                    }
+                                 }
+                              }}
+                           >
+                              <Users className="h-4 w-4" /> Delete Selected
                            </Button>
                         </div>
                      )}
@@ -277,6 +300,16 @@ const JobDetailsPage: React.FC = () => {
                                        isSelected={selectedCandidates.has(candidate.id)}
                                        onSelect={() => handleSelectOne(candidate.id)}
                                        onView={setViewingCandidate}
+                                       onDelete={(id) => {
+                                          if (confirm("Are you sure you want to delete this candidate?")) {
+                                             jobsApi.deleteCVs([id]).then(() => {
+                                                fetchJobDetails();
+                                             }).catch(err => {
+                                                console.error("Failed to delete candidate:", err);
+                                                alert("Failed to delete candidate");
+                                             });
+                                          }
+                                       }}
                                     />
                                  ))
                               )}
@@ -325,6 +358,19 @@ const JobDetailsPage: React.FC = () => {
                candidate={viewingCandidate}
                isOpen={!!viewingCandidate}
                onClose={() => setViewingCandidate(null)}
+            />
+         )}
+
+         {/* Upload Modal */}
+         {job && (
+            <UploadCVModal
+               isOpen={isUploadModalOpen}
+               onClose={() => setIsUploadModalOpen(false)}
+               jobId={job.id}
+               onUploadComplete={() => {
+                  fetchJobDetails();
+                  // Optionally show a success toast here
+               }}
             />
          )}
 

@@ -172,3 +172,8 @@ class JobSearchListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class CVBulkDeleteRequest(BaseModel):
+    """Schema for bulk CV deletion"""
+    cv_ids: List[UUID4]

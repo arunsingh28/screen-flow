@@ -11,9 +11,10 @@ interface CandidateRowProps {
   isSelected: boolean;
   onSelect: () => void;
   onView: (candidate: Candidate) => void;
+  onDelete: (candidateId: string) => void;
 }
 
-const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSelect, onView }) => {
+const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSelect, onView, onDelete }) => {
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600 ring-green-200 bg-green-50 dark:bg-green-950/20 dark:ring-green-900';
     if (score >= 50) return 'text-amber-600 ring-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:ring-amber-900';
@@ -26,8 +27,8 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
       isSelected && "bg-muted/40"
     )}>
       <td className="p-4 w-[50px]">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           checked={isSelected}
           onChange={onSelect}
           className="h-4 w-4 rounded border-gray-300 accent-primary"
@@ -63,9 +64,9 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
             </span>
           )}
           {candidate.skillsMissing.length > 0 && (
-             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" title={`Missing: ${candidate.skillsMissing.join(', ')}`}>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" title={`Missing: ${candidate.skillsMissing.join(', ')}`}>
               -{candidate.skillsMissing.length}
-             </span>
+            </span>
           )}
         </div>
       </td>
@@ -78,9 +79,9 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
         </div>
       </td>
       <td className="p-4">
-         <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {formatDistanceToNow(candidate.appliedDate, { addSuffix: true })}
-         </span>
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {formatDistanceToNow(candidate.appliedDate, { addSuffix: true })}
+        </span>
       </td>
       <td className="p-4 text-right">
         <div className="flex justify-end gap-2">
@@ -90,7 +91,7 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
           <Button variant="ghost" size="icon" title="Reject">
             <XCircle className="h-4 w-4 text-muted-foreground hover:text-red-500" />
           </Button>
-          <Button variant="ghost" size="icon" title="Delete">
+          <Button variant="ghost" size="icon" title="Delete" onClick={() => onDelete(candidate.id)}>
             <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
           </Button>
         </div>

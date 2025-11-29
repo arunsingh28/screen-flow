@@ -124,16 +124,17 @@ const CreateJobPage: React.FC = () => {
 
       for (const file of files) {
         try {
+          const contentType = file.type || 'application/pdf';
           // Request Upload URL
           const { cv_id, presigned_url } = await jobsApi.requestUpload(
             jobId,
             file.name,
             file.size,
-            file.type || 'application/pdf'
+            contentType
           );
 
           // Upload to S3
-          await jobsApi.uploadToS3(presigned_url, file);
+          await jobsApi.uploadToS3(presigned_url, file, contentType);
 
           // Confirm Upload
           await jobsApi.confirmUpload(jobId, cv_id);

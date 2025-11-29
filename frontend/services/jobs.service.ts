@@ -38,13 +38,13 @@ export const jobsApi = {
         return response.data;
     },
 
-    uploadToS3: async (presignedUrl: string, file: File) => {
+    uploadToS3: async (presignedUrl: string, file: File, contentType: string) => {
         // Direct upload to S3 using PUT
         await fetch(presignedUrl, {
             method: 'PUT',
             body: file,
             headers: {
-                'Content-Type': file.type
+                'Content-Type': contentType
             }
         });
     },
@@ -55,7 +55,7 @@ export const jobsApi = {
     },
 
     getJobDetails: async (id: string) => {
-        const response = await axiosInstance.get(`/jobs/batches/${id}/details`);
+        const response = await axiosInstance.get(`/jobs/batches/${id}`);
         return response.data;
     },
 
@@ -69,6 +69,13 @@ export const jobsApi = {
     getActivities: async (skip = 0, limit = 50) => {
         const response = await axiosInstance.get(`/jobs/activities`, {
             params: { skip, limit }
+        });
+        return response.data;
+    },
+
+    deleteCVs: async (cvIds: string[]) => {
+        const response = await axiosInstance.post(`/jobs/cvs/bulk-delete`, {
+            cv_ids: cvIds
         });
         return response.data;
     }

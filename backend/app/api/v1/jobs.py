@@ -18,6 +18,7 @@ from app.schemas.job import (
     CVUploadRequest,
     CVUploadResponse,
     CVUploadConfirmation,
+    CVBulkDeleteRequest,
 )
 from app.models.activity import Activity
 from pydantic import BaseModel
@@ -242,8 +243,16 @@ async def list_cv_batches(
     # Paginate
     batches = query.order_by(CVBatch.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
+    # Create response with dynamic CV counts
+    batch_responses = []
+    for batch in batches:
+        response = CVBatchResponse.from_orm(batch)
+        # Dynamically count CVs to ensure accuracy
+        response.total_cvs = len(batch.cvs)
+        batch_responses.append(response)
+
     return CVBatchListResponse(
-        batches=[CVBatchResponse.from_orm(batch) for batch in batches],
+        batches=batch_responses,
         total=total,
         page=page,
         page_size=page_size
@@ -397,4 +406,63 @@ async def delete_cv(
     return None
 
 
+@router.post("/cvs/bulk-delete", status_code=status.HTTP_204_NO_CONTENT)
+async def bulk_delete_cvs(
+    delete_request: CVBulkDeleteRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk delete CVs"""
+    if not delete_request.cv_ids:
+        return None
 
+    # Get CVs to delete (ensure they belong to user)
+    cvs = db.query(CV).filter(
+        CV.id.in_(delete_request.cv_ids),
+        CV.user_id == current_user.id
+    ).all()
+
+    if not cvs:
+        return None
+
+    # Get S3 keys
+    s3_keys = [cv.s3_key for cv in cvs if cv.s3_key]
+
+    # Delete from S3
+    if s3_keys:
+        try:
+            s3_service.delete_files(s3_keys)
+        except Exception as e:
+            print(f"Failed to delete files from S3: {str(e)}")
+            # Continue with DB deletion
+
+    # Group by batch to update stats
+    batch_updates = {}
+    for cv in cvs:
+        if cv.batch_id not in batch_updates:
+            batch_updates[cv.batch_id] = 0
+        batch_updates[cv.batch_id] += 1
+
+    # Update batch stats
+    for batch_id, count in batch_updates.items():
+        batch = db.query(CVBatch).get(batch_id)
+        if batch:
+            batch.total_cvs = max(0, batch.total_cvs - count)
+
+    # Log Activity
+    from app.models.activity import Activity, ActivityType
+    activity = Activity(
+        user_id=current_user.id,
+        activity_type=ActivityType.CV_FAILED, # Using CV_FAILED as generic 'removed' or add new type
+        description=f"Deleted {len(cvs)} CVs"
+    )
+    # Note: ActivityType might need a DELETE type, but for now using generic description
+    db.add(activity)
+
+    # Delete from DB
+    for cv in cvs:
+        db.delete(cv)
+    
+    db.commit()
+
+    return None
