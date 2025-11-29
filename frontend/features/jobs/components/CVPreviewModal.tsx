@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Download, ExternalLink, ThumbsUp, ThumbsDown, User, BookOpen, BrainCircuit, FileText } from 'lucide-react';
+import { X, Download, ExternalLink, ThumbsUp, ThumbsDown, User, BookOpen, BrainCircuit, FileText, Loader2, AlertCircle, ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Candidate } from '../../../types';
 import { cn } from '../../../lib/utils';
@@ -9,9 +9,49 @@ interface CVPreviewModalProps {
    candidate: Candidate;
    onClose: () => void;
    isOpen: boolean;
+   onNext?: () => void;
+   onPrevious?: () => void;
+   hasNext?: boolean;
+   hasPrevious?: boolean;
+   onShortlist?: (candidate: Candidate) => void;
+   onReject?: (candidate: Candidate) => void;
 }
 
-const CVPreviewModal: React.FC<CVPreviewModalProps> = ({ candidate, onClose, isOpen }) => {
+import { jobsApi } from '../../../services/jobs.service';
+
+const CVPreviewModal: React.FC<CVPreviewModalProps> = ({
+   candidate,
+   onClose,
+   isOpen,
+   onNext,
+   onPrevious,
+   hasNext,
+   hasPrevious,
+   onShortlist,
+   onReject
+}) => {
+   const [downloadUrl, setDownloadUrl] = React.useState<string | null>(null);
+   const [isLoading, setIsLoading] = React.useState(false);
+   const [error, setError] = React.useState<string | null>(null);
+
+   React.useEffect(() => {
+      if (isOpen && candidate.id) {
+         setIsLoading(true);
+         setError(null);
+         jobsApi.getDownloadUrl(candidate.id)
+            .then(data => {
+               setDownloadUrl(data.url);
+            })
+            .catch(err => {
+               console.error("Failed to get download URL:", err);
+               setError("Failed to load document preview.");
+            })
+            .finally(() => {
+               setIsLoading(false);
+            });
+      }
+   }, [isOpen, candidate.id]);
+
    if (!isOpen) return null;
 
    return (
@@ -21,6 +61,14 @@ const CVPreviewModal: React.FC<CVPreviewModalProps> = ({ candidate, onClose, isO
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1 mr-2">
+                     <Button variant="outline" size="icon" onClick={onPrevious} disabled={!hasPrevious}>
+                        <ChevronLeft className="h-4 w-4" />
+                     </Button>
+                     <Button variant="outline" size="icon" onClick={onNext} disabled={!hasNext}>
+                        <ChevronRight className="h-4 w-4" />
+                     </Button>
+                  </div>
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                      {candidate.name ? candidate.name.charAt(0).toUpperCase() : '?'}
                   </div>
@@ -34,9 +82,11 @@ const CVPreviewModal: React.FC<CVPreviewModalProps> = ({ candidate, onClose, isO
                   </div>
                </div>
                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="gap-2">
-                     <Download className="h-4 w-4" /> Download PDF
-                  </Button>
+                  {downloadUrl && (
+                     <Button variant="outline" size="sm" className="gap-2" onClick={() => window.open(downloadUrl, '_blank')}>
+                        <Download className="h-4 w-4" /> Download PDF
+                     </Button>
+                  )}
                   <Button variant="ghost" size="icon" onClick={onClose}>
                      <X className="h-5 w-5" />
                   </Button>
@@ -48,25 +98,50 @@ const CVPreviewModal: React.FC<CVPreviewModalProps> = ({ candidate, onClose, isO
 
                {/* Left: Document Viewer */}
                <div className="flex-1 bg-muted/30 p-8 flex items-center justify-center overflow-auto border-r relative">
-                  <div className="absolute top-4 right-4">
-                     <Button variant="secondary" size="sm" className="gap-2 shadow-sm">
-                        <ExternalLink className="h-3 w-3" /> Open in New Tab
-                     </Button>
-                  </div>
+                  {downloadUrl && (
+                     <div className="absolute top-4 right-4">
+                        <Button variant="secondary" size="sm" className="gap-2 shadow-sm" onClick={() => window.open(downloadUrl, '_blank')}>
+                           <ExternalLink className="h-3 w-3" /> Open in New Tab
+                        </Button>
+                     </div>
+                  )}
 
                   {/* Document Content */}
-                  <div className="bg-white text-black p-8 w-[595px] min-h-[842px] shadow-lg text-sm space-y-6">
-                     {candidate.parsed_text ? (
-                        <div className="whitespace-pre-wrap font-mono text-xs">
+                  <div className="bg-white text-black w-[595px] h-full shadow-lg text-sm flex flex-col">
+                     {error ? (
+                        <div className="flex flex-col items-center justify-center h-full text-red-500 space-y-4 pt-20">
+                           <AlertCircle className="h-16 w-16 opacity-20" />
+                           <p className="text-center">{error}</p>
+                           <Button variant="outline" size="sm" onClick={() => {
+                              setIsLoading(true);
+                              setError(null);
+                              jobsApi.getDownloadUrl(candidate.id)
+                                 .then(data => setDownloadUrl(data.url))
+                                 .catch(err => setError("Failed to retry loading."))
+                                 .finally(() => setIsLoading(false));
+                           }}>Retry</Button>
+                        </div>
+                     ) : downloadUrl ? (
+                        <iframe src={downloadUrl} className="w-full h-full border-none" title="CV Preview" />
+                     ) : candidate.parsed_text ? (
+                        <div className="p-8 whitespace-pre-wrap font-mono text-xs">
                            {candidate.parsed_text}
                         </div>
                      ) : (
                         <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-4 pt-20">
-                           <FileText className="h-16 w-16 opacity-20" />
-                           <p className="text-center">
-                              No parsed text available for this CV.<br />
-                              Please download the original file to view contents.
-                           </p>
+                           {isLoading ? (
+                              <>
+                                 <Loader2 className="h-16 w-16 animate-spin opacity-20" />
+                                 <p className="text-center">Loading preview...</p>
+                              </>
+                           ) : (
+                              <>
+                                 <FileText className="h-16 w-16 opacity-20" />
+                                 <p className="text-center">
+                                    No preview available.
+                                 </p>
+                              </>
+                           )}
                         </div>
                      )}
                   </div>
@@ -152,8 +227,12 @@ const CVPreviewModal: React.FC<CVPreviewModalProps> = ({ candidate, onClose, isO
 
                   <div className="mt-auto p-4 border-t bg-muted/10 sticky bottom-0">
                      <div className="grid grid-cols-2 gap-3">
-                        <Button variant="destructive" className="w-full">Reject</Button>
-                        <Button className="w-full bg-green-600 hover:bg-green-700">Shortlist</Button>
+                        <Button variant="destructive" className="w-full" onClick={() => onReject?.(candidate)}>
+                           <XCircle className="h-4 w-4 mr-2" /> Reject
+                        </Button>
+                        <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => onShortlist?.(candidate)}>
+                           <CheckCircle className="h-4 w-4 mr-2" /> Shortlist
+                        </Button>
                      </div>
                   </div>
                </div>

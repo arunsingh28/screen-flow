@@ -78,5 +78,17 @@ export const jobsApi = {
             cv_ids: cvIds
         });
         return response.data;
+    },
+
+    getDownloadUrl: async (cvId: string) => {
+        const response = await axiosInstance.get(`/jobs/cvs/${cvId}/download-url`);
+        return response.data;
+    },
+
+    updateCVStatus: async (cvId: string, status: string) => {
+        const response = await axiosInstance.patch(`/jobs/cvs/${cvId}/status`, {
+            status
+        });
+        return response.data;
     }
 };

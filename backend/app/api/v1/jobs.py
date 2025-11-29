@@ -459,6 +459,13 @@ async def bulk_delete_cvs(
     # Note: ActivityType might need a DELETE type, but for now using generic description
     db.add(activity)
 
+    # Delete related activities first to avoid FK violation
+    # Note: We need to import Activity model inside function or at top if not circular
+    from app.models.activity import Activity
+    
+    # Delete activities referencing these CVs
+    db.query(Activity).filter(Activity.cv_id.in_(delete_request.cv_ids)).delete(synchronize_session=False)
+
     # Delete from DB
     for cv in cvs:
         db.delete(cv)
@@ -466,3 +473,85 @@ async def bulk_delete_cvs(
     db.commit()
 
     return None
+
+
+@router.get("/cvs/{cv_id}/download-url")
+async def get_cv_download_url(
+    cv_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get presigned URL for downloading CV"""
+    cv = db.query(CV).filter(
+        CV.id == cv_id,
+        CV.user_id == current_user.id
+    ).first()
+
+    if not cv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV not found"
+        )
+
+    try:
+        url = s3_service.generate_presigned_url(
+            s3_key=cv.s3_key,
+            client_method='get_object',
+            filename=cv.filename,
+            expiration=3600
+        )
+        return {"url": url}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate download URL: {str(e)}"
+        )
+
+
+class CVStatusUpdate(BaseModel):
+    status: str
+
+@router.patch("/cvs/{cv_id}/status")
+async def update_cv_status(
+    cv_id: UUID,
+    status_update: CVStatusUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update CV status (e.g. shortlisted, rejected)"""
+    cv = db.query(CV).filter(
+        CV.id == cv_id,
+        CV.user_id == current_user.id
+    ).first()
+
+    if not cv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV not found"
+        )
+
+    try:
+        cv.status = status_update.status
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        # Try to handle Enum error by altering type (hacky but useful for dev)
+        if "invalid input value for enum" in str(e):
+             try:
+                 from sqlalchemy import text
+                 # Note: This syntax might vary based on Postgres version, but usually ADD VALUE works
+                 # We need to run this outside of transaction block usually, but let's try
+                 # db.connection().connection.set_isolation_level(0) # AUTOCOMMIT
+                 db.execute(text(f"ALTER TYPE cvstatus ADD VALUE '{status_update.status}' IF NOT EXISTS"))
+                 db.commit()
+                 
+                 # Re-fetch and update
+                 cv.status = status_update.status
+                 db.commit()
+             except Exception as ex:
+                 print(f"Failed to alter enum: {ex}")
+                 raise HTTPException(status_code=500, detail=f"Failed to update status: {str(e)}")
+        else:
+             raise HTTPException(status_code=500, detail=f"Failed to update status: {str(e)}")
+
+    return {"status": "success", "cv_id": str(cv.id), "new_status": cv.status}

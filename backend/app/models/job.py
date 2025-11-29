@@ -19,6 +19,8 @@ class CVStatus(str, enum.Enum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+    SHORTLISTED = "shortlisted"
+    REJECTED = "rejected"
 
 
 class CVSource(str, enum.Enum):

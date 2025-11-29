@@ -123,6 +123,39 @@ const JobDetailsPage: React.FC = () => {
       setLocalConfig(prev => ({ ...prev, [key]: value }));
    };
 
+   const handleNextCandidate = () => {
+      if (!viewingCandidate) return;
+      const currentIndex = candidates.findIndex(c => c.id === viewingCandidate.id);
+      if (currentIndex < candidates.length - 1) {
+         setViewingCandidate(candidates[currentIndex + 1]);
+      }
+   };
+
+   const handlePreviousCandidate = () => {
+      if (!viewingCandidate) return;
+      const currentIndex = candidates.findIndex(c => c.id === viewingCandidate.id);
+      if (currentIndex > 0) {
+         setViewingCandidate(candidates[currentIndex - 1]);
+      }
+   };
+
+   const handleUpdateStatus = async (candidate: Candidate, status: string) => {
+      try {
+         await jobsApi.updateCVStatus(candidate.id, status);
+         // Update local state
+         setCandidates(prev => prev.map(c =>
+            c.id === candidate.id ? { ...c, status: status } : c
+         ));
+         // Also update viewing candidate if it's the same
+         if (viewingCandidate?.id === candidate.id) {
+            setViewingCandidate(prev => prev ? { ...prev, status: status } : null);
+         }
+      } catch (err) {
+         console.error("Failed to update status:", err);
+         alert("Failed to update status");
+      }
+   };
+
    if (loading) {
       return (
          <div className="flex items-center justify-center min-h-screen">
@@ -166,11 +199,11 @@ const JobDetailsPage: React.FC = () => {
                      {job.is_active ? 'Active' : 'Closed'}
                   </div>
                </div>
-               <p className="text-muted-foreground flex items-center gap-4 text-sm">
+               <div className="text-muted-foreground flex items-center gap-4 text-sm">
                   <span className="flex items-center gap-1"><Briefcase className="h-3 w-3" /> {job.department || 'General'}</span>
                   <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {job.total_cvs} Applicants</span>
                   <span className="flex items-center gap-1 text-green-600"><div className="h-2 w-2 rounded-full bg-green-500" /> {job.processed_cvs} Processed</span>
-               </p>
+               </div>
             </div>
             <div className="flex gap-2">
                <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing}>
@@ -358,6 +391,12 @@ const JobDetailsPage: React.FC = () => {
                candidate={viewingCandidate}
                isOpen={!!viewingCandidate}
                onClose={() => setViewingCandidate(null)}
+               onNext={handleNextCandidate}
+               onPrevious={handlePreviousCandidate}
+               hasNext={candidates.findIndex(c => c.id === viewingCandidate.id) < candidates.length - 1}
+               hasPrevious={candidates.findIndex(c => c.id === viewingCandidate.id) > 0}
+               onShortlist={(c) => handleUpdateStatus(c, 'shortlisted')}
+               onReject={(c) => handleUpdateStatus(c, 'rejected')}
             />
          )}
 
