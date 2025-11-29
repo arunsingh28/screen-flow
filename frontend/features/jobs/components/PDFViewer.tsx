@@ -4,7 +4,16 @@ import { Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Initialize worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+import 'pdfjs-dist/build/pdf.worker.mjs';
+
+// Set worker source to local file if needed, but importing the worker module directly usually registers it.
+// However, for Vite, we often need to explicitly set the workerSrc to the URL of the worker file.
+// Since we are using pdfjs-dist 5.x, the setup might differ.
+// Let's try the standard Vite approach for workers:
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+).toString();
 
 interface PDFViewerProps {
     url: string;

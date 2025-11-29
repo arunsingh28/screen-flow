@@ -19,20 +19,41 @@ const ActivityLogPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 25;
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     const fetchActivities = async () => {
       try {
         setLoading(true);
-        const data = await jobsApi.getActivities();
+        const skip = (currentPage - 1) * pageSize;
+        const data = await jobsApi.getActivities(skip, pageSize);
+
+        if (data.length < pageSize) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+
         // Map backend response to frontend Activity type
-        const mappedActivities: Activity[] = data.map((item: any) => ({
-          id: item.id,
-          type: item.activity_type.toLowerCase() === 'job_created' ? 'upload' : 'complete', // Simple mapping for now
-          description: item.description,
-          timestamp: new Date(item.created_at),
-          status: 'completed',
-        }));
+        const mappedActivities: Activity[] = data.map((item: any) => {
+          let type: any = 'complete';
+          const activityType = item.activity_type.toLowerCase();
+
+          if (activityType.includes('job')) type = 'upload';
+          else if (activityType.includes('cv')) type = 'upload';
+          else if (activityType.includes('delete')) type = 'delete';
+          else if (activityType.includes('search')) type = 'search';
+
+          return {
+            id: item.id,
+            type: type,
+            description: item.description,
+            timestamp: new Date(item.created_at),
+            status: 'completed',
+          };
+        });
         setActivities(mappedActivities);
       } catch (error) {
         console.error("Failed to fetch activities:", error);
@@ -41,7 +62,7 @@ const ActivityLogPage: React.FC = () => {
       }
     };
     fetchActivities();
-  }, []);
+  }, [currentPage]);
 
   const filteredActivities = activities.filter(activity => {
     const matchesType = filterType === 'all' || activity.type === filterType;
@@ -49,7 +70,19 @@ const ActivityLogPage: React.FC = () => {
     return matchesType && matchesSearch;
   });
 
-  if (loading) {
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasMore) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  if (loading && currentPage === 1 && activities.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -74,7 +107,7 @@ const ActivityLogPage: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>System Activity</CardTitle>
-              <CardDescription>Showing {filteredActivities.length} events</CardDescription>
+              <CardDescription>Showing page {currentPage}</CardDescription>
             </div>
             <div className="flex gap-2">
               <div className="relative w-full md:w-[300px]">
@@ -105,7 +138,11 @@ const ActivityLogPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-1">
-            {filteredActivities.length > 0 ? (
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredActivities.length > 0 ? (
               filteredActivities.map((activity) => (
                 <RecentActivityItem key={activity.id} activity={activity} />
               ))
@@ -115,6 +152,31 @@ const ActivityLogPage: React.FC = () => {
                 <p>No activities found matching your filters.</p>
               </div>
             )}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1 || loading}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={!hasMore || loading}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
