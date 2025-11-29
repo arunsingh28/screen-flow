@@ -50,6 +50,7 @@ class CVBatch(Base):
     description = Column(Text, nullable=True)  # Internal notes
     job_description_text = Column(Text, nullable=True)  # Full JD text
     is_active = Column(Boolean, default=True)
+    is_archived = Column(Boolean, default=False)
 
     # Legacy/Compatibility (can map batch_name to title)
     @property

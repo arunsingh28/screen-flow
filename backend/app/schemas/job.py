@@ -25,6 +25,7 @@ class CVBatchResponse(BaseModel):
     description: Optional[str] = None
     job_description_text: Optional[str] = None
     is_active: bool
+    is_archived: bool
     tags: List[str]
     total_cvs: int
     processed_cvs: int

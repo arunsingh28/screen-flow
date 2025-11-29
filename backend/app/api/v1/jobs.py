@@ -344,11 +344,15 @@ async def list_cv_batches(
     page: int = 1,
     page_size: int = 10,
     status: Optional[BatchStatus] = None,
+    is_archived: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """List all CV batches for the current user"""
-    query = db.query(CVBatch).filter(CVBatch.user_id == current_user.id)
+    query = db.query(CVBatch).filter(
+        CVBatch.user_id == current_user.id,
+        CVBatch.is_archived == is_archived
+    )
 
     # Filter by status if provided
     if status:
@@ -410,6 +414,86 @@ async def get_cv_batch(
                 cv.download_url = None
 
     return response
+
+
+class BatchStatusUpdate(BaseModel):
+    is_active: bool
+
+@router.patch("/batches/{batch_id}/status", response_model=CVBatchResponse)
+async def update_batch_status(
+    batch_id: UUID,
+    status_update: BatchStatusUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update batch active status (Close/Reopen job)"""
+    batch = db.query(CVBatch).filter(
+        CVBatch.id == batch_id,
+        CVBatch.user_id == current_user.id
+    ).first()
+
+    if not batch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Batch not found"
+        )
+
+    batch.is_active = status_update.is_active
+    db.commit()
+    db.refresh(batch)
+    
+    # Log Activity
+    from app.models.activity import Activity, ActivityType
+    activity = Activity(
+        user_id=current_user.id,
+        job_id=batch.id,
+        activity_type=ActivityType.JOB_CREATED, # Reusing JOB_CREATED or we could add JOB_UPDATED
+        description=f"{'Opened' if batch.is_active else 'Closed'} job: {batch.title}"
+    )
+    db.add(activity)
+    db.commit()
+
+    return CVBatchResponse.from_orm(batch)
+
+
+class BatchArchiveUpdate(BaseModel):
+    is_archived: bool
+
+@router.patch("/batches/{batch_id}/archive", response_model=CVBatchResponse)
+async def archive_batch(
+    batch_id: UUID,
+    archive_update: BatchArchiveUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Archive or unarchive a batch"""
+    batch = db.query(CVBatch).filter(
+        CVBatch.id == batch_id,
+        CVBatch.user_id == current_user.id
+    ).first()
+
+    if not batch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Batch not found"
+        )
+
+    batch.is_archived = archive_update.is_archived
+    db.commit()
+    db.refresh(batch)
+    
+    # Log Activity
+    from app.models.activity import Activity, ActivityType
+    activity = Activity(
+        user_id=current_user.id,
+        job_id=batch.id,
+        activity_type=ActivityType.JOB_CREATED, 
+        description=f"{'Archived' if batch.is_archived else 'Unarchived'} job: {batch.title}"
+    )
+    db.add(activity)
+    db.commit()
+
+    return CVBatchResponse.from_orm(batch)
 
 
 @router.get("/cvs/{cv_id}/download-url")

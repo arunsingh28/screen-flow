@@ -11,7 +11,11 @@ import {
   MapPin,
   TrendingUp,
   Settings,
-  Loader2
+  Loader2,
+  Archive,
+  Lock,
+  Unlock,
+  RefreshCw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -24,7 +28,7 @@ import { jobsApi } from '@/services/jobs.service';
 
 const JobsListPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed' | 'archived'>('all');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +36,8 @@ const JobsListPage: React.FC = () => {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const data = await jobsApi.getJobs();
+      const isArchived = statusFilter === 'archived';
+      const data = await jobsApi.getJobs(1, 100, isArchived); // Fetch more items since we filter client side for now
       // Map backend response to frontend Job type
       const mappedJobs: Job[] = data.batches.map((batch: any) => ({
         id: batch.id,
@@ -43,7 +48,8 @@ const JobsListPage: React.FC = () => {
         status: batch.is_active ? 'active' : 'closed',
         candidateCount: batch.total_cvs,
         highMatchCount: batch.processed_cvs, // Using processed count as proxy for now, or 0
-        description: batch.description
+        description: batch.description,
+        isArchived: batch.is_archived
       }));
       setJobs(mappedJobs);
     } catch (err) {
@@ -56,11 +62,42 @@ const JobsListPage: React.FC = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [statusFilter]); // Re-fetch when filter changes (especially for archived)
+
+  const handleStatusChange = async (e: React.MouseEvent, jobId: string, currentStatus: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const newIsActive = currentStatus !== 'active';
+      await jobsApi.updateJobStatus(jobId, newIsActive);
+      // Optimistic update
+      setJobs(jobs.map(job =>
+        job.id === jobId ? { ...job, status: newIsActive ? 'active' : 'closed' } : job
+      ));
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+  };
+
+  const handleArchive = async (e: React.MouseEvent, jobId: string, isArchived: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const newIsArchived = !isArchived;
+      await jobsApi.archiveJob(jobId, newIsArchived);
+      // Remove from list if we are not in the target view, or refresh
+      fetchJobs();
+    } catch (err) {
+      console.error("Failed to archive job", err);
+    }
+  };
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.department.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (statusFilter === 'archived') return matchesSearch; // Already filtered by API
+
     const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -118,9 +155,10 @@ const JobsListPage: React.FC = () => {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
           >
-            <option value="all">All Status</option>
+            <option value="all">All Active/Closed</option>
             <option value="active">Active</option>
             <option value="closed">Closed</option>
+            <option value="archived">Archived</option>
           </select>
           <Button variant="outline" size="icon">
             <Filter className="h-4 w-4" />
@@ -150,9 +188,26 @@ const JobsListPage: React.FC = () => {
                     {job.department}
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Settings className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-primary"
+                    onClick={(e) => handleStatusChange(e, job.id, job.status)}
+                    title={job.status === 'active' ? "Close Job" : "Reopen Job"}
+                  >
+                    {job.status === 'active' ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => handleArchive(e, job.id, !!(job as any).isArchived)}
+                    title={(job as any).isArchived ? "Unarchive" : "Archive"}
+                  >
+                    {(job as any).isArchived ? <RefreshCw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 py-4">

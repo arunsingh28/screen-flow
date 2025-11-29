@@ -59,9 +59,9 @@ export const jobsApi = {
         return response.data;
     },
 
-    getJobs: async (page = 1, pageSize = 20) => {
+    getJobs: async (page = 1, pageSize = 20, isArchived = false) => {
         const response = await axiosInstance.get(`/jobs/batches`, {
-            params: { page, page_size: pageSize }
+            params: { page, page_size: pageSize, is_archived: isArchived }
         });
         return response.data;
     },
@@ -107,6 +107,20 @@ export const jobsApi = {
     getAllCVs: async (page = 1, pageSize = 20) => {
         const response = await axiosInstance.get('/jobs/cvs', {
             params: { page, page_size: pageSize }
+        });
+        return response.data;
+    },
+
+    updateJobStatus: async (jobId: string, isActive: boolean) => {
+        const response = await axiosInstance.patch(`/jobs/batches/${jobId}/status`, {
+            is_active: isActive
+        });
+        return response.data;
+    },
+
+    archiveJob: async (jobId: string, isArchived: boolean) => {
+        const response = await axiosInstance.patch(`/jobs/batches/${jobId}/archive`, {
+            is_archived: isArchived
         });
         return response.data;
     }
