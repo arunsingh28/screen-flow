@@ -1,23 +1,61 @@
 
 import React, { useState } from 'react';
-import { User, Bell, Monitor, Moon, Sun, Laptop, Shield } from 'lucide-react';
+import { Bell, Monitor, Moon, Sun, Laptop, Shield, Eye, EyeOff } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { useTheme } from '../../../components/theme-provider';
 import { cn } from '../../../lib/utils';
+import { userService } from '@/services/user.service';
 
 const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
-  const [loading, setLoading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSave = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+  // Password change mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      userService.changePassword(currentPassword, newPassword),
+    onSuccess: () => {
+      toast.success('Password changed successfully');
+      // Clear form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.detail || 'Failed to change password');
+    },
+  });
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('Please fill in all password fields');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    changePasswordMutation.mutate({ currentPassword, newPassword });
   };
 
   return (
@@ -30,38 +68,8 @@ const SettingsPage: React.FC = () => {
       </div>
 
       <div className="grid gap-8">
-        {/* Profile Settings */}
-          <Card className="dark:border-gray-700">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
-              <CardTitle>Profile Information</CardTitle>
-            </div>
-            <CardDescription>Update your personal account details.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First name</Label>
-                <Input id="firstName" defaultValue="Jane" placeholder="Enter your first name" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last name</Label>
-                <Input id="lastName" defaultValue="Doe" placeholder="Enter your last name" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
-              <Input id="email" type="email" defaultValue="jane.doe@company.com" placeholder="Enter your email" />
-            </div>
-          </CardContent>
-          <CardFooter className="border-t px-6 py-4 dark:border-gray-700">
-            <Button variant="outline" onClick={handleSave} disabled={loading}>Save Profile</Button>
-          </CardFooter>
-        </Card>
-
         {/* Appearance Settings */}
-                 <Card className="dark:border-gray-700">
+        <Card className="dark:border-gray-700">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Monitor className="h-5 w-5 text-primary" />
@@ -71,7 +79,7 @@ const SettingsPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div 
+              <div
                 className={cn(
                   "cursor-pointer rounded-lg border-2 p-4 hover:bg-accent hover:text-accent-foreground transition-all flex flex-col items-center gap-2",
                   theme === 'light' ? "border-primary bg-primary/5" : "border-muted"
@@ -81,7 +89,7 @@ const SettingsPage: React.FC = () => {
                 <Sun className="h-6 w-6" />
                 <span className="font-medium">Light</span>
               </div>
-              <div 
+              <div
                 className={cn(
                   "cursor-pointer rounded-lg border-2 p-4 hover:bg-accent hover:text-accent-foreground transition-all flex flex-col items-center gap-2",
                   theme === 'dark' ? "border-primary bg-primary/5" : "border-muted"
@@ -91,7 +99,7 @@ const SettingsPage: React.FC = () => {
                 <Moon className="h-6 w-6" />
                 <span className="font-medium">Dark</span>
               </div>
-              <div 
+              <div
                 className={cn(
                   "cursor-pointer rounded-lg border-2 p-4 hover:bg-accent hover:text-accent-foreground transition-all flex flex-col items-center gap-2",
                   theme === 'system' ? "border-primary bg-primary/5" : "border-muted"
@@ -126,21 +134,88 @@ const SettingsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-         {/* Security */}
-                   <Card className="dark:border-gray-700">
+        {/* Security - Password Change */}
+        <Card className="dark:border-gray-700">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
               <CardTitle>Security</CardTitle>
             </div>
+            <CardDescription>Change your password to keep your account secure.</CardDescription>
           </CardHeader>
           <CardContent>
-             <div className="flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">Password last changed 3 months ago</div>
-                <Button variant="outline" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20">
-                    Reset Password
-                </Button>
-             </div>
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    disabled={changePasswordMutation.isPending}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password (min 8 characters)"
+                    disabled={changePasswordMutation.isPending}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    disabled={changePasswordMutation.isPending}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={changePasswordMutation.isPending}
+                className="w-full sm:w-auto"
+              >
+                {changePasswordMutation.isPending ? 'Changing Password...' : 'Change Password'}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>

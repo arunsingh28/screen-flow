@@ -30,6 +30,12 @@ class UserUpdate(BaseModel):
     job_title: Optional[str] = None
     department: Optional[str] = None
     company_name: Optional[str] = None
+    profile_image_url: Optional[str] = None
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, description="Current password")
+    new_password: str = Field(..., min_length=8, description="New password must be at least 8 characters")
 
 
 class UserLogin(BaseModel):

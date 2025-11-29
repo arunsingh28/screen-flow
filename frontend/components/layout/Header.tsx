@@ -27,6 +27,8 @@ import { CreditPurchaseModal } from '@/components/credits/CreditPurchaseModal';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/routes.constants';
 import { userService } from '@/services/user.service';
+import { jobsApi } from '@/services/jobs.service';
+import { formatDistanceToNow } from 'date-fns';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -42,6 +44,13 @@ const Header: React.FC = () => {
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: userService.getProfile,
+  });
+
+  // Fetch recent activities for notifications
+  const { data: activities = [] } = useQuery({
+    queryKey: ['recentActivities'],
+    queryFn: () => jobsApi.getActivities(0, 5),
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   const handleLogout = () => {
@@ -80,11 +89,16 @@ const Header: React.FC = () => {
     { path: ROUTES.LIBRARY, label: 'CV Library', icon: FolderOpen },
   ];
 
-  const notifications = [
-    { id: 1, title: 'Analysis Complete', desc: 'Batch "Engineering Q1" processed successfully.', time: '2m ago', unread: true },
-    { id: 2, title: 'New High Match', desc: 'Sarah Connor matches 92% for Frontend Lead.', time: '1h ago', unread: true },
-    { id: 3, title: 'System Update', desc: 'Scheduled maintenance tonight at 2 AM.', time: '5h ago', unread: false },
-  ];
+  // Convert activities to notifications format
+  const notifications = activities.map((activity: any) => ({
+    id: activity.id,
+    title: activity.activity_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+    desc: activity.description,
+    time: formatDistanceToNow(new Date(activity.created_at), { addSuffix: true }),
+    unread: false, // We don't have read/unread tracking yet
+  }));
+
+  const hasUnreadNotifications = notifications.length > 0;
 
   const closeMenus = () => {
     setShowUserMenu(false);
@@ -203,26 +217,36 @@ const Header: React.FC = () => {
                 }}
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-2 right-2 h-2 w-2 bg-red-600 rounded-full ring-2 ring-background" />
+                {hasUnreadNotifications && (
+                  <span className="absolute top-2 right-2 h-2 w-2 bg-red-600 rounded-full ring-2 ring-background" />
+                )}
               </Button>
 
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 rounded-md border dark:border-gray-700 bg-card shadow-lg animate-in fade-in zoom-in-95 duration-200">
                   <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
-                    <span className="text-sm font-semibold">Notifications</span>
-                    <span className="text-xs text-primary cursor-pointer hover:underline">Mark all read</span>
+                    <span className="text-sm font-semibold">Recent Activity</span>
+                    <Link to={ROUTES.ACTIVITY} className="text-xs text-primary cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
+                      View all
+                    </Link>
                   </div>
                   <div className="py-2 max-h-[300px] overflow-y-auto">
-                    {notifications.map((notif) => (
-                      <div key={notif.id} className="px-4 py-3 hover:bg-muted/50 cursor-pointer flex gap-3">
-                        <div className={cn("mt-1 h-2 w-2 rounded-full flex-shrink-0", notif.unread ? "bg-blue-500" : "bg-transparent")} />
-                        <div>
-                          <p className={cn("text-sm", notif.unread ? "font-medium text-foreground" : "text-muted-foreground")}>{notif.title}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-1">{notif.desc}</p>
-                          <p className="text-[10px] text-muted-foreground mt-1">{notif.time}</p>
+                    {notifications.length > 0 ? (
+                      notifications.map((notif) => (
+                        <div key={notif.id} className="px-4 py-3 hover:bg-muted/50 cursor-pointer flex gap-3">
+                          <div className={cn("mt-1 h-2 w-2 rounded-full flex-shrink-0", notif.unread ? "bg-blue-500" : "bg-gray-400")} />
+                          <div className="flex-1">
+                            <p className={cn("text-sm", notif.unread ? "font-medium text-foreground" : "text-foreground")}>{notif.title}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2">{notif.desc}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">{notif.time}</p>
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                        No recent activity
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}

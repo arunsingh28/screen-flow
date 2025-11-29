@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, status
 from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdate
+from app.schemas.user import UserResponse, UserUpdate, ChangePasswordRequest
 from app.api.deps import get_current_user, get_db
 from app.services.s3_service import s3_service
 from sqlalchemy.orm import Session
@@ -90,3 +90,34 @@ def get_avatar_upload_url(
         # we might need to know how to access it. 
         # For now, let's assume the frontend will use the s3_key to update the profile.
     }
+
+
+@router.post("/me/change-password")
+def change_password(
+    password_data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change user password."""
+    from app.core.security import verify_password, get_password_hash
+    
+    # Verify current password
+    if not verify_password(password_data.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    # Validate new password is different from current
+    if verify_password(password_data.new_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password"
+        )
+    
+    # Update password
+    current_user.password_hash = get_password_hash(password_data.new_password)
+    db.add(current_user)
+    db.commit()
+    
+    return {"message": "Password changed successfully"}
