@@ -88,9 +88,6 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
           <Button variant="ghost" size="icon" onClick={() => onView(candidate)} title="View Analysis & CV">
             <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
           </Button>
-          <Button variant="ghost" size="icon" title="Reject">
-            <XCircle className="h-4 w-4 text-muted-foreground hover:text-red-500" />
-          </Button>
           <Button variant="ghost" size="icon" title="Delete" onClick={() => onDelete(candidate.id)}>
             <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
           </Button>

@@ -15,9 +15,20 @@ import {
    RefreshCw,
    Upload
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Candidate, MatchingConfig } from '@/types';
 import CandidateRow from '../components/CandidateRow';
 import CVPreviewModal from '../components/CVPreviewModal';
@@ -43,6 +54,11 @@ const JobDetailsPage: React.FC = () => {
    const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null);
 
    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+   // Delete Confirmation State
+   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+   const [candidateToDelete, setCandidateToDelete] = useState<string | null>(null);
+   const [isBulkDelete, setIsBulkDelete] = useState(false);
 
    // Local config state (mock for now as backend doesn't support config yet)
    const [localConfig, setLocalConfig] = useState<MatchingConfig>({
@@ -150,9 +166,31 @@ const JobDetailsPage: React.FC = () => {
          if (viewingCandidate?.id === candidate.id) {
             setViewingCandidate(prev => prev ? { ...prev, status: status } : null);
          }
+         toast.success(`Candidate status updated to ${status}`);
       } catch (err) {
          console.error("Failed to update status:", err);
-         alert("Failed to update status");
+         toast.error("Failed to update status");
+      }
+   };
+
+   const handleConfirmDelete = async () => {
+      try {
+         if (isBulkDelete) {
+            await jobsApi.deleteCVs(Array.from(selectedCandidates));
+            setSelectedCandidates(new Set());
+            toast.success("Candidates deleted successfully");
+         } else if (candidateToDelete) {
+            await jobsApi.deleteCVs([candidateToDelete]);
+            toast.success("Candidate deleted successfully");
+         }
+         fetchJobDetails();
+      } catch (err) {
+         console.error("Failed to delete candidates:", err);
+         toast.error("Failed to delete candidates");
+      } finally {
+         setIsDeleteDialogOpen(false);
+         setCandidateToDelete(null);
+         setIsBulkDelete(false);
       }
    };
 
@@ -278,17 +316,9 @@ const JobDetailsPage: React.FC = () => {
                               variant="destructive"
                               size="sm"
                               className="gap-2"
-                              onClick={async () => {
-                                 if (confirm(`Are you sure you want to delete ${selectedCandidates.size} candidates?`)) {
-                                    try {
-                                       await jobsApi.deleteCVs(Array.from(selectedCandidates));
-                                       setSelectedCandidates(new Set());
-                                       fetchJobDetails();
-                                    } catch (err) {
-                                       console.error("Failed to delete candidates:", err);
-                                       alert("Failed to delete candidates");
-                                    }
-                                 }
+                              onClick={() => {
+                                 setIsBulkDelete(true);
+                                 setIsDeleteDialogOpen(true);
                               }}
                            >
                               <Users className="h-4 w-4" /> Delete Selected
@@ -334,14 +364,9 @@ const JobDetailsPage: React.FC = () => {
                                        onSelect={() => handleSelectOne(candidate.id)}
                                        onView={setViewingCandidate}
                                        onDelete={(id) => {
-                                          if (confirm("Are you sure you want to delete this candidate?")) {
-                                             jobsApi.deleteCVs([id]).then(() => {
-                                                fetchJobDetails();
-                                             }).catch(err => {
-                                                console.error("Failed to delete candidate:", err);
-                                                alert("Failed to delete candidate");
-                                             });
-                                          }
+                                          setCandidateToDelete(id);
+                                          setIsBulkDelete(false);
+                                          setIsDeleteDialogOpen(true);
                                        }}
                                     />
                                  ))
@@ -412,6 +437,25 @@ const JobDetailsPage: React.FC = () => {
                }}
             />
          )}
+
+         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+               <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                     {isBulkDelete
+                        ? `This action cannot be undone. This will permanently delete ${selectedCandidates.size} selected candidates.`
+                        : "This action cannot be undone. This will permanently delete this candidate."}
+                  </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+                     Delete
+                  </AlertDialogAction>
+               </AlertDialogFooter>
+            </AlertDialogContent>
+         </AlertDialog>
 
       </div>
    );

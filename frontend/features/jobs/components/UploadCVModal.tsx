@@ -8,7 +8,8 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, X, File, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, X, File, Loader2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { jobsApi } from '@/services/jobs.service';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -101,6 +102,7 @@ const UploadCVModal: React.FC<UploadCVModalProps> = ({ isOpen, onClose, jobId, o
             onUploadComplete();
             onClose();
             setFiles([]);
+            toast.success("CVs uploaded successfully");
         } else {
             setError(`Uploaded ${successCount} files, but ${failedCount} failed. Please try again.`);
             // Keep failed files or clear all? For now, clear all to simplify, user can re-add.
