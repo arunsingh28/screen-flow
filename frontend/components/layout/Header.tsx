@@ -17,6 +17,7 @@ import {
   User,
   Coins
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
 import { useLogout } from '@/hooks/useAuth';
@@ -25,6 +26,7 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { CreditPurchaseModal } from '@/components/credits/CreditPurchaseModal';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/routes.constants';
+import { userService } from '@/services/user.service';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -36,10 +38,38 @@ const Header: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
 
+  // Fetch user profile
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: userService.getProfile,
+  });
+
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
     setIsMobileMenuOpen(false);
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name[0]}${userProfile.last_name[0]}`.toUpperCase();
+    }
+    if (userProfile?.email) {
+      return userProfile.email.substring(0, 2).toUpperCase();
+    }
+    return 'U';
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name} ${userProfile.last_name}`;
+    }
+    if (userProfile?.first_name) {
+      return userProfile.first_name;
+    }
+    return userProfile?.email?.split('@')[0] || 'User';
   };
 
 
@@ -200,21 +230,33 @@ const Header: React.FC = () => {
 
             {/* User Avatar & Dropdown */}
             <div className="relative z-50 hidden sm:block">
-              <div
-                className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center font-medium shadow-sm cursor-pointer hover:opacity-90 transition-opacity ring-2 ring-background"
-                onClick={() => {
-                  setShowUserMenu(!showUserMenu);
-                  setShowNotifications(false);
-                }}
-              >
-                AS
-              </div>
+              {userProfile?.profile_image_url ? (
+                <img
+                  src={userProfile.profile_image_url}
+                  alt="Profile"
+                  className="h-8 w-8 rounded-full object-cover shadow-sm cursor-pointer hover:opacity-90 transition-opacity ring-2 ring-background"
+                  onClick={() => {
+                    setShowUserMenu(!showUserMenu);
+                    setShowNotifications(false);
+                  }}
+                />
+              ) : (
+                <div
+                  className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center font-medium shadow-sm cursor-pointer hover:opacity-90 transition-opacity ring-2 ring-background text-xs"
+                  onClick={() => {
+                    setShowUserMenu(!showUserMenu);
+                    setShowNotifications(false);
+                  }}
+                >
+                  {getUserInitials()}
+                </div>
+              )}
 
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-56 rounded-md border dark:border-gray-800 bg-card shadow-lg animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-4 py-3 border-b dark:border-gray-700">
-                    <p className="text-sm font-medium">Arun Pratap Singh</p>
-                    <p className="text-xs text-muted-foreground">arun.pratap@gmail.com</p>
+                    <p className="text-sm font-medium">{getDisplayName()}</p>
+                    <p className="text-xs text-muted-foreground truncate">{userProfile?.email || 'No email'}</p>
                   </div>
                   <div className="p-1">
                     <Link
@@ -310,10 +352,18 @@ const Header: React.FC = () => {
               </NavLink>
               <div className="border-t my-2 pt-2">
                 <div className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-muted-foreground">
-                  <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center text-xs">
-                    APS
-                  </div>
-                  <span>Arun Ptatap Singh</span>
+                  {userProfile?.profile_image_url ? (
+                    <img
+                      src={userProfile.profile_image_url}
+                      alt="Profile"
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center text-xs">
+                      {getUserInitials()}
+                    </div>
+                  )}
+                  <span className="truncate">{getDisplayName()}</span>
                 </div>
                 <button
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md transition-colors"
