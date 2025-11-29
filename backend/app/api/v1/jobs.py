@@ -19,8 +19,11 @@ from app.schemas.job import (
     CVUploadResponse,
     CVUploadConfirmation,
     CVUploadConfirmation,
+    CVUploadConfirmation,
     CVBulkDeleteRequest,
     DashboardStatsResponse,
+    StatsHistoryResponse,
+    DailyStats,
 )
 from app.models.activity import Activity
 from app.models.job import JobSearch, SearchResult
@@ -268,6 +271,72 @@ async def get_dashboard_stats(
         success_rate=success_rate,
         processing=processing
     )
+
+
+@router.get("/stats/history", response_model=StatsHistoryResponse)
+async def get_stats_history(
+    days: int = 30,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get historical activity stats for charts"""
+    from sqlalchemy import func, cast, Date
+    from datetime import timedelta, date
+    
+    # Calculate date range
+    end_date = date.today()
+    start_date = end_date - timedelta(days=days)
+    
+    # Query Activity table
+    # Group by date and activity_type
+    # We are looking for JOB_CREATED (searches/jobs) and CV_UPLOADED (uploads)
+    
+    # Note: ActivityType.JOB_CREATED is used for "Job Batches" which we treat as searches/jobs here
+    # ActivityType.CV_UPLOADED is for CVs
+    
+    results = db.query(
+        cast(Activity.created_at, Date).label('date'),
+        Activity.activity_type,
+        func.count(Activity.id).label('count')
+    ).filter(
+        Activity.user_id == current_user.id,
+        Activity.created_at >= start_date
+    ).group_by(
+        cast(Activity.created_at, Date),
+        Activity.activity_type
+    ).all()
+    
+    # Process results into a dictionary keyed by date
+    stats_by_date = {}
+    
+    # Initialize all dates with 0
+    current_date = start_date
+    while current_date <= end_date:
+        date_str = current_date.isoformat()
+        stats_by_date[date_str] = {"uploads": 0, "searches": 0}
+        current_date += timedelta(days=1)
+        
+    # Fill with data
+    from app.models.activity import ActivityType
+    
+    for r in results:
+        date_str = r.date.isoformat()
+        if date_str in stats_by_date:
+            if r.activity_type == ActivityType.CV_UPLOADED:
+                stats_by_date[date_str]["uploads"] += r.count
+            elif r.activity_type == ActivityType.JOB_CREATED:
+                stats_by_date[date_str]["searches"] += r.count
+                
+    # Convert to list
+    history = [
+        DailyStats(date=d, uploads=s["uploads"], searches=s["searches"])
+        for d, s in stats_by_date.items()
+    ]
+    
+    # Sort by date
+    history.sort(key=lambda x: x.date)
+    
+    return StatsHistoryResponse(history=history)
 
 
 @router.get("/batches", response_model=CVBatchListResponse)
@@ -554,6 +623,37 @@ async def get_cv_download_url(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate download URL: {str(e)}"
         )
+
+
+from app.schemas.job import CVListResponse
+
+@router.get("/cvs", response_model=CVListResponse)
+async def list_all_cvs(
+    page: int = 1,
+    page_size: int = 20,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List all CVs for the current user across all batches with pagination"""
+    query = db.query(CV).filter(CV.user_id == current_user.id)
+    
+    # Get total count
+    total = query.count()
+    
+    # Paginate
+    cvs = query.order_by(CV.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    
+    # Populate job_title from the associated batch
+    for cv in cvs:
+        if cv.batch:
+            cv.job_title = cv.batch.title
+            
+    return CVListResponse(
+        items=cvs,
+        total=total,
+        page=page,
+        page_size=page_size
+    )
 
 
 class CVStatusUpdate(BaseModel):

@@ -15,15 +15,18 @@ export const useDashboardData = () => {
     processing: 0,
   });
 
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Fetch stats and activities in parallel
-        const [statsData, activitiesData] = await Promise.all([
+        // Fetch stats, activities, and history in parallel
+        const [statsData, activitiesData, historyData] = await Promise.all([
           jobsApi.getDashboardStats(),
-          jobsApi.getActivities(0, 5)
+          jobsApi.getActivities(0, 5),
+          jobsApi.getStatsHistory(30)
         ]);
 
         // Map stats (backend snake_case to frontend camelCase)
@@ -46,6 +49,15 @@ export const useDashboardData = () => {
         }));
 
         setRecentActivities(mappedActivities);
+
+        // Map history to chart data
+        const mappedChartData: ChartDataPoint[] = historyData.history.map((item: any) => ({
+          date: format(new Date(item.date), 'MMM dd'),
+          uploads: item.uploads,
+          searches: item.searches,
+        }));
+        setChartData(mappedChartData);
+
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -55,17 +67,6 @@ export const useDashboardData = () => {
 
     fetchData();
   }, []);
-
-  const chartData: ChartDataPoint[] = useMemo(() =>
-    Array.from({ length: 30 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (29 - i));
-      return {
-        date: format(date, 'MMM dd'),
-        uploads: Math.floor(Math.random() * 50) + 10, // Random 10-60
-        searches: Math.floor(Math.random() * 20) + 5, // Random 5-25
-      };
-    }), []);
 
   return {
     loading,

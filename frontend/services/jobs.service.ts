@@ -95,5 +95,19 @@ export const jobsApi = {
     getDashboardStats: async () => {
         const response = await axiosInstance.get('/jobs/stats');
         return response.data;
+    },
+
+    getStatsHistory: async (days = 30) => {
+        const response = await axiosInstance.get('/jobs/stats/history', {
+            params: { days }
+        });
+        return response.data;
+    },
+
+    getAllCVs: async (page = 1, pageSize = 20) => {
+        const response = await axiosInstance.get('/jobs/cvs', {
+            params: { page, page_size: pageSize }
+        });
+        return response.data;
     }
 };

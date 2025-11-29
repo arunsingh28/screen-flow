@@ -74,6 +74,8 @@ class CVResponse(BaseModel):
     created_at: datetime
     processed_at: Optional[datetime] = None
     download_url: Optional[str] = None  # Presigned URL (not stored in DB)
+    job_id: Optional[UUID4] = Field(None, alias="batch_id") # Alias batch_id to job_id for frontend clarity
+    job_title: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -166,6 +168,14 @@ class CVBatchListResponse(BaseModel):
     page_size: int
 
 
+class CVListResponse(BaseModel):
+    """Schema for paginated CV list"""
+    items: List[CVResponse]
+    total: int
+    page: int
+    page_size: int
+
+
 class JobSearchListResponse(BaseModel):
     """Schema for paginated job search list"""
     searches: List[JobSearchResponse]
@@ -186,4 +196,17 @@ class DashboardStatsResponse(BaseModel):
     high_matches: int
     success_rate: float
     processing: int
+
+
+class DailyStats(BaseModel):
+    """Schema for daily activity stats"""
+    date: str
+    uploads: int
+    searches: int
+
+
+class StatsHistoryResponse(BaseModel):
+    """Schema for historical stats response"""
+    history: List[DailyStats]
+
 
