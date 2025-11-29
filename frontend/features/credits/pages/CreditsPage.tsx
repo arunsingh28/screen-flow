@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import axiosInstance from '@/lib/axios';
+import React, { useState, useEffect } from 'react';
 import {
   Coins,
   TrendingUp,
@@ -21,57 +22,41 @@ interface Transaction {
   type: 'purchase' | 'usage';
   amount: number;
   description: string;
-  date: Date;
-  balance: number;
+  created_at: string; // API returns string
+  balance_after: number;
+}
+
+interface UsageSummary {
+  today: number;
+  last_7_days: number;
+  this_month: number;
 }
 
 const CreditsPage: React.FC = () => {
-  const { credits, maxCredits } = useCredits();
+  const { credits, maxCredits, loading: creditsLoading } = useCredits();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [usageSummary, setUsageSummary] = useState<UsageSummary>({ today: 0, last_7_days: 0, this_month: 0 });
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
-  // Dummy transaction history
-  const transactions: Transaction[] = [
-    {
-      id: '1',
-      type: 'purchase',
-      amount: 50,
-      description: 'Professional Package (+5 bonus)',
-      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      balance: 100
-    },
-    {
-      id: '2',
-      type: 'usage',
-      amount: -1,
-      description: 'CV Scan - Sarah Connor',
-      date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-      balance: 99
-    },
-    {
-      id: '3',
-      type: 'usage',
-      amount: -1,
-      description: 'CV Scan - John Smith',
-      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      balance: 98
-    },
-    {
-      id: '4',
-      type: 'usage',
-      amount: -1,
-      description: 'CV Scan - Emily Chen',
-      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      balance: 97
-    },
-    {
-      id: '5',
-      type: 'purchase',
-      amount: 25,
-      description: 'Starter Package',
-      date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-      balance: 50
-    },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [historyRes, usageRes] = await Promise.all([
+          axiosInstance.get('/credits/history'),
+          axiosInstance.get('/credits/usage')
+        ]);
+        setTransactions(historyRes.data);
+        setUsageSummary(usageRes.data);
+      } catch (error) {
+        console.error('Failed to fetch credit data:', error);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    fetchData();
+  }, [credits]); // Refresh when credits change
 
   const percentage = (credits / maxCredits) * 100;
 
@@ -159,15 +144,15 @@ const CreditsPage: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">This Month</span>
-                <span className="text-2xl font-bold">23</span>
+                <span className="text-2xl font-bold">{usageSummary.this_month}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Last 7 Days</span>
-                <span className="text-xl font-semibold">8</span>
+                <span className="text-xl font-semibold">{usageSummary.last_7_days}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Today</span>
-                <span className="text-xl font-semibold">3</span>
+                <span className="text-xl font-semibold">{usageSummary.today}</span>
               </div>
             </CardContent>
           </Card>
@@ -213,51 +198,61 @@ const CreditsPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {transactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "h-10 w-10 rounded-full flex items-center justify-center",
-                    transaction.type === 'purchase'
-                      ? "bg-green-100 text-green-600 dark:bg-green-900/30"
-                      : "bg-blue-100 text-blue-600 dark:bg-blue-900/30"
-                  )}>
-                    {transaction.type === 'purchase' ? (
-                      <CreditCard className="h-5 w-5" />
-                    ) : (
-                      <TrendingUp className="h-5 w-5" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium">{transaction.description}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                      <Calendar className="h-3 w-3" />
-                      {transaction.date.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+            {loadingHistory ? (
+              <div className="flex justify-center p-8">
+                <CircularProgress size={40} />
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="text-center p-8 text-muted-foreground">
+                No transactions found
+              </div>
+            ) : (
+              transactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "h-10 w-10 rounded-full flex items-center justify-center",
+                      transaction.type === 'purchase'
+                        ? "bg-green-100 text-green-600 dark:bg-green-900/30"
+                        : "bg-blue-100 text-blue-600 dark:bg-blue-900/30"
+                    )}>
+                      {transaction.type === 'purchase' ? (
+                        <CreditCard className="h-5 w-5" />
+                      ) : (
+                        <TrendingUp className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{transaction.description}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(transaction.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <p className={cn(
+                      "text-lg font-bold",
+                      transaction.type === 'purchase' ? "text-green-600" : "text-blue-600"
+                    )}>
+                      {transaction.amount > 0 ? '+' : ''}{transaction.amount}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Balance: {transaction.balance_after}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className={cn(
-                    "text-lg font-bold",
-                    transaction.type === 'purchase' ? "text-green-600" : "text-blue-600"
-                  )}>
-                    {transaction.amount > 0 ? '+' : ''}{transaction.amount}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Balance: {transaction.balance}
-                  </p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

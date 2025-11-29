@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   User,
@@ -12,8 +12,12 @@ import {
   Camera,
   Shield,
   Bell,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -21,47 +25,107 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ROUTES } from '@/config/routes.constants';
 import { cn } from '@/lib/utils';
-
-interface UserProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  location: string;
-  role: string;
-  department: string;
-  joinDate: string;
-  bio: string;
-  avatar?: string;
-}
+import { userService, UpdateProfileData } from '@/services/user.service';
 
 const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'preferences'>('profile');
+  const [editedProfile, setEditedProfile] = useState<UpdateProfileData>({});
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
-  const [profile, setProfile] = useState<UserProfile>({
-    firstName: 'Jane',
-    lastName: 'Doe',
-    email: 'jane.doe@screenflow.ai',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    role: 'HR Manager',
-    department: 'Human Resources',
-    joinDate: '2023-01-15',
-    bio: 'Passionate about finding the right talent and building great teams. 5+ years of experience in recruitment and talent acquisition.',
+  // Fetch profile
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: userService.getProfile,
   });
 
-  const [editedProfile, setEditedProfile] = useState<UserProfile>(profile);
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: UpdateProfileData) => userService.updateProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      toast.success('Profile updated successfully');
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.detail || 'Failed to update profile');
+    },
+  });
 
   const handleSave = () => {
-    setProfile(editedProfile);
-    setIsEditing(false);
+    updateProfileMutation.mutate(editedProfile);
   };
 
   const handleCancel = () => {
-    setEditedProfile(profile);
+    setEditedProfile({});
     setIsEditing(false);
   };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      // Step 1: Get presigned URL
+      const { upload_url, s3_key } = await userService.getAvatarUploadUrl(
+        file.name,
+        file.type
+      );
+
+      // Step 2: Upload to S3
+      await axios.put(upload_url, file, {
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      // Step 3: Update profile with S3 key
+      await userService.updateProfile({ profile_image_url: s3_key });
+
+      // Invalidate queries to refresh profile
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      toast.success('Profile image updated successfully');
+    } catch (error: any) {
+      console.error('Image upload error:', error);
+      toast.error(error?.response?.data?.detail || 'Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const getDisplayValue = (field: keyof UpdateProfileData, defaultValue: string = '') => {
+    if (isEditing) {
+      return editedProfile[field] !== undefined ? editedProfile[field] : (profile?.[field] || defaultValue);
+    }
+    return profile?.[field] || defaultValue;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
 
   return (
@@ -80,11 +144,34 @@ const ProfilePage: React.FC = () => {
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Avatar */}
             <div className="relative group">
-              <div className="h-32 w-32 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center font-bold text-4xl shadow-lg">
-                {profile.firstName[0]}{profile.lastName[0]}
-              </div>
-              <button className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors">
-                <Camera className="h-5 w-5 dark:text-gray-50" />
+              {profile?.profile_image_url ? (
+                <img
+                  src={profile.profile_image_url}
+                  alt="Profile"
+                  className="h-32 w-32 rounded-full object-cover shadow-lg"
+                />
+              ) : (
+                <div className="h-32 w-32 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center font-bold text-4xl shadow-lg">
+                  {profile?.first_name?.[0] || profile?.email?.[0]?.toUpperCase() || 'U'}{profile?.last_name?.[0] || ''}
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingImage}
+                className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {isUploadingImage ? (
+                  <Loader2 className="h-5 w-5 animate-spin dark:text-gray-50" />
+                ) : (
+                  <Camera className="h-5 w-5 dark:text-gray-50" />
+                )}
               </button>
             </div>
 
@@ -92,30 +179,36 @@ const ProfilePage: React.FC = () => {
             <div className="flex-1 space-y-1">
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold">
-                  {profile.firstName} {profile.lastName}
+                  {profile?.first_name || profile?.last_name ? `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() : 'No name set'}
                 </h2>
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                  {profile.role}
-                </span>
+                {profile?.job_title && (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                    {profile.job_title}
+                  </span>
+                )}
               </div>
-              <p className="text-muted-foreground">{profile.department}</p>
+              {profile?.department && <p className="text-muted-foreground">{profile.department}</p>}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <span>{profile.email}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{profile.phone}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{profile.location}</span>
-                </div>
+                {profile?.phone_number && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span>{profile.phone_number}</span>
+                  </div>
+                )}
+                {profile?.location && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{profile.location}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>Joined {new Date(profile.joinDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                  <span>Joined {new Date(profile?.created_at || new Date()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                 </div>
               </div>
             </div>
@@ -145,8 +238,8 @@ const ProfilePage: React.FC = () => {
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
                     id="firstName"
-                    value={isEditing ? editedProfile.firstName : profile.firstName}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, firstName: e.target.value })}
+                    value={getDisplayValue('first_name')}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, first_name: e.target.value })}
                     disabled={!isEditing}
                   />
                 </div>
@@ -154,8 +247,8 @@ const ProfilePage: React.FC = () => {
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
                     id="lastName"
-                    value={isEditing ? editedProfile.lastName : profile.lastName}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, lastName: e.target.value })}
+                    value={getDisplayValue('last_name')}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, last_name: e.target.value })}
                     disabled={!isEditing}
                   />
                 </div>
@@ -167,17 +260,18 @@ const ProfilePage: React.FC = () => {
                   <Input
                     id="email"
                     type="email"
-                    value={isEditing ? editedProfile.email : profile.email}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
-                    disabled={!isEditing}
+                    value={profile?.email || ''}
+                    disabled
+                    className="bg-muted"
                   />
+                  <p className="text-xs text-muted-foreground">Email cannot be changed</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone</Label>
                   <Input
                     id="phone"
-                    value={isEditing ? editedProfile.phone : profile.phone}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
+                    value={getDisplayValue('phone_number')}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, phone_number: e.target.value })}
                     disabled={!isEditing}
                   />
                 </div>
@@ -187,7 +281,7 @@ const ProfilePage: React.FC = () => {
                 <Label htmlFor="location">Location</Label>
                 <Input
                   id="location"
-                  value={isEditing ? editedProfile.location : profile.location}
+                  value={getDisplayValue('location')}
                   onChange={(e) => setEditedProfile({ ...editedProfile, location: e.target.value })}
                   disabled={!isEditing}
                 />
@@ -197,7 +291,7 @@ const ProfilePage: React.FC = () => {
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
                   id="bio"
-                  value={isEditing ? editedProfile.bio : profile.bio}
+                  value={getDisplayValue('bio')}
                   onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                   disabled={!isEditing}
                   rows={4}
@@ -228,22 +322,21 @@ const ProfilePage: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="jobTitle">Job Title</Label>
                   <Input
-                    id="role"
-                    value={profile.role}
-                    disabled
-                    className="bg-muted"
+                    id="jobTitle"
+                    value={getDisplayValue('job_title')}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, job_title: e.target.value })}
+                    disabled={!isEditing}
                   />
-                  <p className="text-xs text-muted-foreground">Contact admin to change your role</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="department">Department</Label>
                   <Input
                     id="department"
-                    value={profile.department}
-                    disabled
-                    className="bg-muted"
+                    value={getDisplayValue('department')}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, department: e.target.value })}
+                    disabled={!isEditing}
                   />
                 </div>
               </div>

@@ -7,10 +7,29 @@ from uuid import UUID
 class UserBase(BaseModel):
     email: EmailStr
     company_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    job_title: Optional[str] = None
+    department: Optional[str] = None
+    profile_image_url: Optional[str] = None
 
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
+
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    job_title: Optional[str] = None
+    department: Optional[str] = None
+    company_name: Optional[str] = None
 
 
 class UserLogin(BaseModel):

@@ -22,9 +22,11 @@ import { parseFile } from '@/lib/fileParser';
 import { jobsApi } from '@/services/jobs.service';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ROUTES } from '@/config/routes.constants';
+import { useCredits } from '@/contexts/CreditContext';
 
 const CreateJobPage: React.FC = () => {
   const navigate = useNavigate();
+  const { refreshCredits } = useCredits();
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [jdFile, setJdFile] = useState<File | null>(null);
@@ -118,6 +120,9 @@ const CreateJobPage: React.FC = () => {
       const job = await jobsApi.createJob(jobData);
       const jobId = job.id;
 
+      // Refresh credits after job creation (1 credit)
+      await refreshCredits();
+
       // 2. Upload Files
       let successCount = 0;
       let failedCount = 0;
@@ -139,6 +144,9 @@ const CreateJobPage: React.FC = () => {
           // Confirm Upload
           await jobsApi.confirmUpload(jobId, cv_id);
 
+          // Refresh credits after each successful upload (2 credits)
+          await refreshCredits();
+
           successCount++;
         } catch (err) {
           console.error(`Failed to upload ${file.name}:`, err);
@@ -146,6 +154,9 @@ const CreateJobPage: React.FC = () => {
         }
         setUploadProgress(prev => ({ ...prev, current: prev.current + 1, failed: failedCount }));
       }
+
+      // Final refresh to ensure everything is synced
+      await refreshCredits();
 
       // 3. Navigate
       if (failedCount > 0) {

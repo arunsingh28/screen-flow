@@ -54,23 +54,27 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     }
   ];
 
-  const handlePurchase = (pkg: CreditPackage) => {
+  const handlePurchase = async (pkg: CreditPackage) => {
     // Simulate purchase
     const totalCredits = pkg.credits + (pkg.bonus || 0);
-    addCredits(totalCredits);
-    setSelectedPackage(pkg.id);
+    try {
+      await addCredits(totalCredits, `Purchase: ${pkg.id} package`);
+      setSelectedPackage(pkg.id);
 
-    // Show success and close after delay
-    setTimeout(() => {
-      onClose();
-      setSelectedPackage(null);
-    }, 1500);
+      // Show success and close after delay
+      setTimeout(() => {
+        onClose();
+        setSelectedPackage(null);
+      }, 1500);
+    } catch (error) {
+      console.error("Purchase failed", error);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"

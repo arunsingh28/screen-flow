@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import axiosInstance from '@/lib/axios';
 
 interface CreditContextType {
   credits: number;
   maxCredits: number;
-  consumeCredit: (amount?: number) => boolean;
-  addCredits: (amount: number) => void;
-  resetCredits: () => void;
+  consumeCredit: (amount?: number) => Promise<boolean>;
+  addCredits: (amount: number, description: string) => Promise<void>;
+  refreshCredits: () => Promise<void>;
+  loading: boolean;
 }
 
 const CreditContext = createContext<CreditContextType | undefined>(undefined);
@@ -20,39 +22,52 @@ export const useCredits = () => {
 
 interface CreditProviderProps {
   children: ReactNode;
-  initialCredits?: number;
 }
 
 export const CreditProvider: React.FC<CreditProviderProps> = ({
-  children,
-  initialCredits = 100
+  children
 }) => {
-  const maxCredits = 100;
-  const [credits, setCredits] = useState<number>(() => {
-    // Try to load from localStorage
-    const saved = localStorage.getItem('userCredits');
-    return saved ? parseInt(saved, 10) : initialCredits;
-  });
+  const [credits, setCredits] = useState<number>(0);
+  const [maxCredits, setMaxCredits] = useState<number>(100);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const consumeCredit = (amount: number = 1): boolean => {
+  const fetchCredits = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get('/credits');
+      setCredits(response.data.credits);
+      setMaxCredits(response.data.max_credits);
+    } catch (error) {
+      console.error('Failed to fetch credits:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCredits();
+  }, [fetchCredits]);
+
+  const consumeCredit = async (amount: number = 1): Promise<boolean> => {
+    // In a real app, this would be a server-side check during the operation.
+    // Here we just check locally or call an API if we had a specific "consume" endpoint.
+    // For now, we'll assume the operation that consumes credits will handle the deduction on the backend,
+    // and we just refresh the credits afterwards.
     if (credits >= amount) {
-      const newCredits = credits - amount;
-      setCredits(newCredits);
-      localStorage.setItem('userCredits', newCredits.toString());
+      // Optimistic update
+      setCredits(prev => prev - amount);
       return true;
     }
     return false;
   };
 
-  const addCredits = (amount: number) => {
-    const newCredits = Math.min(credits + amount, maxCredits);
-    setCredits(newCredits);
-    localStorage.setItem('userCredits', newCredits.toString());
-  };
-
-  const resetCredits = () => {
-    setCredits(initialCredits);
-    localStorage.setItem('userCredits', initialCredits.toString());
+  const addCredits = async (amount: number, description: string) => {
+    try {
+      await axiosInstance.post('/credits/purchase', { amount, description });
+      await fetchCredits();
+    } catch (error) {
+      console.error('Failed to purchase credits:', error);
+      throw error;
+    }
   };
 
   return (
@@ -62,7 +77,8 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({
         maxCredits,
         consumeCredit,
         addCredits,
-        resetCredits
+        refreshCredits: fetchCredits,
+        loading
       }}
     >
       {children}

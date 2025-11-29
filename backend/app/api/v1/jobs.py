@@ -27,6 +27,7 @@ from app.schemas.job import (
 )
 from app.models.activity import Activity
 from app.models.job import JobSearch, SearchResult
+from app.models.credit_transaction import CreditTransaction, TransactionType
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
@@ -52,6 +53,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx"}
 
 
+
 def validate_file(file: UploadFile) -> None:
     """Validate uploaded file"""
     file_ext = Path(file.filename).suffix.lower()
@@ -61,6 +63,32 @@ def validate_file(file: UploadFile) -> None:
             detail=f"File type {file_ext} not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
 
+def deduct_credits(user: User, amount: int, description: str, db: Session):
+    """Deduct credits from user and record transaction"""
+    if user.credits < amount:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=f"Insufficient credits. Required: {amount}, Available: {user.credits}"
+        )
+    
+    new_balance = user.credits - amount
+    
+    # Create transaction
+    transaction = CreditTransaction(
+        user_id=user.id,
+        type=TransactionType.USAGE,
+        amount=-amount, # Negative for usage
+        description=description,
+        balance_after=new_balance
+    )
+    
+    # Update user balance
+    user.credits = new_balance
+    
+    db.add(transaction)
+    db.add(user)
+    # Note: We don't commit here, we let the caller commit to ensure atomicity with the main action
+
 
 @router.post("/batches", response_model=CVBatchResponse, status_code=status.HTTP_201_CREATED)
 async def create_cv_batch(
@@ -69,6 +97,9 @@ async def create_cv_batch(
     db: Session = Depends(get_db)
 ):
     """Create a new Job (CV batch)"""
+    # Deduct 1 credit for job creation
+    deduct_credits(current_user, 1, f"Job Creation: {batch_data.title}", db)
+
     new_batch = CVBatch(
         user_id=current_user.id,
         title=batch_data.title,
@@ -185,6 +216,9 @@ async def confirm_cv_upload(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV record not found"
         )
+
+    # Deduct 2 credits for CV upload
+    deduct_credits(current_user, 2, f"CV Upload: {cv.filename}", db)
 
     # Update status (e.g. trigger processing queue here if using async worker)
     # For now, we just confirm it's queued for processing
