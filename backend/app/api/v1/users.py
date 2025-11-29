@@ -17,7 +17,25 @@ class AvatarUploadRequest(BaseModel):
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information."""
-    return UserResponse.from_orm(current_user)
+    user_data = UserResponse.from_orm(current_user)
+    
+    # If user has a profile image (S3 key), generate a presigned URL for viewing
+    if current_user.profile_image_url:
+        try:
+            # Generate presigned GET URL valid for 1 hour
+            presigned_url = s3_service.generate_presigned_url(
+                s3_key=current_user.profile_image_url,
+                client_method='get_object',
+                expiration=3600  # 1 hour
+            )
+            # Replace the S3 key with the presigned URL
+            user_data.profile_image_url = presigned_url
+        except Exception as e:
+            # If there's an error generating the URL, just return None
+            print(f"Error generating presigned URL: {e}")
+            user_data.profile_image_url = None
+    
+    return user_data
 
 
 @router.put("/me", response_model=UserResponse)
