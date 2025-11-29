@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Activity } from '@/types';
 import RecentActivityItem from '../../dashboard/components/RecentActivityItem';
 import { jobsApi } from '@/services/jobs.service';
+import { exportToCSV } from '@/lib/export';
 
 const ActivityLogPage: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('all');
@@ -38,11 +39,15 @@ const ActivityLogPage: React.FC = () => {
 
         // Map backend response to frontend Activity type
         const mappedActivities: Activity[] = data.map((item: any) => {
-          let type: any = 'complete';
+          let type: Activity['type'] = 'complete';
           const activityType = item.activity_type.toLowerCase();
 
-          if (activityType.includes('job')) type = 'upload';
-          else if (activityType.includes('cv')) type = 'upload';
+          if (activityType === 'job_created') type = 'upload';
+          else if (activityType === 'cv_uploaded') type = 'upload';
+          else if (activityType === 'cv_processed') type = 'complete';
+          else if (activityType === 'cv_failed') type = 'complete';
+          else if (activityType === 'job_closed') type = 'delete';
+          else if (activityType === 'job_reopened') type = 'upload';
           else if (activityType.includes('delete')) type = 'delete';
           else if (activityType.includes('search')) type = 'search';
 
@@ -51,7 +56,7 @@ const ActivityLogPage: React.FC = () => {
             type: type,
             description: item.description,
             timestamp: new Date(item.created_at),
-            status: 'completed',
+            status: activityType === 'cv_failed' ? 'failed' : 'completed',
           };
         });
         setActivities(mappedActivities);
@@ -80,6 +85,16 @@ const ActivityLogPage: React.FC = () => {
     if (hasMore) {
       setCurrentPage(prev => prev + 1);
     }
+  };
+
+  const handleExport = () => {
+    const dataToExport = filteredActivities.map(activity => ({
+      Description: activity.description,
+      Type: activity.type,
+      Status: activity.status,
+      Date: activity.timestamp
+    }));
+    exportToCSV(dataToExport, 'activity_log');
   };
 
   if (loading && currentPage === 1 && activities.length === 0) {
@@ -130,7 +145,7 @@ const ActivityLogPage: React.FC = () => {
                 <option value="delete">Deletions</option>
                 <option value="complete">System Tasks</option>
               </select>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2" onClick={handleExport}>
                 <Download className="h-4 w-4" /> Export
               </Button>
             </div>
