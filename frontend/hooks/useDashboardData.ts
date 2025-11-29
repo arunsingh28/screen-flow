@@ -7,22 +7,36 @@ export const useDashboardData = () => {
   const [loading, setLoading] = useState(true);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
 
-  // Memoize data to prevent regeneration on re-renders
-  const stats: DashboardStats = useMemo(() => ({
-    totalCVs: 1247,
-    totalSearches: 143,
-    highMatches: 856,
-    successRate: 68.7,
-    processing: 23,
-  }), []);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalCVs: 0,
+    totalSearches: 0,
+    highMatches: 0,
+    successRate: 0,
+    processing: 0,
+  });
 
   useEffect(() => {
-    const fetchActivities = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await jobsApi.getActivities(0, 5); // Fetch top 5 recent activities
 
-        const mappedActivities: Activity[] = data.map((item: any) => ({
+        // Fetch stats and activities in parallel
+        const [statsData, activitiesData] = await Promise.all([
+          jobsApi.getDashboardStats(),
+          jobsApi.getActivities(0, 5)
+        ]);
+
+        // Map stats (backend snake_case to frontend camelCase)
+        setStats({
+          totalCVs: statsData.total_cvs,
+          totalSearches: statsData.total_searches,
+          highMatches: statsData.high_matches,
+          successRate: statsData.success_rate,
+          processing: statsData.processing,
+        });
+
+        // Map activities
+        const mappedActivities: Activity[] = activitiesData.map((item: any) => ({
           id: item.id,
           type: item.activity_type.toLowerCase().includes('job') ? 'upload' :
             item.activity_type.toLowerCase().includes('cv') ? 'upload' : 'complete',
@@ -33,13 +47,13 @@ export const useDashboardData = () => {
 
         setRecentActivities(mappedActivities);
       } catch (error) {
-        console.error("Failed to fetch dashboard activities:", error);
+        console.error("Failed to fetch dashboard data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchActivities();
+    fetchData();
   }, []);
 
   const chartData: ChartDataPoint[] = useMemo(() =>

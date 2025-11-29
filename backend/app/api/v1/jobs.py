@@ -18,9 +18,12 @@ from app.schemas.job import (
     CVUploadRequest,
     CVUploadResponse,
     CVUploadConfirmation,
+    CVUploadConfirmation,
     CVBulkDeleteRequest,
+    DashboardStatsResponse,
 )
 from app.models.activity import Activity
+from app.models.job import JobSearch, SearchResult
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
@@ -220,6 +223,51 @@ async def get_activities(
     ).order_by(Activity.created_at.desc()).offset(skip).limit(limit).all()
     
     return activities
+
+
+@router.get("/stats", response_model=DashboardStatsResponse)
+async def get_dashboard_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get dashboard statistics"""
+    # Total CVs
+    total_cvs = db.query(CV).filter(CV.user_id == current_user.id).count()
+    
+    # Total Searches
+    total_searches = db.query(JobSearch).filter(JobSearch.user_id == current_user.id).count()
+    
+    # High Matches (score >= 80)
+    # We need to join with JobSearch to ensure we only count results for this user's searches
+    high_matches = db.query(SearchResult).join(JobSearch).filter(
+        JobSearch.user_id == current_user.id,
+        SearchResult.score >= 80
+    ).count()
+    
+    # Processing (CVs in QUEUED or PROCESSING status)
+    processing = db.query(CV).filter(
+        CV.user_id == current_user.id,
+        CV.status.in_([CVStatus.QUEUED, CVStatus.PROCESSING])
+    ).count()
+    
+    # Success Rate (High Matches / Total Analyzed CVs in Searches) * 100
+    # Or maybe (High Matches / Total Searches) if that makes more sense?
+    # Let's stick to High Matches / Total Results for now as a proxy for "Quality Candidate Rate"
+    total_results = db.query(SearchResult).join(JobSearch).filter(
+        JobSearch.user_id == current_user.id
+    ).count()
+    
+    success_rate = 0.0
+    if total_results > 0:
+        success_rate = round((high_matches / total_results) * 100, 1)
+        
+    return DashboardStatsResponse(
+        total_cvs=total_cvs,
+        total_searches=total_searches,
+        high_matches=high_matches,
+        success_rate=success_rate,
+        processing=processing
+    )
 
 
 @router.get("/batches", response_model=CVBatchListResponse)

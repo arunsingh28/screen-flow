@@ -177,3 +177,13 @@ class JobSearchListResponse(BaseModel):
 class CVBulkDeleteRequest(BaseModel):
     """Schema for bulk CV deletion"""
     cv_ids: List[UUID4]
+
+
+class DashboardStatsResponse(BaseModel):
+    """Schema for dashboard statistics"""
+    total_cvs: int
+    total_searches: int
+    high_matches: int
+    success_rate: float
+    processing: int
+

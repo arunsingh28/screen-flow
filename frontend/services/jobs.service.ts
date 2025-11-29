@@ -90,5 +90,10 @@ export const jobsApi = {
             status
         });
         return response.data;
+    },
+
+    getDashboardStats: async () => {
+        const response = await axiosInstance.get('/jobs/stats');
+        return response.data;
     }
 };
