@@ -2,7 +2,7 @@ name: Deploy to EC2 using ECR
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-and-deploy:
@@ -28,18 +28,22 @@ jobs:
       # ---- Build Docker Image ----
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.ECR_REPOSITORY }} .
+          docker build \
+            -t ${{ secrets.ECR_REPOSITORY }}:latest \
+            ./backend
 
       # ---- Tag Docker Image ----
       - name: Tag image
         run: |
-          docker tag ${{ secrets.ECR_REPOSITORY }}:latest \
-          ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+          docker tag \
+            ${{ secrets.ECR_REPOSITORY }}:latest \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
       # ---- Push to ECR ----
       - name: Push image to ECR
         run: |
-          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+          docker push \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
       # ---- Deploy to EC2 ----
       - name: Deploy to EC2
@@ -49,10 +53,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            echo "🔄 Updating project on EC2"
+            echo "Updating project on EC2..."
             cd /var/www/screenflow
 
-            echo "📝 Rewriting .env file..."
+            echo "Writing new .env file..."
             cat > .env << EOF
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             REDIS_URL=${{ secrets.REDIS_URL }}
@@ -67,14 +71,14 @@ jobs:
             S3_PRESIGNED_URL_EXPIRATION=${{ secrets.S3_PRESIGNED_URL_EXPIRATION }}
             EOF
 
-            echo "Logging in to Amazon ECR..."
+            echo "Logging into Amazon ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
               | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
             echo "Pulling latest image from ECR..."
             docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
-            echo " Stopping old containers..."
+            echo "Stopping old containers..."
             docker-compose down
 
             echo "Starting new containers..."
