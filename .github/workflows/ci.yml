@@ -1,0 +1,83 @@
+name: Deploy to EC2 using ECR
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---- Checkout Code ----
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---- Configure AWS ----
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ---- Login to ECR ----
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ---- Build Docker Image ----
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.ECR_REPOSITORY }} .
+
+      # ---- Tag Docker Image ----
+      - name: Tag image
+        run: |
+          docker tag ${{ secrets.ECR_REPOSITORY }}:latest \
+          ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+
+      # ---- Push to ECR ----
+      - name: Push image to ECR
+        run: |
+          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+
+      # ---- Deploy to EC2 ----
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "🔄 Updating project on EC2"
+            cd /var/www/screenflow
+
+            echo "📝 Rewriting .env file..."
+            cat > .env << EOF
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            REDIS_URL=${{ secrets.REDIS_URL }}
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            JWT_ALGORITHM=${{ secrets.JWT_ALGORITHM }}
+            ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+            API_V1_PREFIX=${{ secrets.API_V1_PREFIX }}
+            PROJECT_NAME=${{ secrets.PROJECT_NAME }}
+            BACKEND_CORS_ORIGINS=${{ secrets.BACKEND_CORS_ORIGINS }}
+            ENVIRONMENT=${{ secrets.ENVIRONMENT }}
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+            S3_PRESIGNED_URL_EXPIRATION=${{ secrets.S3_PRESIGNED_URL_EXPIRATION }}
+            EOF
+
+            echo "Logging in to Amazon ECR..."
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+              | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+            echo "Pulling latest image from ECR..."
+            docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+
+            echo " Stopping old containers..."
+            docker-compose down
+
+            echo "Starting new containers..."
+            docker-compose up -d
+
+            echo "Deployment complete!"
