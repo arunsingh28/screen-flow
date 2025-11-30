@@ -45,6 +45,7 @@ class ActivityResponse(BaseModel):
         from_attributes = True
 from app.api.deps import get_current_user
 from app.services.s3_service import s3_service
+from app.core.cache import cache_service
 
 router = APIRouter()
 
@@ -124,6 +125,12 @@ async def create_cv_batch(
     )
     db.add(activity)
     db.commit()
+
+    # Invalidate caches
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_cv_batches:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_dashboard_stats:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_stats_history:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_activities:*")
 
     return CVBatchResponse.from_orm(new_batch)
 
@@ -241,6 +248,14 @@ async def confirm_cv_upload(
     
     db.commit()
 
+    # Invalidate caches
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_cv_batch:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_cv_batches:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_dashboard_stats:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_stats_history:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_all_cvs:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_activities:*")
+
     return CVUploadConfirmation(
         cv_id=cv.id,
         status=cv.status
@@ -248,6 +263,7 @@ async def confirm_cv_upload(
 
 
 @router.get("/activities", response_model=List[ActivityResponse])
+@cache_service.cache_response(ttl=60)
 async def get_activities(
     skip: int = 0,
     limit: int = 50,
@@ -259,10 +275,11 @@ async def get_activities(
         Activity.user_id == current_user.id
     ).order_by(Activity.created_at.desc()).offset(skip).limit(limit).all()
     
-    return activities
+    return [ActivityResponse.from_orm(a) for a in activities]
 
 
 @router.get("/stats", response_model=DashboardStatsResponse)
+@cache_service.cache_response(ttl=300)
 async def get_dashboard_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -308,6 +325,7 @@ async def get_dashboard_stats(
 
 
 @router.get("/stats/history", response_model=StatsHistoryResponse)
+@cache_service.cache_response(ttl=300)
 async def get_stats_history(
     days: int = 30,
     current_user: User = Depends(get_current_user),
@@ -374,6 +392,7 @@ async def get_stats_history(
 
 
 @router.get("/batches", response_model=CVBatchListResponse)
+@cache_service.cache_response(ttl=60)
 async def list_cv_batches(
     page: int = 1,
     page_size: int = 10,
@@ -415,6 +434,7 @@ async def list_cv_batches(
 
 
 @router.get("/batches/{batch_id}", response_model=CVDetailResponse)
+@cache_service.cache_response(ttl=60)
 async def get_cv_batch(
     batch_id: UUID,
     include_download_urls: bool = True,
@@ -487,6 +507,11 @@ async def update_batch_status(
     db.add(activity)
     db.commit()
 
+    # Invalidate caches
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_cv_batch:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_cv_batches:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_activities:*")
+
     return CVBatchResponse.from_orm(batch)
 
 
@@ -526,6 +551,11 @@ async def archive_batch(
     )
     db.add(activity)
     db.commit()
+
+    # Invalidate caches
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_cv_batch:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_cv_batches:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_activities:*")
 
     return CVBatchResponse.from_orm(batch)
 
@@ -602,6 +632,12 @@ async def delete_cv_batch(
     db.delete(batch)
     db.commit()
 
+    # Invalidate caches
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_cv_batches:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_dashboard_stats:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_all_cvs:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_activities:*")
+
     return None
 
 
@@ -637,6 +673,13 @@ async def delete_cv(
     # Delete CV
     db.delete(cv)
     db.commit()
+
+    # Invalidate caches
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_cv_batch:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_cv_batches:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_dashboard_stats:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_all_cvs:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_activities:*")
 
     return None
 
@@ -707,6 +750,13 @@ async def bulk_delete_cvs(
     
     db.commit()
 
+    # Invalidate caches
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_cv_batch:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_cv_batches:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_dashboard_stats:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:list_all_cvs:*")
+    await cache_service.delete_pattern(f"cache:{current_user.id}:get_activities:*")
+
     return None
 
 
@@ -746,6 +796,7 @@ async def get_cv_download_url(
 from app.schemas.job import CVListResponse
 
 @router.get("/cvs", response_model=CVListResponse)
+@cache_service.cache_response(ttl=60)
 async def list_all_cvs(
     page: int = 1,
     page_size: int = 20,
