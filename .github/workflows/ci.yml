@@ -27,12 +27,13 @@ jobs:
 
       # ---- Build Docker Image ----
       - name: Build Docker image
+      # backend/ is your build context
         run: |
           docker build \
             -t ${{ secrets.ECR_REPOSITORY }}:latest \
             ./backend
 
-      # ---- Tag Docker Image ----
+      # ---- Tag Image ----
       - name: Tag image
         run: |
           docker tag \
@@ -53,35 +54,40 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            echo "Updating project on EC2..."
             cd /var/www/screenflow
 
-            echo "Writing new .env file..."
-            cat > .env << EOF
+            echo "📝 Writing .env file..."
+            cat > .env <<EOF
+            ECR_REGISTRY=${{ secrets.ECR_REGISTRY }}
+            ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}
+
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             REDIS_URL=${{ secrets.REDIS_URL }}
+
             SECRET_KEY=${{ secrets.SECRET_KEY }}
             JWT_ALGORITHM=${{ secrets.JWT_ALGORITHM }}
             ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+
             API_V1_PREFIX=${{ secrets.API_V1_PREFIX }}
             PROJECT_NAME=${{ secrets.PROJECT_NAME }}
             BACKEND_CORS_ORIGINS=${{ secrets.BACKEND_CORS_ORIGINS }}
             ENVIRONMENT=${{ secrets.ENVIRONMENT }}
+
             S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
             S3_PRESIGNED_URL_EXPIRATION=${{ secrets.S3_PRESIGNED_URL_EXPIRATION }}
             EOF
 
-            echo "Logging into Amazon ECR..."
+            echo "🔐 Logging into Amazon ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
               | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-            echo "Pulling latest image from ECR..."
+            echo "🐳 Pulling latest API image..."
             docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
-            echo "Stopping old containers..."
-            docker-compose down
+            echo "🛑 Stopping old containers..."
+            docker-compose down || true
 
-            echo "Starting new containers..."
+            echo "🚀 Starting new containers..."
             docker-compose up -d
 
-            echo "Deployment complete!"
+            echo "🎉 Deployment complete!"
