@@ -88,17 +88,17 @@ class CacheService:
                 # Try to find request and user in kwargs
                 request: Request = kwargs.get("request")
                 current_user = kwargs.get("current_user")
+                
+                print(f"Cache decorator args: {args}")
+                print(f"Cache decorator kwargs keys: {list(kwargs.keys())}")
 
                 # If not explicitly passed, look for them in args (harder with FastAPI dependency injection)
                 # For now, we assume standard pattern where these are available or we skip caching
 
                 if not current_user:
-                    # Try to find user in args if it's there (unlikely with Depends)
-                    # If we can't identify user, we might want to skip or use global cache
-                    # For this app, everything is user-scoped
-                    return await func(*args, **kwargs)
-
-                user_id = str(current_user.id)
+                    user_id = "public"
+                else:
+                    user_id = str(current_user.id)
 
                 # Construct cache key
                 # We use the function name if prefix is not provided
@@ -121,10 +121,19 @@ class CacheService:
                 cached_data = await self.get(cache_key)
                 if cached_data:
                     # logger.debug(f"Cache hit: {cache_key}")
+                    # Add X-Cache header if response object is available
+                    response = kwargs.get("response")
+                    if response:
+                        response.headers["X-Cache"] = "HIT"
                     return cached_data
 
                 # Execute function
                 result = await func(*args, **kwargs)
+
+                # Add X-Cache header if response object is available
+                response = kwargs.get("response")
+                if response:
+                    response.headers["X-Cache"] = "MISS"
 
                 # Cache result
                 # Use jsonable_encoder to handle Pydantic models, SQLAlchemy objects, lists, etc.
