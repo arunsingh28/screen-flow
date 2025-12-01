@@ -94,4 +94,10 @@ jobs:
             echo "Starting new containers..."
             docker-compose up -d
 
-            echo "Deployment complete!"
+            echo "⏳ Waiting for containers to be ready..."
+            sleep 10
+
+            echo "🔍 Verifying migrations..."
+            docker-compose exec -T api alembic current || echo "⚠️  Could not verify migrations, but continuing..."
+
+            echo "✅ Deployment complete!"
