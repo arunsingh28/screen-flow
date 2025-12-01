@@ -18,6 +18,9 @@ import AuthLayout from '@/components/layout/AuthLayout';
 import PublicRoute from '@/components/auth/PublicRoute';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
+import AdminLayout from '@/components/layout/AdminLayout';
+import AdminRoute from '@/components/auth/AdminRoute';
+import AdminDashboard from '@/features/admin/pages/AdminDashboard';
 
 export const routes: RouteObject[] = [
   // Auth Routes
@@ -94,6 +97,41 @@ export const routes: RouteObject[] = [
         path: ROUTES.REFERRALS,
         element: <ReferralPage />,
       },
+    ],
+  },
+  // Admin Routes
+  {
+    path: '/admin',
+    element: (
+      <AdminRoute>
+        <AdminLayout />
+      </AdminRoute>
+    ),
+    children: [
+      {
+        path: '',
+        element: <AdminDashboard />,
+      },
+      // {
+      //   path: 'users',
+      //   element: <AdminUsersPage />,
+      // },
+      // {
+      //   path: 'users/:id',
+      //   element: <AdminUserDetailsPage />,
+      // },
+      // {
+      //   path: 'activity',
+      //   element: <AdminActivityPage />,
+      // },
+      // {
+      //   path: 'analytics',
+      //   element: <AdminAnalyticsPage />,
+      // },
+      // {
+      //   path: 'sessions',
+      //   element: <AdminSessionsPage />,
+      // },
     ],
   },
 ];

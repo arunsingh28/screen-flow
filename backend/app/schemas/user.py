@@ -47,6 +47,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: UUID
     referral_code: Optional[str] = None
+    role: str
     created_at: datetime
     updated_at: Optional[datetime] = None
 

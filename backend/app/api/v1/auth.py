@@ -75,9 +75,9 @@ def register(user_data: UserCreate, response: Response, db: Session = Depends(ge
             db.commit()
 
     # Create tokens
-    user_id_str = str(new_user.id)
-    access_token = create_access_token(data={"user_id": user_id_str, "email": new_user.email})
-    refresh_token = create_refresh_token(data={"user_id": user_id_str})
+    new_user_id_str = str(new_user.id)
+    access_token = create_access_token(data={"user_id": new_user_id_str, "email": new_user.email, "role": new_user.role})
+    refresh_token = create_refresh_token(data={"user_id": new_user_id_str})
 
     # Set refresh token as HttpOnly cookie
     response.set_cookie(
@@ -115,7 +115,7 @@ def login(credentials: UserLogin, response: Response, db: Session = Depends(get_
 
     # Create tokens
     user_id_str = str(user.id)
-    access_token = create_access_token(data={"user_id": user_id_str, "email": user.email})
+    access_token = create_access_token(data={"user_id": user_id_str, "email": user.email, "role": user.role})
     refresh_token = create_refresh_token(data={"user_id": user_id_str})
 
     # Set refresh token as HttpOnly cookie
@@ -168,7 +168,7 @@ def refresh_token(request: Request, db: Session = Depends(get_db)):
         )
 
     # Create new access token
-    access_token = create_access_token(data={"user_id": user_id, "email": user.email})
+    access_token = create_access_token(data={"user_id": user_id, "email": user.email, "role": user.role})
 
     return Token(access_token=access_token)
 

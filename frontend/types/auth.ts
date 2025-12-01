@@ -2,6 +2,7 @@ export interface User {
     id: string;
     email: string;
     company_name: string;
+    role?: 'USER' | 'ADMIN';
     created_at: string;
 }
 

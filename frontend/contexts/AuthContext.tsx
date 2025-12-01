@@ -6,6 +6,7 @@ interface AuthContextType {
     token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
+    isAdmin: boolean;
     setAuthData: (user: User, token: string) => void;
     clearAuth: () => void;
 }
@@ -49,6 +50,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 user,
                 token,
                 isAuthenticated: !!token,
+                isAdmin: user?.role === 'ADMIN',
                 isLoading,
                 setAuthData,
                 clearAuth,
