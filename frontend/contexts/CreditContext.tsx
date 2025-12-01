@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import axiosInstance from '@/lib/axios';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CreditContextType {
   credits: number;
@@ -27,11 +28,16 @@ interface CreditProviderProps {
 export const CreditProvider: React.FC<CreditProviderProps> = ({
   children
 }) => {
+  const { isAuthenticated } = useAuth();
   const [credits, setCredits] = useState<number>(0);
   const [maxCredits, setMaxCredits] = useState<number>(100);
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchCredits = useCallback(async () => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     try {
       const response = await axiosInstance.get('/credits');
       setCredits(response.data.credits);
@@ -41,7 +47,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchCredits();
