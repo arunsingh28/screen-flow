@@ -38,6 +38,7 @@ interface UserSummary {
 export default function AdminActivityPage() {
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activityFilter, setActivityFilter] = useState<string>('ALL');
 
     // Fetch users summary for the main list
     const { data: users, isLoading: loadingUsers } = useQuery<UserSummary[]>({
@@ -60,13 +61,20 @@ export default function AdminActivityPage() {
 
     // Fetch specific user activities when a user is selected
     const { data: userActivities, isLoading: loadingActivities } = useQuery<ActivityLog[]>({
-        queryKey: ['admin-user-activities', selectedUserId],
+        queryKey: ['admin-user-activities', selectedUserId, activityFilter],
         queryFn: async () => {
             if (!selectedUserId) return [];
             const response = await axiosInstance.get('/admin/activity', {
                 params: { limit: 1000 }
             });
-            return response.data.filter((a: ActivityLog) => a.user_email === users?.find(u => u.id === selectedUserId)?.email);
+            let activities = response.data.filter((a: ActivityLog) => a.user_email === users?.find(u => u.id === selectedUserId)?.email);
+
+            // Apply activity type filter
+            if (activityFilter !== 'ALL') {
+                activities = activities.filter((a: ActivityLog) => a.type === activityFilter);
+            }
+
+            return activities;
         },
         enabled: !!selectedUserId
     });
@@ -106,6 +114,22 @@ export default function AdminActivityPage() {
                     </div>
                 </div>
 
+                {/* Activity Type Filter */}
+                <div className="mb-4">
+                    <select
+                        value={activityFilter}
+                        onChange={(e) => setActivityFilter(e.target.value)}
+                        className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 dark:bg-gray-800 dark:border-gray-700"
+                    >
+                        <option value="ALL">All Activities</option>
+                        <option value="USER_LOGIN">Login</option>
+                        <option value="USER_LOGOUT">Logout</option>
+                        <option value="JOB_CREATED">Job Created</option>
+                        <option value="CV_UPLOADED">CV Uploaded</option>
+                        <option value="CV_PROCESSED">CV Processed</option>
+                    </select>
+                </div>
+
                 <Card className="overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -113,7 +137,7 @@ export default function AdminActivityPage() {
                                 <tr>
                                     <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                     <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -134,6 +158,7 @@ export default function AdminActivityPage() {
                                 ) : (
                                     userActivities?.map((activity) => {
                                         const Icon = getActivityIcon(activity.type);
+                                        const timestamp = new Date(activity.created_at);
                                         return (
                                             <tr key={activity.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                                 <td className="py-4 px-6 whitespace-nowrap">
@@ -152,11 +177,21 @@ export default function AdminActivityPage() {
                                                     </p>
                                                 </td>
                                                 <td className="py-4 px-6 whitespace-nowrap">
-                                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                        <Clock className="w-3 h-3" />
-                                                        <span>
-                                                            {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
-                                                        </span>
+                                                    <div className="text-sm">
+                                                        <div className="text-gray-900 dark:text-white font-medium">
+                                                            {timestamp.toLocaleDateString('en-US', {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </div>
+                                                        <div className="text-gray-500 text-xs">
+                                                            {timestamp.toLocaleTimeString('en-US', {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                second: '2-digit'
+                                                            })}
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -235,8 +270,8 @@ export default function AdminActivityPage() {
                                         </td>
                                         <td className="py-4 px-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'ADMIN'
-                                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
-                                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
+                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
                                                 }`}>
                                                 {user.role}
                                             </span>

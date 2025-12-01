@@ -14,7 +14,8 @@ export function usePageTracking() {
         const previousPath = currentPathRef.current;
 
         // Don't record very short visits or initial load if 0
-        if (duration > 1) {
+        // Also exclude admin pages from tracking
+        if (duration > 1 && !previousPath.startsWith('/admin')) {
             axiosInstance.post('/analytics/page-visit', {
                 path: previousPath,
                 duration_seconds: duration

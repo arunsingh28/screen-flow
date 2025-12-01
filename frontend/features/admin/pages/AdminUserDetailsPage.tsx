@@ -166,6 +166,35 @@ export default function AdminUserDetailsPage() {
                             </div>
                         )}
                     </Card>
+
+                    {/* Top Pages Card */}
+                    <Card className="p-6">
+                        <h2 className="text-xl font-bold mb-4">Top Pages ({data?.top_pages?.length || 0})</h2>
+                        {!data?.top_pages || data.top_pages.length === 0 ? (
+                            <p className="text-gray-500 text-center py-8">No page visits recorded</p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="border-b dark:border-gray-800">
+                                        <tr>
+                                            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Page</th>
+                                            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Visits</th>
+                                            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Avg Duration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.top_pages.map((page: any, idx: number) => (
+                                            <tr key={idx} className="border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                                <td className="py-3 px-4 text-sm font-mono text-gray-900 dark:text-white">{page.path}</td>
+                                                <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-300">{page.visits}</td>
+                                                <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-300">{page.avg_duration}s</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </Card>
                 </div>
 
                 {/* Right Column: Actions */}

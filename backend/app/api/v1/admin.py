@@ -205,8 +205,32 @@ def get_user_details(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    
     jobs = db.query(CVBatch).filter(CVBatch.user_id == user_id).all()
     cvs_count = db.query(CV).filter(CV.user_id == user_id).count()
+    
+    # Get top pages for this user
+    from app.models.analytics import PageVisit
+    top_pages_data = (
+        db.query(
+            PageVisit.path,
+            func.count(PageVisit.id).label('visits'),
+            func.avg(PageVisit.duration_seconds).label('avg_duration')
+        )
+        .filter(PageVisit.user_id == user_id)
+        .group_by(PageVisit.path)
+        .order_by(desc('visits'))
+        .limit(10)
+        .all()
+    )
+    
+    top_pages = [
+        {
+            "path": item.path,
+            "visits": item.visits,
+            "avg_duration": round(item.avg_duration or 0, 1)
+        } for item in top_pages_data
+    ]
     
     return {
         "user": AdminUserResponse(
@@ -225,7 +249,8 @@ def get_user_details(
             can_create_jobs=user.can_create_jobs,
             cv_upload_limit=user.cv_upload_limit
         ),
-        "jobs": jobs
+        "jobs": jobs,
+        "top_pages": top_pages
     }
 
 

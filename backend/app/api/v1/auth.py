@@ -120,6 +120,20 @@ def login(credentials: UserLogin, response: Response, db: Session = Depends(get_
             detail="Your account has been blocked. Please contact support."
         )
 
+    # Log login activity
+    from app.models.activity import Activity, ActivityType
+    from datetime import datetime
+    activity = Activity(
+        user_id=user.id,
+        activity_type=ActivityType.USER_LOGIN,
+        description=f"User logged in"
+    )
+    db.add(activity)
+    
+    # Update last login time
+    user.last_login = datetime.utcnow()
+    db.commit()
+
     # Create tokens
     user_id_str = str(user.id)
     access_token = create_access_token(data={"user_id": user_id_str, "email": user.email, "role": user.role})
@@ -188,7 +202,29 @@ def refresh_token(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/logout")
-def logout(response: Response):
+def logout(response: Response, db: Session = Depends(get_db), request: Request = None):
     """Logout user by clearing refresh token cookie."""
+    # Try to log logout activity if we can get user from token
+    try:
+        from app.api.deps import get_current_user
+        # Get token from Authorization header
+        auth_header = request.headers.get("Authorization") if request else None
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            payload = decode_access_token(token)
+            if payload:
+                user_id = payload.get("user_id")
+                if user_id:
+                    from app.models.activity import Activity, ActivityType
+                    activity = Activity(
+                        user_id=user_id,
+                        activity_type=ActivityType.USER_LOGOUT,
+                        description=f"User logged out"
+                    )
+                    db.add(activity)
+                    db.commit()
+    except:
+        pass  # Logout should succeed even if activity logging fails
+    
     response.delete_cookie(key="refresh_token")
     return {"message": "Successfully logged out"}

@@ -155,6 +155,9 @@ async def request_cv_upload(
         CVBatch.user_id == current_user.id
     ).first()
 
+    if not batch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found"
         )
 
