@@ -170,9 +170,9 @@ export const ReferralPage = () => {
 
                         <div className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border shadow-sm mb-6">
                             <code className="flex-1 text-lg font-mono text-purple-600 dark:text-purple-400 px-4">
-                                {window.location.origin}/signup?ref={codeData?.referral_code}
+                                {window.location.origin}/auth/signup?ref={codeData?.referral_code}
                             </code>
-                            <Button onClick={() => copyToClipboard(`${window.location.origin}/signup?ref=${codeData?.referral_code}`)}>
+                            <Button onClick={() => copyToClipboard(`${window.location.origin}/auth/signup?ref=${codeData?.referral_code}`)}>
                                 <Copy className="w-4 h-4 mr-2" />
                                 Copy
                             </Button>
