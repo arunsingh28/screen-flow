@@ -1,0 +1,55 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2 and Run Migrations
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Navigate to project directory
+            cd /home/ubuntu/screenflow-dashboard
+            
+            # Pull latest changes
+            git pull origin main
+            
+            # Navigate to backend
+            cd backend
+            
+            # Rebuild and restart containers
+            docker-compose down
+            docker-compose up --build -d
+            
+            # Wait for database to be ready
+            sleep 10
+            
+            # Run database migrations
+            docker exec screenflow-api alembic upgrade head
+            
+            # Check if migrations succeeded
+            if [ $? -eq 0 ]; then
+              echo "✅ Migrations completed successfully"
+            else
+              echo "❌ Migration failed"
+              exit 1
+            fi
+            
+            # Restart API to ensure all changes are loaded
+            docker-compose restart api
+            
+            echo "🚀 Backend deployment completed!"
