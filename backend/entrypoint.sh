@@ -1,23 +1,23 @@
 #!/bin/bash
 set -e
 
-echo "⏳ Waiting for database to be ready..."
+echo "Waiting for database to be ready..."
 
 # Wait for PostgreSQL to be ready
-until PGPASSWORD="${DATABASE_URL##*:}" pg_isready -h "${DATABASE_URL#*@}" -U "${DATABASE_URL%:*}" 2>/dev/null; do
+until pg_isready -d "$DATABASE_URL" 2>/dev/null; do
   echo "Postgres is unavailable - sleeping"
   sleep 2
 done
 
-echo "✅ Database is ready!"
+echo "Database is ready!"
 
-echo "🔄 Running database migrations..."
+echo "Running database migrations..."
 if alembic upgrade head; then
-  echo "✅ Migrations completed successfully"
+  echo "Migrations completed successfully"
 else
-  echo "⚠️  Migration failed or already applied, checking current version..."
+  echo "Migration failed or already applied, checking current version..."
   alembic current || true
 fi
 
-echo "🚀 Starting application..."
+echo "Starting application..."
 exec "$@"

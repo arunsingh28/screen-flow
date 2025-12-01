@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
@@ -156,6 +156,7 @@ def get_admin_stats(
 @limiter.limit(RateLimits.ADMIN_API)
 @cache_service.cache_response(ttl=120)
 async def get_all_users(
+    request: Request,
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
     search: Optional[str] = Query(None),
@@ -205,6 +206,7 @@ async def get_all_users(
 @limiter.limit(RateLimits.ADMIN_API)
 @cache_service.cache_response(ttl=60)
 async def get_user_details(
+    request: Request,
     user_id: UUID,
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
@@ -353,6 +355,7 @@ def update_user_credits(
 @limiter.limit(RateLimits.ADMIN_API)
 @cache_service.cache_response(ttl=30)
 async def get_all_activity(
+    request: Request,
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
@@ -418,6 +421,7 @@ def get_active_sessions(
 @limiter.limit(RateLimits.ADMIN_API)
 @cache_service.cache_response(ttl=300)
 async def get_referral_analytics(
+    request: Request,
     current_admin: User = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Get comprehensive referral program analytics."""
