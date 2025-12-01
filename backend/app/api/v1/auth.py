@@ -44,6 +44,36 @@ def register(user_data: UserCreate, response: Response, db: Session = Depends(ge
     db.commit()
     db.refresh(new_user)
 
+    # Handle Referral
+    if user_data.referral_code:
+        from app.models.referral import Referral, ReferralStatus
+        from app.models.credit_transaction import CreditTransaction, TransactionType
+        
+        referrer = db.query(User).filter(User.referral_code == user_data.referral_code).first()
+        if referrer:
+            # Create Referral Record
+            referral = Referral(
+                referrer_id=referrer.id,
+                referred_user_id=new_user.id,
+                status=ReferralStatus.COMPLETED
+            )
+            db.add(referral)
+            
+            # Add Credits to Referrer
+            bonus_amount = 50
+            referrer.credits += bonus_amount
+            
+            # Create Transaction for Referrer
+            transaction = CreditTransaction(
+                user_id=referrer.id,
+                type=TransactionType.REFERRAL_BONUS,
+                amount=bonus_amount,
+                description=f"Referral bonus for referring {new_user.email}",
+                balance_after=referrer.credits
+            )
+            db.add(transaction)
+            db.commit()
+
     # Create tokens
     user_id_str = str(new_user.id)
     access_token = create_access_token(data={"user_id": user_id_str, "email": new_user.email})

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useSignup } from '@/hooks/useAuth';
 import { ROUTES } from '@/config/routes.constants';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,18 @@ export default function SignupPage() {
     const [companyName, setCompanyName] = useState('');
     const { mutate: signup, isPending, isError, error } = useSignup();
 
+    const [searchParams] = useSearchParams();
+    const referralCode = searchParams.get('ref');
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         e.stopPropagation();
-        signup({ email, password, company_name: companyName });
+        signup({
+            email,
+            password,
+            company_name: companyName,
+            referral_code: referralCode || undefined
+        });
     };
 
     const handleGoogleSignup = () => {

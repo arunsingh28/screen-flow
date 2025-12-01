@@ -19,6 +19,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
+    referral_code: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
@@ -45,6 +46,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(UserBase):
     id: UUID
+    referral_code: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

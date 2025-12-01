@@ -14,6 +14,7 @@ export interface SignupData {
     email: string;
     password: string;
     company_name: string;
+    referral_code?: string;
 }
 
 export interface AuthResponse {

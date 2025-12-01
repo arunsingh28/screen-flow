@@ -10,6 +10,7 @@ import SearchPage from '@/features/search/pages/SearchPage';
 import ActivityLogPage from '@/features/activity/pages/ActivityLogPage';
 import ProfilePage from '@/features/profile/pages/ProfilePage';
 import CreditsPage from '@/features/credits/pages/CreditsPage';
+import { ReferralPage } from '@/features/referrals/ReferralPage';
 import LoginPage from '@/features/auth/pages/LoginPage';
 import SignupPage from '@/features/auth/pages/SignupPage';
 import ForgotPasswordPage from '@/features/auth/pages/ForgotPasswordPage';
@@ -88,6 +89,10 @@ export const routes: RouteObject[] = [
       {
         path: ROUTES.CREDITS,
         element: <CreditsPage />,
+      },
+      {
+        path: ROUTES.REFERRALS,
+        element: <ReferralPage />,
       },
     ],
   },

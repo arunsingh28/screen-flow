@@ -15,7 +15,8 @@ import {
   Briefcase,
   Sparkles,
   User,
-  Coins
+  Coins,
+  Gift
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,7 @@ const Header: React.FC = () => {
     { path: ROUTES.JOBS_LIST, label: 'Jobs', icon: Briefcase },
     { path: ROUTES.SEARCH, label: 'AI Search', icon: Sparkles },
     { path: ROUTES.LIBRARY, label: 'CV Library', icon: FolderOpen },
+    { path: ROUTES.REFERRALS, label: 'Refer & Earn', icon: Gift },
   ];
 
   // Convert activities to notifications format
@@ -226,7 +228,7 @@ const Header: React.FC = () => {
                 <div className="absolute right-0 mt-2 w-80 rounded-md border dark:border-gray-700 bg-card shadow-lg animate-in fade-in zoom-in-95 duration-200">
                   <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
                     <span className="text-sm font-semibold">Recent Activity</span>
-                    <Link to={ROUTES.ACTIVITY} className="text-xs text-primary cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
+                    <Link to={ROUTES.ACTIVITY_LOG} className="text-xs text-primary cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
                       View all
                     </Link>
                   </div>

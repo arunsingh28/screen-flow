@@ -10,6 +10,9 @@ from app.models.job import (
     SearchStatus,
 )
 
+from app.models.referral import Referral
+from app.models.credit_transaction import CreditTransaction
+
 __all__ = [
     "User",
     "CVBatch",
@@ -20,4 +23,6 @@ __all__ = [
     "CVStatus",
     "CVSource",
     "SearchStatus",
+    "Referral",
+    "CreditTransaction",
 ]

@@ -9,6 +9,7 @@ export const ROUTES = {
   ACTIVITY_LOG: '/activity',
   PROFILE: '/profile',
   CREDITS: '/credits',
+  REFERRALS: '/referrals',
   LOGIN: '/auth/login',
   SIGNUP: '/auth/signup',
   FORGOT_PASSWORD: '/auth/forgot',

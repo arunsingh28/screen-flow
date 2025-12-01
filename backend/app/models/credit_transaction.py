@@ -9,6 +9,7 @@ from app.database import Base
 class TransactionType(str, enum.Enum):
     PURCHASE = "purchase"
     USAGE = "usage"
+    REFERRAL_BONUS = "referral_bonus"
 
 class CreditTransaction(Base):
     __tablename__ = "credit_transactions"
