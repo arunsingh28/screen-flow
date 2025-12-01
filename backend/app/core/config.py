@@ -19,7 +19,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://app.xowix.com",
+        "https://www.xowix.com"
+    ]
 
     # Environment
     ENVIRONMENT: str = "development"
