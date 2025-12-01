@@ -291,6 +291,8 @@ async def confirm_cv_upload(
 async def get_activities(
     skip: int = 0,
     limit: int = 50,
+    request: Request = None,
+    response: Response = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -317,6 +319,8 @@ async def get_activities(
 @router.get("/stats", response_model=DashboardStatsResponse)
 @cache_service.cache_response(ttl=300)
 async def get_dashboard_stats(
+    request: Request = None,
+    response: Response = None,
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Get dashboard statistics"""
@@ -374,6 +378,8 @@ async def get_dashboard_stats(
 @cache_service.cache_response(ttl=300)
 async def get_stats_history(
     days: int = 30,
+    request: Request = None,
+    response: Response = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -443,6 +449,8 @@ async def list_cv_batches(
     page_size: int = 10,
     status: Optional[BatchStatus] = None,
     is_archived: bool = False,
+    request: Request = None,
+    response: Response = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -484,6 +492,8 @@ async def list_cv_batches(
 async def get_cv_batch(
     batch_id: UUID,
     include_download_urls: bool = True,
+    request: Request = None,
+    response: Response = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

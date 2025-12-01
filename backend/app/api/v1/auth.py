@@ -226,28 +226,29 @@ def refresh_token(request: Request, db: Session = Depends(get_db)):
 def logout(response: Response, db: Session = Depends(get_db), request: Request = None):
     """Logout user by clearing refresh token cookie."""
     # Try to log logout activity if we can get user from token
-    try:
-        from app.api.deps import get_current_user
-
-        # Get token from Authorization header
-        auth_header = request.headers.get("Authorization") if request else None
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            payload = decode_access_token(token)
-            if payload:
-                user_id = payload.get("user_id")
-                if user_id:
-                    from app.models.activity import Activity, ActivityType
-
-                    activity = Activity(
-                        user_id=user_id,
-                        activity_type=ActivityType.USER_LOGOUT,
-                        description=f"User logged out",
-                    )
-                    db.add(activity)
-                    db.commit()
-    except:
-        pass  # Logout should succeed even if activity logging fails
+    # Try to log logout activity if we can get user from token
+    # try:
+    #     from app.api.deps import get_current_user
+    #
+    #     # Get token from Authorization header
+    #     auth_header = request.headers.get("Authorization") if request else None
+    #     if auth_header and auth_header.startswith("Bearer "):
+    #         token = auth_header.split(" ")[1]
+    #         payload = decode_access_token(token)
+    #         if payload:
+    #             user_id = payload.get("user_id")
+    #             if user_id:
+    #                 from app.models.activity import Activity, ActivityType
+    #
+    #                 activity = Activity(
+    #                     user_id=user_id,
+    #                     activity_type=ActivityType.USER_LOGOUT,
+    #                     description=f"User logged out",
+    #                 )
+    #                 db.add(activity)
+    #                 db.commit()
+    # except:
+    #     pass  # Logout should succeed even if activity logging fails
 
     response.delete_cookie(key="refresh_token")
     return {"message": "Successfully logged out"}
