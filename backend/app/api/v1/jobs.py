@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request, Response
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pathlib import Path
@@ -99,6 +99,7 @@ def deduct_credits(user: User, amount: int, description: str, db: Session):
 @limiter.limit(RateLimits.JOB_CREATE)
 async def create_cv_batch(
     request: Request,
+    response: Response,
     batch_data: CVBatchCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -153,6 +154,7 @@ async def create_cv_batch(
 @limiter.limit(RateLimits.CV_UPLOAD)
 async def request_cv_upload(
     request: Request,
+    response: Response,
     batch_id: UUID,
     upload_request: CVUploadRequest,
     current_user: User = Depends(get_current_user),

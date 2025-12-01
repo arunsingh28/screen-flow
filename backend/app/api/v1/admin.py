@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
@@ -157,6 +157,7 @@ def get_admin_stats(
 @cache_service.cache_response(ttl=120)
 async def get_all_users(
     request: Request,
+    response: Response,
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
     search: Optional[str] = Query(None),
@@ -207,6 +208,7 @@ async def get_all_users(
 @cache_service.cache_response(ttl=60)
 async def get_user_details(
     request: Request,
+    response: Response,
     user_id: UUID,
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
@@ -356,6 +358,7 @@ def update_user_credits(
 @cache_service.cache_response(ttl=30)
 async def get_all_activity(
     request: Request,
+    response: Response,
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
@@ -388,6 +391,7 @@ async def get_all_activity(
 @cache_service.cache_response(ttl=60)
 async def get_admin_stats(
     request: Request,
+    response: Response,
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -422,6 +426,7 @@ def get_active_sessions(
 @cache_service.cache_response(ttl=300)
 async def get_referral_analytics(
     request: Request,
+    response: Response,
     current_admin: User = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Get comprehensive referral program analytics."""
