@@ -1,3 +1,4 @@
+from fastapi import APIRouter
 from app.api.v1 import auth, users, jobs, credits, referrals, admin, analytics
 
 api_router = APIRouter()

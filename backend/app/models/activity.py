@@ -7,6 +7,8 @@ import enum
 from app.database import Base
 
 class ActivityType(str, enum.Enum):
+    USER_LOGIN = "user_login"
+    USER_LOGOUT = "user_logout"
     JOB_CREATED = "job_created"
     CV_UPLOADED = "cv_uploaded"
     CV_PROCESSED = "cv_processed"

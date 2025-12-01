@@ -5,7 +5,7 @@ from app.database import get_db
 from app.api.deps import require_admin
 from app.models.user import User
 from app.models.job import CVBatch, CV
-from app.models.activity import Activity
+from app.models.activity import Activity, ActivityType
 from typing import List, Optional
 from pydantic import BaseModel
 from uuid import UUID
@@ -88,7 +88,7 @@ def get_admin_stats(
             func.date_trunc('day', Activity.created_at).label('date'),
             func.count(Activity.id).label('count')
         )
-        .filter(Activity.type == 'USER_LOGIN')
+        .filter(Activity.activity_type == ActivityType.USER_LOGIN)
         .filter(Activity.created_at >= seven_days_ago)
         .group_by('date')
         .order_by('date')
@@ -229,7 +229,7 @@ def get_all_activity(
         AdminActivityResponse(
             id=activity.id,
             user_email=email,
-            type=activity.type,
+            type=activity.activity_type,
             description=activity.description,
             created_at=activity.created_at
         )
