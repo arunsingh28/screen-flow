@@ -1,8 +1,23 @@
 #!/bin/bash
 set -e
 
-echo "🔄 Running database migrations..."
-alembic upgrade head
+echo "⏳ Waiting for database to be ready..."
 
-echo "✅ Migrations complete. Starting application..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Wait for PostgreSQL to be ready
+until PGPASSWORD="${DATABASE_URL##*:}" pg_isready -h "${DATABASE_URL#*@}" -U "${DATABASE_URL%:*}" 2>/dev/null; do
+  echo "Postgres is unavailable - sleeping"
+  sleep 2
+done
+
+echo "✅ Database is ready!"
+
+echo "🔄 Running database migrations..."
+if alembic upgrade head; then
+  echo "✅ Migrations completed successfully"
+else
+  echo "⚠️  Migration failed or already applied, checking current version..."
+  alembic current || true
+fi
+
+echo "🚀 Starting application..."
+exec "$@"

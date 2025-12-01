@@ -6,7 +6,7 @@ services:
     container_name: screenflow-postgres
     environment:
       POSTGRES_USER: screenflow
-      POSTGRES_PASSWORD: screenflow_dev_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-screenflow_dev_password}
       POSTGRES_DB: screenflow_db
     ports:
       - "5432:5432"
@@ -17,12 +17,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: always
 
   redis:
     image: redis:7-alpine
     container_name: screenflow-redis
     ports:
-      - "6380:6379"
+      - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -31,28 +32,28 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: always
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
     container_name: screenflow-api
     env_file:
       - .env
     ports:
       - "8000:8000"
-    volumes:
-      - ./app:/app/app
-      - ./alembic:/app/alembic
-      - ./alembic.ini:/app/alembic.ini
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
-    stdin_open: true
-    tty: true
+    # No need to specify command - entrypoint.sh handles everything
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:
