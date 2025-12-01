@@ -90,7 +90,7 @@ class AdminActivityResponse(BaseModel):
 # Admin Endpoints
 @router.get("/analytics/overview", response_model=AdminStatsResponse)
 def get_admin_stats(
-    current_admin: User = Depends(require_admin), db: Session = Depends(get_db)
+    current_user: User = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Get overall platform statistics with trends."""
     total_users = db.query(User).count()
@@ -158,7 +158,7 @@ def get_admin_stats(
 async def get_all_users(
     request: Request,
     response: Response,
-    current_admin: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
     search: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
@@ -210,7 +210,7 @@ async def get_user_details(
     request: Request,
     response: Response,
     user_id: UUID,
-    current_admin: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Get detailed information about a specific user."""
@@ -272,7 +272,7 @@ async def get_user_details(
 def update_user_status(
     user_id: UUID,
     status_update: UserStatusUpdate,
-    current_admin: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Update user status and permissions."""
@@ -318,7 +318,7 @@ def update_user_status(
 def update_user_credits(
     user_id: UUID,
     credits_update: UserCreditsUpdate,
-    current_admin: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Update user credits manually."""
@@ -359,7 +359,7 @@ def update_user_credits(
 async def get_all_activity(
     request: Request,
     response: Response,
-    current_admin: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, le=1000),
@@ -392,7 +392,7 @@ async def get_all_activity(
 async def get_admin_stats(
     request: Request,
     response: Response,
-    current_admin: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Get various statistics for the admin dashboard."""
@@ -402,7 +402,7 @@ async def get_admin_stats(
 
 @router.get("/sessions")
 def get_active_sessions(
-    current_admin: User = Depends(require_admin), db: Session = Depends(get_db)
+    current_user: User = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Get active user sessions."""
     # This would require session tracking implementation
@@ -427,7 +427,7 @@ def get_active_sessions(
 async def get_referral_analytics(
     request: Request,
     response: Response,
-    current_admin: User = Depends(require_admin), db: Session = Depends(get_db)
+    current_user: User = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Get comprehensive referral program analytics."""
     from app.models.referral import Referral, ReferralStatus
