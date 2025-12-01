@@ -3,6 +3,9 @@ name: Deploy to EC2 using ECR
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
 
 jobs:
   build-and-deploy:
@@ -54,7 +57,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/screenflow
+            # Create app directory
+            mkdir -p /home/ubuntu/screenflow-dashboard/backend
+            cd /home/ubuntu/screenflow-dashboard/backend
 
             echo "📝 Writing .env file..."
             cat > .env <<EOF
@@ -92,12 +97,40 @@ jobs:
             docker-compose down || true
 
             echo "Starting new containers..."
+            # Note: We assume docker-compose.prod.yml content is synced or we write it here.
+            # Since we can't easily sync files with ssh-action without scp, let's write the content here for simplicity
+            # or use the one we pushed if we used rsync. But we are not using rsync here.
+            # Let's use scp-action to copy the file BEFORE this step.
+            
+      - name: Copy production docker-compose
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "backend/docker-compose.prod.yml"
+          target: "/home/ubuntu/screenflow-dashboard"
+          strip_components: 1
+
+      - name: Start Services and Run Migrations
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/ubuntu/screenflow-dashboard/backend
+            
+            # Rename prod compose to standard name for easier usage
+            mv docker-compose.prod.yml docker-compose.yml
+
+            echo "🚀 Starting containers..."
             docker-compose up -d
 
-            echo "⏳ Waiting for containers to be ready..."
+            echo "⏳ Waiting for database..."
             sleep 10
 
-            echo "🔍 Verifying migrations..."
-            docker-compose exec -T api alembic current || echo "⚠️  Could not verify migrations, but continuing..."
+            echo "🔄 Running migrations..."
+            docker exec screenflow-api alembic upgrade head
 
             echo "✅ Deployment complete!"
