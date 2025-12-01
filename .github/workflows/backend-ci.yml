@@ -3,6 +3,7 @@ name: Deploy to EC2 using ECR
 on:
   push:
     branches: ["main"]
+  workflow_dispatch:  # Add manual trigger
 
 jobs:
   build-and-deploy:
@@ -30,20 +31,27 @@ jobs:
         run: |
           docker build \
             -t ${{ secrets.ECR_REPOSITORY }}:latest \
+            -t ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }} \
             ./backend
 
-      # ---- Tag Image ----
-      - name: Tag image
+      # ---- Tag Images ----
+      - name: Tag images
         run: |
+          # Tag latest
           docker tag \
             ${{ secrets.ECR_REPOSITORY }}:latest \
             ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+          
+          # Tag with commit SHA for versioning
+          docker tag \
+            ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }} \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
       # ---- Push to ECR ----
-      - name: Push image to ECR
+      - name: Push images to ECR
         run: |
-          docker push \
-            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
       # ---- Deploy to EC2 ----
       - name: Deploy to EC2
@@ -88,7 +96,10 @@ jobs:
             docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
             echo "🛑 Stopping old containers..."
-            docker-compose down || true
+            docker-compose down
+
+            echo "🧹 Cleaning up old images..."
+            docker image prune -f
 
             echo "🚀 Starting new containers..."
             docker-compose up -d
@@ -97,8 +108,8 @@ jobs:
             timeout=60
             elapsed=0
             while [ $elapsed -lt $timeout ]; do
-              if docker-compose ps | grep -q "healthy"; then
-                echo "✅ Containers are healthy!"
+              if docker-compose ps api | grep -q "Up"; then
+                echo "✅ API container is up!"
                 break
               fi
               sleep 5
@@ -110,6 +121,28 @@ jobs:
             docker-compose ps
 
             echo "📝 Recent logs:"
-            docker-compose logs --tail=50 api
+            docker-compose logs --tail=100 api
+
+            echo "🔍 Checking for errors..."
+            if docker-compose logs api | grep -i "error\|traceback\|exception" | tail -20; then
+              echo "⚠️  Found errors in logs"
+              exit 1
+            fi
 
             echo "✅ Deployment complete!"
+
+      # ---- Verify Deployment ----
+      - name: Verify deployment
+        if: always()
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /var/www/screenflow
+            echo "Final status check:"
+            docker-compose ps
+            echo ""
+            echo "API health check:"
+            curl -f http://localhost:8000/health || echo "Health check failed"
