@@ -17,6 +17,17 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Create referral_status_enum if it doesn't exist
+    conn = op.get_bind()
+    result = conn.execute(sa.text(
+        "SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'referral_status_enum')"
+    ))
+    enum_exists = result.scalar()
+    
+    if not enum_exists:
+        # Create the enum type
+        sa.Enum('PENDING', 'COMPLETED', name='referral_status_enum').create(conn)
+    
     # Create referrals table
     op.create_table('referrals',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -35,37 +46,15 @@ def upgrade() -> None:
     op.add_column('users', sa.Column('referral_code', sa.String(), nullable=True))
     op.create_index(op.f('ix_users_referral_code'), 'users', ['referral_code'], unique=True)
 
-    # Handle Enum update for credit_transactions
-    # We use execute to run raw SQL for altering enum
-    with op.get_context().autocommit_block():
-        op.execute("ALTER TYPE credit_txn_type_final ADD VALUE IF NOT EXISTS 'REFERRAL_BONUS'")
-
-    # Recreate credit_transactions table
-    op.create_table('credit_transactions',
-        sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('type', sa.Enum('PURCHASE', 'USAGE', 'REFERRAL_BONUS', name='credit_txn_type_final'), nullable=False),
-        sa.Column('amount', sa.Integer(), nullable=False),
-        sa.Column('description', sa.String(), nullable=False),
-        sa.Column('balance_after', sa.Integer(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_credit_transactions_id'), 'credit_transactions', ['id'], unique=False)
-    op.create_index(op.f('ix_credit_transactions_user_id'), 'credit_transactions', ['user_id'], unique=False)
+    # Add new value to credit_txn_type_final enum
+    op.execute("ALTER TYPE credit_txn_type_final ADD VALUE IF NOT EXISTS 'REFERRAL_BONUS'")
 
 
 def downgrade() -> None:
-    op.drop_index(op.f('ix_credit_transactions_user_id'), table_name='credit_transactions')
-    op.drop_index(op.f('ix_credit_transactions_id'), table_name='credit_transactions')
-    op.drop_table('credit_transactions')
-    
     op.drop_index(op.f('ix_users_referral_code'), table_name='users')
     op.drop_column('users', 'referral_code')
     
     op.drop_index(op.f('ix_referrals_id'), table_name='referrals')
     op.drop_table('referrals')
     
-    # We cannot easily remove value from Enum in Postgres
-    op.execute("DROP TYPE referral_status_enum")
+    # Note: We cannot easily remove value from Enum in Postgres without recreating it
