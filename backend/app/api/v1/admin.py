@@ -26,9 +26,24 @@ class AdminUserResponse(BaseModel):
     last_login: datetime | None
     jobs_count: int
     cvs_count: int
+    
+    # Restrictions
+    is_blocked: bool
+    can_create_jobs: bool
+    cv_upload_limit: int
 
     class Config:
         from_attributes = True
+
+
+class UserStatusUpdate(BaseModel):
+    is_blocked: Optional[bool] = None
+    can_create_jobs: Optional[bool] = None
+    cv_upload_limit: Optional[int] = None
+
+
+class UserCreditsUpdate(BaseModel):
+    credits: int
 
 
 from app.models.analytics import PageVisit
@@ -170,7 +185,10 @@ def get_all_users(
             created_at=user.created_at,
             last_login=user.last_login,
             jobs_count=jobs_count,
-            cvs_count=cvs_count
+            cvs_count=cvs_count,
+            is_blocked=user.is_blocked,
+            can_create_jobs=user.can_create_jobs,
+            cv_upload_limit=user.cv_upload_limit
         ))
     
     return result
@@ -202,10 +220,98 @@ def get_user_details(
             created_at=user.created_at,
             last_login=user.last_login,
             jobs_count=len(jobs),
-            cvs_count=cvs_count
+            cvs_count=cvs_count,
+            is_blocked=user.is_blocked,
+            can_create_jobs=user.can_create_jobs,
+            cv_upload_limit=user.cv_upload_limit
         ),
         "jobs": jobs
     }
+
+
+@router.patch("/users/{user_id}/status", response_model=AdminUserResponse)
+def update_user_status(
+    user_id: UUID,
+    status_update: UserStatusUpdate,
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Update user status and permissions."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if status_update.is_blocked is not None:
+        user.is_blocked = status_update.is_blocked
+    
+    if status_update.can_create_jobs is not None:
+        user.can_create_jobs = status_update.can_create_jobs
+        
+    if status_update.cv_upload_limit is not None:
+        user.cv_upload_limit = status_update.cv_upload_limit
+    
+    db.commit()
+    db.refresh(user)
+    
+    # Return enriched response
+    jobs_count = db.query(CVBatch).filter(CVBatch.user_id == user.id).count()
+    cvs_count = db.query(CV).filter(CV.user_id == user.id).count()
+    
+    return AdminUserResponse(
+        id=user.id,
+        email=user.email,
+        company_name=user.company_name,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        role=user.role,
+        credits=user.credits,
+        created_at=user.created_at,
+        last_login=user.last_login,
+        jobs_count=jobs_count,
+        cvs_count=cvs_count,
+        is_blocked=user.is_blocked,
+        can_create_jobs=user.can_create_jobs,
+        cv_upload_limit=user.cv_upload_limit
+    )
+
+
+@router.patch("/users/{user_id}/credits", response_model=AdminUserResponse)
+def update_user_credits(
+    user_id: UUID,
+    credits_update: UserCreditsUpdate,
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Update user credits manually."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.credits = credits_update.credits
+    
+    db.commit()
+    db.refresh(user)
+    
+    # Return enriched response
+    jobs_count = db.query(CVBatch).filter(CVBatch.user_id == user.id).count()
+    cvs_count = db.query(CV).filter(CV.user_id == user.id).count()
+    
+    return AdminUserResponse(
+        id=user.id,
+        email=user.email,
+        company_name=user.company_name,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        role=user.role,
+        credits=user.credits,
+        created_at=user.created_at,
+        last_login=user.last_login,
+        jobs_count=jobs_count,
+        cvs_count=cvs_count,
+        is_blocked=user.is_blocked,
+        can_create_jobs=user.can_create_jobs,
+        cv_upload_limit=user.cv_upload_limit
+    )
 
 
 @router.get("/activity", response_model=List[AdminActivityResponse])

@@ -7,14 +7,14 @@ import enum
 from app.database import Base
 
 class ActivityType(str, enum.Enum):
-    USER_LOGIN = "user_login"
-    USER_LOGOUT = "user_logout"
-    JOB_CREATED = "job_created"
-    CV_UPLOADED = "cv_uploaded"
-    CV_PROCESSED = "cv_processed"
-    CV_FAILED = "cv_failed"
-    JOB_CLOSED = "job_closed"
-    JOB_REOPENED = "job_reopened"
+    USER_LOGIN = "USER_LOGIN"
+    USER_LOGOUT = "USER_LOGOUT"
+    JOB_CREATED = "JOB_CREATED"
+    CV_UPLOADED = "CV_UPLOADED"
+    CV_PROCESSED = "CV_PROCESSED"
+    CV_FAILED = "CV_FAILED"
+    JOB_CLOSED = "JOB_CLOSED"
+    JOB_REOPENED = "JOB_REOPENED"
 
 class Activity(Base):
     """User activity log"""

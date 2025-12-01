@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Integer
+from sqlalchemy import Column, String, DateTime, Integer, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
@@ -24,6 +24,11 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_login = Column(DateTime(timezone=True), nullable=True)
+    
+    # Restrictions
+    is_blocked = Column(Boolean, default=False, nullable=False)
+    can_create_jobs = Column(Boolean, default=True, nullable=False)
+    cv_upload_limit = Column(Integer, default=100, nullable=False)
 
     # Profile fields
     first_name = Column(String, nullable=True)

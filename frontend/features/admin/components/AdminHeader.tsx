@@ -11,10 +11,7 @@ export default function AdminHeader() {
             <div className="container mx-auto flex h-16 items-center justify-between px-8">
                 <div className="flex items-center gap-4">
                     <Link to="/admin" className="flex items-center gap-2">
-                        <div className="h-8 w-8 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                            A
-                        </div>
-                        <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                        <span className="text-xl font-bold text-gray-900 dark:text-white bg-clip-text text-transparent">
                             Admin Dashboard
                         </span>
                     </Link>

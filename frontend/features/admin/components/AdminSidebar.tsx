@@ -1,3 +1,4 @@
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, Activity, BarChart3, Clock, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -20,13 +21,6 @@ export default function AdminSidebar() {
             isCollapsed ? "w-20" : "w-64"
         )}>
             <div className="p-6">
-                {/* Admin Badge */}
-                {!isCollapsed && (
-                    <div className="flex items-center gap-2 mb-6 px-3 py-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                        <Shield className="w-5 h-5 text-purple-600" />
-                        <span className="font-semibold text-purple-600 dark:text-purple-400">Admin Panel</span>
-                    </div>
-                )}
 
                 {isCollapsed && (
                     <div className="flex justify-center mb-6">
@@ -68,10 +62,10 @@ export default function AdminSidebar() {
                     )}
                 >
                     {isCollapsed ? (
-                        <ChevronRight className="w-5 h-5" />
+                        <ChevronRight size={20} />
                     ) : (
                         <>
-                            <ChevronLeft className="w-5 h-5" />
+                            <ChevronLeft size={20} />
                             <span>Collapse</span>
                         </>
                     )}

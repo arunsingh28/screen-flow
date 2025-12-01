@@ -113,6 +113,13 @@ def login(credentials: UserLogin, response: Response, db: Session = Depends(get_
             detail="Incorrect email or password"
         )
 
+    # Check if user is blocked
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked. Please contact support."
+        )
+
     # Create tokens
     user_id_str = str(user.id)
     access_token = create_access_token(data={"user_id": user_id_str, "email": user.email, "role": user.role})
@@ -165,6 +172,13 @@ def refresh_token(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
+        )
+
+    # Check if user is blocked
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked"
         )
 
     # Create new access token

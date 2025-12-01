@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import axiosInstance from '@/lib/axios';
+import { HowItWorks } from './components/HowItWork';
 
 interface ReferralStats {
     total_referrals: number;
@@ -193,7 +194,8 @@ export const ReferralPage = () => {
                     </div>
                 </Card>
             </motion.div>
-        </div >
+            <HowItWorks />
+        </div>
     );
 };
 

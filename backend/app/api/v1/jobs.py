@@ -98,6 +98,13 @@ async def create_cv_batch(
     db: Session = Depends(get_db)
 ):
     """Create a new Job (CV batch)"""
+    # Check permissions
+    if not current_user.can_create_jobs:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to create jobs."
+        )
+
     # Deduct 1 credit for job creation
     deduct_credits(current_user, 1, f"Job Creation: {batch_data.title}", db)
 
@@ -148,10 +155,16 @@ async def request_cv_upload(
         CVBatch.user_id == current_user.id
     ).first()
 
-    if not batch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found"
+        )
+
+    # Check upload limit
+    # Count current CVs in batch (including those currently uploading/queued)
+    current_cv_count = db.query(CV).filter(CV.batch_id == batch_id).count()
+    if current_cv_count >= current_user.cv_upload_limit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Upload limit reached. You can only upload {current_user.cv_upload_limit} CVs per job."
         )
 
     # Generate S3 key
