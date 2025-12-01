@@ -43,10 +43,10 @@ class ActivityResponse(BaseModel):
 
     class Config:
         from_attributes = True
-from app.api.deps import get_current_user
-from app.services.s3_service import s3_service
-from app.core.cache import cache_service
-from app.core.rate_limit import limiter, RateLimits
+        from app.api.deps import get_current_user
+        from app.services.s3_service import s3_service
+        from app.core.cache import cache_service
+        from app.core.rate_limit import limiter, RateLimits
 
 router = APIRouter()
 
