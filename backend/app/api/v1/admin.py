@@ -4,8 +4,7 @@ from sqlalchemy import func
 from app.database import get_db
 from app.api.deps import require_admin
 from app.models.user import User
-from app.models.job import Job
-from app.models.cv import CV
+from app.models.job import CVBatch, CV
 from app.models.activity import Activity
 from typing import List, Optional
 from pydantic import BaseModel
@@ -58,7 +57,7 @@ def get_admin_stats(
 ):
     """Get overall platform statistics."""
     total_users = db.query(User).count()
-    total_jobs = db.query(Job).count()
+    total_jobs = db.query(CVBatch).count()
     total_cvs = db.query(CV).count()
     
     # For active sessions, we could track this in a separate table
@@ -96,7 +95,7 @@ def get_all_users(
     # Enrich with counts
     result = []
     for user in users:
-        jobs_count = db.query(Job).filter(Job.user_id == user.id).count()
+        jobs_count = db.query(CVBatch).filter(CVBatch.user_id == user.id).count()
         cvs_count = db.query(CV).filter(CV.user_id == user.id).count()
         
         result.append(AdminUserResponse(
@@ -127,7 +126,7 @@ def get_user_details(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    jobs = db.query(Job).filter(Job.user_id == user_id).all()
+    jobs = db.query(CVBatch).filter(CVBatch.user_id == user_id).all()
     cvs_count = db.query(CV).filter(CV.user_id == user_id).count()
     
     return {

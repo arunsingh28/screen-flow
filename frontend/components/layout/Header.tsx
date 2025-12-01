@@ -16,12 +16,14 @@ import {
   Sparkles,
   User,
   Coins,
-  Gift
+  Gift,
+  Shield
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
 import { useLogout } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCredits } from '@/contexts/CreditContext';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { CreditPurchaseModal } from '@/components/credits/CreditPurchaseModal';
@@ -35,6 +37,7 @@ const Header: React.FC = () => {
   const location = useLocation();
   const { setTheme, theme } = useTheme();
   const { credits, maxCredits } = useCredits();
+  const { isAdmin } = useAuth();
   const { mutate: logout } = useLogout();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -309,6 +312,16 @@ const Header: React.FC = () => {
                       <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
                       Settings
                     </Link>
+                    {isAdmin && (
+                      <Link
+                        to={ROUTES.ADMIN_DASHBOARD}
+                        className="flex w-full items-center px-3 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950 rounded-sm font-medium"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin Panel
+                      </Link>
+                    )}
                   </div>
                   <div className="p-1 border-t dark:border-gray-700">
                     <button
