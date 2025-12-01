@@ -10,6 +10,7 @@ from app.schemas import credits as schemas
 
 router = APIRouter()
 
+
 @router.get("", response_model=schemas.CreditBalance)
 def get_credits(
     current_user: User = Depends(get_current_user),
@@ -19,8 +20,9 @@ def get_credits(
     """
     return {
         "credits": current_user.credits,
-        "max_credits": 100 # Hardcoded max credits for now
+        "max_credits": 100,  # Hardcoded max credits for now
     }
+
 
 @router.get("/history", response_model=List[schemas.CreditTransaction])
 def get_credit_history(
@@ -42,6 +44,7 @@ def get_credit_history(
     )
     return transactions
 
+
 @router.get("/usage", response_model=schemas.CreditUsageSummary)
 def get_usage_summary(
     db: Session = Depends(get_db),
@@ -61,7 +64,7 @@ def get_usage_summary(
             .filter(
                 CreditTransaction.user_id == current_user.id,
                 CreditTransaction.type == TransactionType.USAGE,
-                CreditTransaction.created_at >= start_date
+                CreditTransaction.created_at >= start_date,
             )
             .scalar()
         )
@@ -71,8 +74,9 @@ def get_usage_summary(
     return {
         "today": get_usage_sum(today_start),
         "last_7_days": get_usage_sum(seven_days_ago),
-        "this_month": get_usage_sum(month_start)
+        "this_month": get_usage_sum(month_start),
     }
+
 
 @router.post("/purchase", response_model=schemas.CreditBalance)
 def purchase_credits(
@@ -85,27 +89,24 @@ def purchase_credits(
     """
     # In a real app, this would integrate with Stripe/etc.
     # For now, we just add the credits.
-    
+
     new_balance = current_user.credits + purchase.amount
-    
+
     # Create transaction record
     transaction = CreditTransaction(
         user_id=current_user.id,
         type=TransactionType.PURCHASE,
         amount=purchase.amount,
         description=purchase.description,
-        balance_after=new_balance
+        balance_after=new_balance,
     )
-    
+
     # Update user balance
     current_user.credits = new_balance
-    
+
     db.add(transaction)
     db.add(current_user)
     db.commit()
     db.refresh(current_user)
-    
-    return {
-        "credits": current_user.credits,
-        "max_credits": 100
-    }
+
+    return {"credits": current_user.credits, "max_credits": 100}

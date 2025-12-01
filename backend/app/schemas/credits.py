@@ -4,15 +4,18 @@ from datetime import datetime
 from uuid import UUID
 from enum import Enum
 
+
 class TransactionType(str, Enum):
     PURCHASE = "purchase"
     USAGE = "usage"
+
 
 class CreditTransactionBase(BaseModel):
     type: TransactionType
     amount: int
     description: str
     balance_after: int
+
 
 class CreditTransaction(CreditTransactionBase):
     id: UUID
@@ -22,9 +25,11 @@ class CreditTransaction(CreditTransactionBase):
     class Config:
         from_attributes = True
 
+
 class CreditBalance(BaseModel):
     credits: int
-    max_credits: int = 100 # Hardcoded for now, could be dynamic later
+    max_credits: int = 100  # Hardcoded for now, could be dynamic later
+
 
 class CreditHistory(BaseModel):
     transactions: List[CreditTransaction]
@@ -32,9 +37,11 @@ class CreditHistory(BaseModel):
     page: int
     size: int
 
+
 class PurchaseCreditsRequest(BaseModel):
     amount: int
     description: str = "Credit Purchase"
+
 
 class CreditUsageSummary(BaseModel):
     today: int

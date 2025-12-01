@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:5173",
         "https://app.xowix.com",
-        "https://www.xowix.com"
+        "https://www.xowix.com",
     ]
 
     # Environment

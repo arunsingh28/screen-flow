@@ -18,7 +18,9 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
+    password: str = Field(
+        ..., min_length=8, description="Password must be at least 8 characters"
+    )
     referral_code: Optional[str] = None
 
 
@@ -36,7 +38,9 @@ class UserUpdate(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(..., min_length=1, description="Current password")
-    new_password: str = Field(..., min_length=8, description="New password must be at least 8 characters")
+    new_password: str = Field(
+        ..., min_length=8, description="New password must be at least 8 characters"
+    )
 
 
 class UserLogin(BaseModel):

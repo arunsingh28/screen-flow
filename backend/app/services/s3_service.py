@@ -14,16 +14,22 @@ class S3Service:
 
     def __init__(self):
         self.s3_client = boto3.client(
-            's3',
+            "s3",
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             region_name=settings.AWS_REGION,
             endpoint_url=f"https://s3.{settings.AWS_REGION}.amazonaws.com",
-            config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'})
+            config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
         )
         self.bucket_name = settings.S3_BUCKET_NAME
 
-    def generate_s3_key(self, user_id: str, file_type: str, original_filename: str, batch_id: Optional[str] = None) -> str:
+    def generate_s3_key(
+        self,
+        user_id: str,
+        file_type: str,
+        original_filename: str,
+        batch_id: Optional[str] = None,
+    ) -> str:
         """
         Generate S3 key following best practices
         Format: users/{user_id}/batches/{batch_id}/{file_type}/{uuid}_{filename}
@@ -53,7 +59,7 @@ class S3Service:
         file_obj: BinaryIO,
         s3_key: str,
         content_type: str = "application/octet-stream",
-        metadata: Optional[dict] = None
+        metadata: Optional[dict] = None,
     ) -> dict:
         """
         Upload file to S3
@@ -69,24 +75,21 @@ class S3Service:
 
             # Prepare extra args
             extra_args = {
-                'ContentType': content_type,
+                "ContentType": content_type,
             }
 
             if metadata:
-                extra_args['Metadata'] = metadata
+                extra_args["Metadata"] = metadata
 
             # Upload file
             self.s3_client.upload_fileobj(
-                file_obj,
-                self.bucket_name,
-                s3_key,
-                ExtraArgs=extra_args
+                file_obj, self.bucket_name, s3_key, ExtraArgs=extra_args
             )
 
             return {
-                's3_key': s3_key,
-                'bucket_name': self.bucket_name,
-                'file_size': file_size,
+                "s3_key": s3_key,
+                "bucket_name": self.bucket_name,
+                "file_size": file_size,
             }
 
         except ClientError as e:
@@ -95,10 +98,10 @@ class S3Service:
     def generate_presigned_url(
         self,
         s3_key: str,
-        client_method: str = 'get_object',
+        client_method: str = "get_object",
         expiration: Optional[int] = None,
         filename: Optional[str] = None,
-        content_type: Optional[str] = None
+        content_type: Optional[str] = None,
     ) -> str:
         """
         Generate presigned URL for downloading or uploading file
@@ -114,22 +117,20 @@ class S3Service:
             expiration = expiration or settings.S3_PRESIGNED_URL_EXPIRATION
 
             params = {
-                'Bucket': self.bucket_name,
-                'Key': s3_key,
+                "Bucket": self.bucket_name,
+                "Key": s3_key,
             }
 
             # Add Content-Disposition if filename provided (only for downloads)
-            if filename and client_method == 'get_object':
-                params['ResponseContentDisposition'] = f'inline; filename="{filename}"'
-            
+            if filename and client_method == "get_object":
+                params["ResponseContentDisposition"] = f'inline; filename="{filename}"'
+
             # Add Content-Type if provided (important for uploads)
-            if content_type and client_method == 'put_object':
-                params['ContentType'] = content_type
+            if content_type and client_method == "put_object":
+                params["ContentType"] = content_type
 
             url = self.s3_client.generate_presigned_url(
-                client_method,
-                Params=params,
-                ExpiresIn=expiration
+                client_method, Params=params, ExpiresIn=expiration
             )
 
             return url
@@ -140,10 +141,7 @@ class S3Service:
     def delete_file(self, s3_key: str) -> bool:
         """Delete file from S3"""
         try:
-            self.s3_client.delete_object(
-                Bucket=self.bucket_name,
-                Key=s3_key
-            )
+            self.s3_client.delete_object(Bucket=self.bucket_name, Key=s3_key)
             return True
         except ClientError as e:
             raise Exception(f"Failed to delete file from S3: {str(e)}")
@@ -156,24 +154,20 @@ class S3Service:
             dict with deleted count and errors
         """
         if not s3_keys:
-            return {'deleted': 0, 'errors': []}
+            return {"deleted": 0, "errors": []}
 
         try:
             # Prepare objects for deletion
-            objects = [{'Key': key} for key in s3_keys]
+            objects = [{"Key": key} for key in s3_keys]
 
             response = self.s3_client.delete_objects(
-                Bucket=self.bucket_name,
-                Delete={'Objects': objects}
+                Bucket=self.bucket_name, Delete={"Objects": objects}
             )
 
-            deleted = len(response.get('Deleted', []))
-            errors = response.get('Errors', [])
+            deleted = len(response.get("Deleted", []))
+            errors = response.get("Errors", [])
 
-            return {
-                'deleted': deleted,
-                'errors': errors
-            }
+            return {"deleted": deleted, "errors": errors}
 
         except ClientError as e:
             raise Exception(f"Failed to delete files from S3: {str(e)}")
@@ -181,10 +175,7 @@ class S3Service:
     def file_exists(self, s3_key: str) -> bool:
         """Check if file exists in S3"""
         try:
-            self.s3_client.head_object(
-                Bucket=self.bucket_name,
-                Key=s3_key
-            )
+            self.s3_client.head_object(Bucket=self.bucket_name, Key=s3_key)
             return True
         except ClientError:
             return False
@@ -192,16 +183,13 @@ class S3Service:
     def get_file_metadata(self, s3_key: str) -> dict:
         """Get file metadata from S3"""
         try:
-            response = self.s3_client.head_object(
-                Bucket=self.bucket_name,
-                Key=s3_key
-            )
+            response = self.s3_client.head_object(Bucket=self.bucket_name, Key=s3_key)
 
             return {
-                'content_type': response.get('ContentType'),
-                'content_length': response.get('ContentLength'),
-                'last_modified': response.get('LastModified'),
-                'metadata': response.get('Metadata', {}),
+                "content_type": response.get("ContentType"),
+                "content_length": response.get("ContentLength"),
+                "last_modified": response.get("LastModified"),
+                "metadata": response.get("Metadata", {}),
             }
 
         except ClientError as e:

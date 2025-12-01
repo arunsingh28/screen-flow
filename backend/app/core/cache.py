@@ -11,6 +11,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class CacheService:
     def __init__(self):
         self.redis: Optional[aioredis.Redis] = None
@@ -19,9 +20,7 @@ class CacheService:
     async def connect(self):
         if not self.redis:
             self.redis = aioredis.from_url(
-                settings.REDIS_URL,
-                encoding="utf-8",
-                decode_responses=True
+                settings.REDIS_URL, encoding="utf-8", decode_responses=True
             )
             logger.info("Connected to Redis")
 
@@ -49,9 +48,7 @@ class CacheService:
             await self.connect()
         try:
             await self.redis.set(
-                key,
-                json.dumps(value, default=str),
-                ex=ttl or self.default_ttl
+                key, json.dumps(value, default=str), ex=ttl or self.default_ttl
             )
         except Exception as e:
             logger.error(f"Redis set error: {e}")
@@ -84,16 +81,17 @@ class CacheService:
         Decorator to cache FastAPI response.
         Key format: {prefix}:{user_id}:{path}:{sorted_query_params}
         """
+
         def decorator(func: Callable):
             @wraps(func)
             async def wrapper(*args, **kwargs):
                 # Try to find request and user in kwargs
-                request: Request = kwargs.get('request')
-                current_user = kwargs.get('current_user')
-                
+                request: Request = kwargs.get("request")
+                current_user = kwargs.get("current_user")
+
                 # If not explicitly passed, look for them in args (harder with FastAPI dependency injection)
                 # For now, we assume standard pattern where these are available or we skip caching
-                
+
                 if not current_user:
                     # Try to find user in args if it's there (unlikely with Depends)
                     # If we can't identify user, we might want to skip or use global cache
@@ -101,21 +99,22 @@ class CacheService:
                     return await func(*args, **kwargs)
 
                 user_id = str(current_user.id)
-                
+
                 # Construct cache key
                 # We use the function name if prefix is not provided
                 key_prefix = prefix or func.__name__
-                
+
                 # Create a unique signature from arguments
                 # We filter out 'request', 'db', 'current_user' from key generation
                 key_args = {
-                    k: v for k, v in kwargs.items() 
-                    if k not in ['request', 'db', 'current_user', 'response']
+                    k: v
+                    for k, v in kwargs.items()
+                    if k not in ["request", "db", "current_user", "response"]
                 }
-                
+
                 arg_str = json.dumps(key_args, sort_keys=True, default=str)
                 arg_hash = hashlib.md5(arg_str.encode()).hexdigest()
-                
+
                 cache_key = f"cache:{user_id}:{key_prefix}:{arg_hash}"
 
                 # Try to get from cache
@@ -130,12 +129,16 @@ class CacheService:
                 # Cache result
                 # Use jsonable_encoder to handle Pydantic models, SQLAlchemy objects, lists, etc.
                 from fastapi.encoders import jsonable_encoder
+
                 to_cache = jsonable_encoder(result)
-                
+
                 await self.set(cache_key, to_cache, ttl)
-                
+
                 return result
+
             return wrapper
+
         return decorator
+
 
 cache_service = CacheService()

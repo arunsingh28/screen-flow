@@ -39,7 +39,7 @@ def root():
     return {
         "message": "Welcome to ScreenFlow API",
         "docs": f"{settings.API_V1_PREFIX}/docs",
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
 
 

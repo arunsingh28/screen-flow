@@ -15,6 +15,7 @@ from app.core.cache import cache_service
 
 router = APIRouter()
 
+
 # Response Models
 class AdminUserResponse(BaseModel):
     id: UUID
@@ -28,7 +29,7 @@ class AdminUserResponse(BaseModel):
     last_login: datetime | None
     jobs_count: int
     cvs_count: int
-    
+
     # Restrictions
     is_blocked: bool
     can_create_jobs: bool
@@ -54,14 +55,17 @@ from datetime import datetime, timedelta
 
 # ... (previous imports)
 
+
 class LoginTrend(BaseModel):
     date: str
     count: int
+
 
 class PageStat(BaseModel):
     path: str
     visits: int
     avg_duration: float
+
 
 class AdminStatsResponse(BaseModel):
     total_users: int
@@ -86,67 +90,65 @@ class AdminActivityResponse(BaseModel):
 # Admin Endpoints
 @router.get("/analytics/overview", response_model=AdminStatsResponse)
 def get_admin_stats(
-    current_admin: User = Depends(require_admin),
-    db: Session = Depends(get_db)
+    current_admin: User = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Get overall platform statistics with trends."""
     total_users = db.query(User).count()
     total_jobs = db.query(CVBatch).count()
     total_cvs = db.query(CV).count()
-    
+
     # Active sessions (users logged in last 24h)
     recent_threshold = datetime.utcnow() - timedelta(hours=24)
     active_sessions = db.query(User).filter(User.last_login >= recent_threshold).count()
-    
+
     # Login Trends (Last 7 days)
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     login_data = (
         db.query(
-            func.date_trunc('day', Activity.created_at).label('date'),
-            func.count(Activity.id).label('count')
+            func.date_trunc("day", Activity.created_at).label("date"),
+            func.count(Activity.id).label("count"),
         )
         .filter(Activity.activity_type == ActivityType.USER_LOGIN)
         .filter(Activity.created_at >= seven_days_ago)
-        .group_by('date')
-        .order_by('date')
+        .group_by("date")
+        .order_by("date")
         .all()
     )
-    
+
     login_trends = [
-        LoginTrend(
-            date=item.date.strftime('%Y-%m-%d'),
-            count=item.count
-        ) for item in login_data
+        LoginTrend(date=item.date.strftime("%Y-%m-%d"), count=item.count)
+        for item in login_data
     ]
 
     # Top Pages (Most visited)
     page_data = (
         db.query(
             PageVisit.path,
-            func.count(PageVisit.id).label('visits'),
-            func.avg(PageVisit.duration_seconds).label('avg_duration')
+            func.count(PageVisit.id).label("visits"),
+            func.avg(PageVisit.duration_seconds).label("avg_duration"),
         )
         .group_by(PageVisit.path)
-        .order_by(desc('visits'))
+        .order_by(desc("visits"))
         .limit(10)
         .all()
     )
-    
+
     top_pages = [
         PageStat(
             path=item.path,
             visits=item.visits,
-            avg_duration=round(item.avg_duration or 0, 1)
-        ) for item in page_data
+            avg_duration=round(item.avg_duration or 0, 1),
+        )
+        for item in page_data
     ]
-    
+
     return AdminStatsResponse(
         total_users=total_users,
         total_jobs=total_jobs,
         total_cvs=total_cvs,
         active_sessions=active_sessions,
         login_trends=login_trends,
-        top_pages=top_pages
+        top_pages=top_pages,
     )
 
 
@@ -158,43 +160,44 @@ async def get_all_users(
     db: Session = Depends(get_db),
     search: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, le=1000)
+    limit: int = Query(100, le=1000),
 ):
     """Get all users with their stats."""
     query = db.query(User)
-    
+
     # Search filter
     if search:
         query = query.filter(
-            (User.email.ilike(f"%{search}%")) |
-            (User.company_name.ilike(f"%{search}%"))
+            (User.email.ilike(f"%{search}%")) | (User.company_name.ilike(f"%{search}%"))
         )
-    
+
     users = query.offset(skip).limit(limit).all()
-    
+
     # Enrich with counts
     result = []
     for user in users:
         jobs_count = db.query(CVBatch).filter(CVBatch.user_id == user.id).count()
         cvs_count = db.query(CV).filter(CV.user_id == user.id).count()
-        
-        result.append(AdminUserResponse(
-            id=user.id,
-            email=user.email,
-            company_name=user.company_name,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            role=user.role,
-            credits=user.credits,
-            created_at=user.created_at,
-            last_login=user.last_login,
-            jobs_count=jobs_count,
-            cvs_count=cvs_count,
-            is_blocked=user.is_blocked,
-            can_create_jobs=user.can_create_jobs,
-            cv_upload_limit=user.cv_upload_limit
-        ))
-    
+
+        result.append(
+            AdminUserResponse(
+                id=user.id,
+                email=user.email,
+                company_name=user.company_name,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                role=user.role,
+                credits=user.credits,
+                created_at=user.created_at,
+                last_login=user.last_login,
+                jobs_count=jobs_count,
+                cvs_count=cvs_count,
+                is_blocked=user.is_blocked,
+                can_create_jobs=user.can_create_jobs,
+                cv_upload_limit=user.cv_upload_limit,
+            )
+        )
+
     return result
 
 
@@ -204,40 +207,41 @@ async def get_all_users(
 async def get_user_details(
     user_id: UUID,
     current_admin: User = Depends(require_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get detailed information about a specific user."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    
+
     jobs = db.query(CVBatch).filter(CVBatch.user_id == user_id).all()
     cvs_count = db.query(CV).filter(CV.user_id == user_id).count()
-    
+
     # Get top pages for this user
     from app.models.analytics import PageVisit
+
     top_pages_data = (
         db.query(
             PageVisit.path,
-            func.count(PageVisit.id).label('visits'),
-            func.avg(PageVisit.duration_seconds).label('avg_duration')
+            func.count(PageVisit.id).label("visits"),
+            func.avg(PageVisit.duration_seconds).label("avg_duration"),
         )
         .filter(PageVisit.user_id == user_id)
         .group_by(PageVisit.path)
-        .order_by(desc('visits'))
+        .order_by(desc("visits"))
         .limit(10)
         .all()
     )
-    
+
     top_pages = [
         {
             "path": item.path,
             "visits": item.visits,
-            "avg_duration": round(item.avg_duration or 0, 1)
-        } for item in top_pages_data
+            "avg_duration": round(item.avg_duration or 0, 1),
+        }
+        for item in top_pages_data
     ]
-    
+
     return {
         "user": AdminUserResponse(
             id=user.id,
@@ -253,10 +257,10 @@ async def get_user_details(
             cvs_count=cvs_count,
             is_blocked=user.is_blocked,
             can_create_jobs=user.can_create_jobs,
-            cv_upload_limit=user.cv_upload_limit
+            cv_upload_limit=user.cv_upload_limit,
         ),
         "jobs": jobs,
-        "top_pages": top_pages
+        "top_pages": top_pages,
     }
 
 
@@ -265,29 +269,29 @@ def update_user_status(
     user_id: UUID,
     status_update: UserStatusUpdate,
     current_admin: User = Depends(require_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update user status and permissions."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     if status_update.is_blocked is not None:
         user.is_blocked = status_update.is_blocked
-    
+
     if status_update.can_create_jobs is not None:
         user.can_create_jobs = status_update.can_create_jobs
-        
+
     if status_update.cv_upload_limit is not None:
         user.cv_upload_limit = status_update.cv_upload_limit
-    
+
     db.commit()
     db.refresh(user)
-    
+
     # Return enriched response
     jobs_count = db.query(CVBatch).filter(CVBatch.user_id == user.id).count()
     cvs_count = db.query(CV).filter(CV.user_id == user.id).count()
-    
+
     return AdminUserResponse(
         id=user.id,
         email=user.email,
@@ -302,7 +306,7 @@ def update_user_status(
         cvs_count=cvs_count,
         is_blocked=user.is_blocked,
         can_create_jobs=user.can_create_jobs,
-        cv_upload_limit=user.cv_upload_limit
+        cv_upload_limit=user.cv_upload_limit,
     )
 
 
@@ -311,22 +315,22 @@ def update_user_credits(
     user_id: UUID,
     credits_update: UserCreditsUpdate,
     current_admin: User = Depends(require_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update user credits manually."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     user.credits = credits_update.credits
-    
+
     db.commit()
     db.refresh(user)
-    
+
     # Return enriched response
     jobs_count = db.query(CVBatch).filter(CVBatch.user_id == user.id).count()
     cvs_count = db.query(CV).filter(CV.user_id == user.id).count()
-    
+
     return AdminUserResponse(
         id=user.id,
         email=user.email,
@@ -341,7 +345,7 @@ def update_user_credits(
         cvs_count=cvs_count,
         is_blocked=user.is_blocked,
         can_create_jobs=user.can_create_jobs,
-        cv_upload_limit=user.cv_upload_limit
+        cv_upload_limit=user.cv_upload_limit,
     )
 
 
@@ -352,7 +356,7 @@ async def get_all_activity(
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, le=1000)
+    limit: int = Query(100, le=1000),
 ):
     """Get all platform activity logs."""
     activities = (
@@ -363,14 +367,14 @@ async def get_all_activity(
         .limit(limit)
         .all()
     )
-    
+
     return [
         AdminActivityResponse(
             id=activity.id,
             user_email=email,
             type=activity.activity_type,
             description=activity.description,
-            created_at=activity.created_at
+            created_at=activity.created_at,
         )
         for activity, email in activities
     ]
@@ -382,7 +386,7 @@ async def get_all_activity(
 async def get_admin_stats(
     request: Request,
     current_admin: User = Depends(require_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get various statistics for the admin dashboard."""
     # Placeholder for statistics logic
@@ -391,30 +395,22 @@ async def get_admin_stats(
 
 @router.get("/sessions")
 def get_active_sessions(
-    current_admin: User = Depends(require_admin),
-    db: Session = Depends(get_db)
+    current_admin: User = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Get active user sessions."""
     # This would require session tracking implementation
     # For now, return users who logged in recently
     from datetime import datetime, timedelta
-    
+
     recent_threshold = datetime.utcnow() - timedelta(hours=24)
-    recent_users = (
-        db.query(User)
-        .filter(User.last_login >= recent_threshold)
-        .all()
-    )
-    
+    recent_users = db.query(User).filter(User.last_login >= recent_threshold).all()
+
     return {
         "active_sessions": len(recent_users),
         "users": [
-            {
-                "email": user.email,
-                "last_login": user.last_login
-            }
+            {"email": user.email, "last_login": user.last_login}
             for user in recent_users
-        ]
+        ],
     }
 
 
@@ -422,44 +418,52 @@ def get_active_sessions(
 @limiter.limit(RateLimits.ADMIN_API)
 @cache_service.cache_response(ttl=300)
 async def get_referral_analytics(
-    current_admin: User = Depends(require_admin),
-    db: Session = Depends(get_db)
+    current_admin: User = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Get comprehensive referral program analytics."""
     from app.models.referral import Referral, ReferralStatus
     from app.models.credit_transaction import CreditTransaction, TransactionType
-    
+
     # Total referrals
     total_referrals = db.query(Referral).count()
-    
+
     # Completed vs Pending
-    completed_referrals = db.query(Referral).filter(Referral.status == ReferralStatus.COMPLETED).count()
-    pending_referrals = db.query(Referral).filter(Referral.status == ReferralStatus.PENDING).count()
-    
+    completed_referrals = (
+        db.query(Referral).filter(Referral.status == ReferralStatus.COMPLETED).count()
+    )
+    pending_referrals = (
+        db.query(Referral).filter(Referral.status == ReferralStatus.PENDING).count()
+    )
+
     # Conversion rate
     total_users = db.query(User).count()
-    conversion_rate = round((total_referrals / total_users * 100), 2) if total_users > 0 else 0
-    
+    conversion_rate = (
+        round((total_referrals / total_users * 100), 2) if total_users > 0 else 0
+    )
+
     # Total credits given through referrals
-    total_credits_given = db.query(func.sum(CreditTransaction.amount)).filter(
-        CreditTransaction.type == TransactionType.REFERRAL_BONUS
-    ).scalar() or 0
-    
+    total_credits_given = (
+        db.query(func.sum(CreditTransaction.amount))
+        .filter(CreditTransaction.type == TransactionType.REFERRAL_BONUS)
+        .scalar()
+        or 0
+    )
+
     # Top referrers
     top_referrers = (
         db.query(
             User.id,
             User.email,
             User.company_name,
-            func.count(Referral.id).label('referral_count')
+            func.count(Referral.id).label("referral_count"),
         )
         .join(Referral, Referral.referrer_id == User.id)
         .group_by(User.id, User.email, User.company_name)
-        .order_by(desc('referral_count'))
+        .order_by(desc("referral_count"))
         .limit(10)
         .all()
     )
-    
+
     # Recent referrals with details
     recent_referrals = (
         db.query(Referral, User)
@@ -468,36 +472,42 @@ async def get_referral_analytics(
         .limit(50)
         .all()
     )
-    
+
     referral_details = []
     for referral, referrer in recent_referrals:
-        referred_user = db.query(User).filter(User.id == referral.referred_user_id).first()
-        referral_details.append({
-            "id": str(referral.id),
-            "referrer_email": referrer.email,
-            "referrer_company": referrer.company_name,
-            "referred_email": referred_user.email if referred_user else "Unknown",
-            "referred_company": referred_user.company_name if referred_user else None,
-            "status": referral.status.value,
-            "created_at": referral.created_at.isoformat()
-        })
-    
+        referred_user = (
+            db.query(User).filter(User.id == referral.referred_user_id).first()
+        )
+        referral_details.append(
+            {
+                "id": str(referral.id),
+                "referrer_email": referrer.email,
+                "referrer_company": referrer.company_name,
+                "referred_email": referred_user.email if referred_user else "Unknown",
+                "referred_company": (
+                    referred_user.company_name if referred_user else None
+                ),
+                "status": referral.status.value,
+                "created_at": referral.created_at.isoformat(),
+            }
+        )
+
     return {
         "overview": {
             "total_referrals": total_referrals,
             "completed_referrals": completed_referrals,
             "pending_referrals": pending_referrals,
             "conversion_rate": conversion_rate,
-            "total_credits_given": int(total_credits_given)
+            "total_credits_given": int(total_credits_given),
         },
         "top_referrers": [
             {
                 "id": str(r.id),
                 "email": r.email,
                 "company_name": r.company_name,
-                "referral_count": r.referral_count
+                "referral_count": r.referral_count,
             }
             for r in top_referrers
         ],
-        "recent_referrals": referral_details
+        "recent_referrals": referral_details,
     }

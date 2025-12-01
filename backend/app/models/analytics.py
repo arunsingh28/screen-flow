@@ -5,11 +5,14 @@ from sqlalchemy.sql import func
 import uuid
 from app.database import Base
 
+
 class PageVisit(Base):
     __tablename__ = "page_visits"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
     path = Column(String, nullable=False, index=True)
     duration_seconds = Column(Float, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
