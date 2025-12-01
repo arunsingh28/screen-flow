@@ -295,9 +295,16 @@ async def get_activities(
     db: Session = Depends(get_db),
 ):
     """Get recent activities for the current user"""
+    from app.models.activity import ActivityType
+
     activities = (
         db.query(Activity)
-        .filter(Activity.user_id == current_user.id)
+        .filter(
+            Activity.user_id == current_user.id,
+            Activity.activity_type.notin_(
+                [ActivityType.USER_LOGIN, ActivityType.USER_LOGOUT]
+            ),
+        )
         .order_by(Activity.created_at.desc())
         .offset(skip)
         .limit(limit)
