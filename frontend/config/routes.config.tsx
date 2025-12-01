@@ -21,6 +21,11 @@ import MainLayout from '@/components/layout/MainLayout';
 import AdminLayout from '@/components/layout/AdminLayout';
 import AdminRoute from '@/components/auth/AdminRoute';
 import AdminDashboard from '@/features/admin/pages/AdminDashboard';
+import AdminUsersPage from '@/features/admin/pages/AdminUsersPage';
+import AdminUserDetailsPage from '@/features/admin/pages/AdminUserDetailsPage';
+import AdminActivityPage from '@/features/admin/pages/AdminActivityPage';
+import AdminAnalyticsPage from '@/features/admin/pages/AdminAnalyticsPage';
+import AdminSessionsPage from '@/features/admin/pages/AdminSessionsPage';
 
 export const routes: RouteObject[] = [
   // Auth Routes
@@ -112,26 +117,26 @@ export const routes: RouteObject[] = [
         path: '',
         element: <AdminDashboard />,
       },
-      // {
-      //   path: 'users',
-      //   element: <AdminUsersPage />,
-      // },
-      // {
-      //   path: 'users/:id',
-      //   element: <AdminUserDetailsPage />,
-      // },
-      // {
-      //   path: 'activity',
-      //   element: <AdminActivityPage />,
-      // },
-      // {
-      //   path: 'analytics',
-      //   element: <AdminAnalyticsPage />,
-      // },
-      // {
-      //   path: 'sessions',
-      //   element: <AdminSessionsPage />,
-      // },
+      {
+        path: 'users',
+        element: <AdminUsersPage />,
+      },
+      {
+        path: 'users/:userId',
+        element: <AdminUserDetailsPage />,
+      },
+      {
+        path: 'activity',
+        element: <AdminActivityPage />,
+      },
+      {
+        path: 'analytics',
+        element: <AdminAnalyticsPage />,
+      },
+      {
+        path: 'sessions',
+        element: <AdminSessionsPage />,
+      },
     ],
   },
 ];
