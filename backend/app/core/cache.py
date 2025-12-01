@@ -36,7 +36,10 @@ class CacheService:
         try:
             data = await self.redis.get(key)
             if data:
+                logger.info(f"Cache HIT: {key}")
                 return json.loads(data)
+            else:
+                logger.info(f"Cache MISS: {key}")
         except Exception as e:
             logger.error(f"Redis get error: {e}")
         return None
@@ -52,6 +55,8 @@ class CacheService:
             )
         except Exception as e:
             logger.error(f"Redis set error: {e}")
+        else:
+            logger.info(f"Cache SET: {key} (ttl={ttl})")
 
     async def delete(self, key: str):
         if not self.redis:

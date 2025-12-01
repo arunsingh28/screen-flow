@@ -10,7 +10,7 @@ from app.schemas import credits as schemas
 
 router = APIRouter()
 
-@router.get("/", response_model=schemas.CreditBalance)
+@router.get("", response_model=schemas.CreditBalance)
 def get_credits(
     current_user: User = Depends(get_current_user),
 ) -> Any:
