@@ -30,7 +30,10 @@ from app.models.job import JobSearch, SearchResult
 from app.models.credit_transaction import CreditTransaction, TransactionType
 from pydantic import BaseModel
 from datetime import datetime
-from uuid import UUID
+from app.api.deps import get_current_user
+from app.services.s3_service import s3_service
+from app.core.cache import cache_service
+from app.core.rate_limit import limiter, RateLimits
 
 class ActivityResponse(BaseModel):
     id: UUID
@@ -43,10 +46,6 @@ class ActivityResponse(BaseModel):
 
     class Config:
         from_attributes = True
-        from app.api.deps import get_current_user
-        from app.services.s3_service import s3_service
-        from app.core.cache import cache_service
-        from app.core.rate_limit import limiter, RateLimits
 
 router = APIRouter()
 
