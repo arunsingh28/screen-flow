@@ -24,6 +24,7 @@ import AdminDashboard from '@/features/admin/pages/AdminDashboard';
 import AdminUsersPage from '@/features/admin/pages/AdminUsersPage';
 import AdminUserDetailsPage from '@/features/admin/pages/AdminUserDetailsPage';
 import AdminActivityPage from '@/features/admin/pages/AdminActivityPage';
+import AdminReferralsPage from '@/features/admin/pages/AdminReferralsPage';
 import AdminAnalyticsPage from '@/features/admin/pages/AdminAnalyticsPage';
 import AdminSessionsPage from '@/features/admin/pages/AdminSessionsPage';
 
@@ -128,6 +129,10 @@ export const routes: RouteObject[] = [
       {
         path: 'activity',
         element: <AdminActivityPage />,
+      },
+      {
+        path: '/admin/referrals',
+        element: <AdminReferralsPage />,
       },
       {
         path: 'analytics',

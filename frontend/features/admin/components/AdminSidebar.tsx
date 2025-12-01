@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Activity, BarChart3, Clock, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, BarChart3, Clock, Shield, ChevronLeft, ChevronRight, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/layout/AdminLayout';
 
@@ -11,6 +11,7 @@ export default function AdminSidebar() {
         { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/admin/users', label: 'Users', icon: Users },
         { path: '/admin/activity', label: 'Activity', icon: Activity },
+        { path: '/admin/referrals', label: 'Referrals', icon: Gift },
         { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
         { path: '/admin/sessions', label: 'Sessions', icon: Clock },
     ];

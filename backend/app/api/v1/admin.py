@@ -395,3 +395,86 @@ def get_active_sessions(
             for user in recent_users
         ]
     }
+
+
+@router.get("/referrals/analytics")
+def get_referral_analytics(
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive referral program analytics."""
+    from app.models.referral import Referral, ReferralStatus
+    from app.models.credit_transaction import CreditTransaction, TransactionType
+    
+    # Total referrals
+    total_referrals = db.query(Referral).count()
+    
+    # Completed vs Pending
+    completed_referrals = db.query(Referral).filter(Referral.status == ReferralStatus.COMPLETED).count()
+    pending_referrals = db.query(Referral).filter(Referral.status == ReferralStatus.PENDING).count()
+    
+    # Conversion rate
+    total_users = db.query(User).count()
+    conversion_rate = round((total_referrals / total_users * 100), 2) if total_users > 0 else 0
+    
+    # Total credits given through referrals
+    total_credits_given = db.query(func.sum(CreditTransaction.amount)).filter(
+        CreditTransaction.type == TransactionType.REFERRAL_BONUS
+    ).scalar() or 0
+    
+    # Top referrers
+    top_referrers = (
+        db.query(
+            User.id,
+            User.email,
+            User.company_name,
+            func.count(Referral.id).label('referral_count')
+        )
+        .join(Referral, Referral.referrer_id == User.id)
+        .group_by(User.id, User.email, User.company_name)
+        .order_by(desc('referral_count'))
+        .limit(10)
+        .all()
+    )
+    
+    # Recent referrals with details
+    recent_referrals = (
+        db.query(Referral, User)
+        .join(User, Referral.referrer_id == User.id)
+        .order_by(Referral.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    
+    referral_details = []
+    for referral, referrer in recent_referrals:
+        referred_user = db.query(User).filter(User.id == referral.referred_user_id).first()
+        referral_details.append({
+            "id": str(referral.id),
+            "referrer_email": referrer.email,
+            "referrer_company": referrer.company_name,
+            "referred_email": referred_user.email if referred_user else "Unknown",
+            "referred_company": referred_user.company_name if referred_user else None,
+            "status": referral.status.value,
+            "created_at": referral.created_at.isoformat()
+        })
+    
+    return {
+        "overview": {
+            "total_referrals": total_referrals,
+            "completed_referrals": completed_referrals,
+            "pending_referrals": pending_referrals,
+            "conversion_rate": conversion_rate,
+            "total_credits_given": int(total_credits_given)
+        },
+        "top_referrers": [
+            {
+                "id": str(r.id),
+                "email": r.email,
+                "company_name": r.company_name,
+                "referral_count": r.referral_count
+            }
+            for r in top_referrers
+        ],
+        "recent_referrals": referral_details
+    }
