@@ -10,6 +10,8 @@ from typing import List, Optional
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
+from app.core.rate_limit import limiter, RateLimits
+from app.core.cache import cache_service
 
 router = APIRouter()
 
@@ -149,7 +151,9 @@ def get_admin_stats(
 
 
 @router.get("/users", response_model=List[AdminUserResponse])
-def get_all_users(
+@limiter.limit(RateLimits.ADMIN_API)
+@cache_service.cache_response(ttl=120)
+async def get_all_users(
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
     search: Optional[str] = Query(None),
@@ -195,7 +199,9 @@ def get_all_users(
 
 
 @router.get("/users/{user_id}")
-def get_user_details(
+@limiter.limit(RateLimits.ADMIN_API)
+@cache_service.cache_response(ttl=60)
+async def get_user_details(
     user_id: UUID,
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db)
@@ -340,7 +346,9 @@ def update_user_credits(
 
 
 @router.get("/activity", response_model=List[AdminActivityResponse])
-def get_all_activity(
+@limiter.limit(RateLimits.ADMIN_API)
+@cache_service.cache_response(ttl=30)
+async def get_all_activity(
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
@@ -366,6 +374,19 @@ def get_all_activity(
         )
         for activity, email in activities
     ]
+
+
+@router.get("/stats")
+@limiter.limit(RateLimits.ADMIN_API)
+@cache_service.cache_response(ttl=60)
+async def get_admin_stats(
+    request: Request,
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get various statistics for the admin dashboard."""
+    # Placeholder for statistics logic
+    return {"message": "Admin stats endpoint - under construction"}
 
 
 @router.get("/sessions")
@@ -398,7 +419,9 @@ def get_active_sessions(
 
 
 @router.get("/referrals/analytics")
-def get_referral_analytics(
+@limiter.limit(RateLimits.ADMIN_API)
+@cache_service.cache_response(ttl=300)
+async def get_referral_analytics(
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):

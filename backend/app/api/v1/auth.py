@@ -10,12 +10,14 @@ from app.core.security import (
     create_refresh_token,
     decode_access_token
 )
+from app.core.rate_limit import limiter, RateLimits
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=UserWithToken, status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreate, response: Response, db: Session = Depends(get_db)):
+@limiter.limit(RateLimits.REGISTER)
+def register(request: Request, user_data: UserCreate, response: Response, db: Session = Depends(get_db)):
     """Register a new user."""
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
@@ -96,7 +98,8 @@ def register(user_data: UserCreate, response: Response, db: Session = Depends(ge
 
 
 @router.post("/login", response_model=UserWithToken)
-def login(credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
+@limiter.limit(RateLimits.LOGIN)
+def login(request: Request, credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
     """Authenticate user and return JWT token."""
     # Find user by email
     user = db.query(User).filter(User.email == credentials.email).first()

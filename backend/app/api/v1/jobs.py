@@ -46,6 +46,7 @@ class ActivityResponse(BaseModel):
 from app.api.deps import get_current_user
 from app.services.s3_service import s3_service
 from app.core.cache import cache_service
+from app.core.rate_limit import limiter, RateLimits
 
 router = APIRouter()
 
@@ -92,7 +93,9 @@ def deduct_credits(user: User, amount: int, description: str, db: Session):
 
 
 @router.post("/batches", response_model=CVBatchResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit(RateLimits.JOB_CREATE)
 async def create_cv_batch(
+    request: Request,
     batch_data: CVBatchCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -143,7 +146,9 @@ async def create_cv_batch(
 
 
 @router.post("/batches/{batch_id}/upload-request", response_model=CVUploadResponse)
+@limiter.limit(RateLimits.CV_UPLOAD)
 async def request_cv_upload(
+    request: Request,
     batch_id: UUID,
     upload_request: CVUploadRequest,
     current_user: User = Depends(get_current_user),

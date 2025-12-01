@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1 import api_router
 from app.database import Base, engine
+from app.core.rate_limit import limiter, custom_rate_limit_handler
+from slowapi.errors import RateLimitExceeded
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -13,6 +15,10 @@ app = FastAPI(
     docs_url=f"{settings.API_V1_PREFIX}/docs",
     redoc_url=f"{settings.API_V1_PREFIX}/redoc",
 )
+
+# Add rate limiting state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, custom_rate_limit_handler)
 
 # Set up CORS
 app.add_middleware(
