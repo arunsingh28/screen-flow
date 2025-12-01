@@ -9,6 +9,7 @@ from app.models.job import (
     CVSource,
     SearchStatus,
 )
+from app.models.analytics import PageVisit
 
 from app.models.referral import Referral
 from app.models.credit_transaction import CreditTransaction
@@ -25,4 +26,5 @@ __all__ = [
     "SearchStatus",
     "Referral",
     "CreditTransaction",
+    "PageVisit",
 ]

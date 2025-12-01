@@ -31,11 +31,28 @@ class AdminUserResponse(BaseModel):
         from_attributes = True
 
 
+from app.models.analytics import PageVisit
+from sqlalchemy import func, desc
+from datetime import datetime, timedelta
+
+# ... (previous imports)
+
+class LoginTrend(BaseModel):
+    date: str
+    count: int
+
+class PageStat(BaseModel):
+    path: str
+    visits: int
+    avg_duration: float
+
 class AdminStatsResponse(BaseModel):
     total_users: int
     total_jobs: int
     total_cvs: int
     active_sessions: int
+    login_trends: List[LoginTrend]
+    top_pages: List[PageStat]
 
 
 class AdminActivityResponse(BaseModel):
@@ -55,20 +72,64 @@ def get_admin_stats(
     current_admin: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
-    """Get overall platform statistics."""
+    """Get overall platform statistics with trends."""
     total_users = db.query(User).count()
     total_jobs = db.query(CVBatch).count()
     total_cvs = db.query(CV).count()
     
-    # For active sessions, we could track this in a separate table
-    # For now, return a placeholder
-    active_sessions = 0
+    # Active sessions (users logged in last 24h)
+    recent_threshold = datetime.utcnow() - timedelta(hours=24)
+    active_sessions = db.query(User).filter(User.last_login >= recent_threshold).count()
+    
+    # Login Trends (Last 7 days)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    login_data = (
+        db.query(
+            func.date_trunc('day', Activity.created_at).label('date'),
+            func.count(Activity.id).label('count')
+        )
+        .filter(Activity.type == 'USER_LOGIN')
+        .filter(Activity.created_at >= seven_days_ago)
+        .group_by('date')
+        .order_by('date')
+        .all()
+    )
+    
+    login_trends = [
+        LoginTrend(
+            date=item.date.strftime('%Y-%m-%d'),
+            count=item.count
+        ) for item in login_data
+    ]
+
+    # Top Pages (Most visited)
+    page_data = (
+        db.query(
+            PageVisit.path,
+            func.count(PageVisit.id).label('visits'),
+            func.avg(PageVisit.duration_seconds).label('avg_duration')
+        )
+        .group_by(PageVisit.path)
+        .order_by(desc('visits'))
+        .limit(10)
+        .all()
+    )
+    
+    top_pages = [
+        PageStat(
+            path=item.path,
+            visits=item.visits,
+            avg_duration=round(item.avg_duration or 0, 1)
+        ) for item in page_data
+    ]
     
     return AdminStatsResponse(
         total_users=total_users,
         total_jobs=total_jobs,
         total_cvs=total_cvs,
-        active_sessions=active_sessions
+        active_sessions=active_sessions,
+        login_trends=login_trends,
+        top_pages=top_pages
     )
 
 

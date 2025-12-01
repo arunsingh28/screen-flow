@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-from app.api.v1 import auth, users, jobs, credits, referrals, admin
+from app.api.v1 import auth, users, jobs, credits, referrals, admin, analytics
 
 api_router = APIRouter()
 
@@ -9,3 +8,4 @@ api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(credits.router, prefix="/credits", tags=["credits"])
 api_router.include_router(referrals.router, prefix="/referrals", tags=["referrals"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])

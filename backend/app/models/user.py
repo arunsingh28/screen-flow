@@ -41,3 +41,4 @@ class User(Base):
     job_searches = relationship("JobSearch", back_populates="user", cascade="all, delete-orphan")
     activities = relationship("Activity", back_populates="user", cascade="all, delete-orphan")
     credit_transactions = relationship("CreditTransaction", back_populates="user", cascade="all, delete-orphan")
+    page_visits = relationship("PageVisit", back_populates="user", cascade="all, delete-orphan")
