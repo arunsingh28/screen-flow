@@ -3,6 +3,9 @@ name: Deploy Frontend to S3 + CloudFront
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/client-ci.yml'
 
 jobs:
   deploy-frontend:
