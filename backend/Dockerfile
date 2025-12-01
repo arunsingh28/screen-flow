@@ -13,11 +13,12 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy entrypoint first to root directory
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Copy application code
 COPY . .
-
-# Set permissions for entrypoint (already copied with COPY . .)
-RUN chmod +x /entrypoint.sh
 
 # Expose port
 EXPOSE 8000
