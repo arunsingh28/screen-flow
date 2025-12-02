@@ -38,7 +38,7 @@ def fix_enum():
         # Add 'shortlisted'
         if 'shortlisted' not in existing:
             try:
-                print("Adding 'shortlisted' to cvstatus...")
+                print("Adding 'shortlisted' to cvstatus....")
                 conn.execute(text("ALTER TYPE cvstatus ADD VALUE 'shortlisted'"))
                 print("Success.")
             except Exception as e:
