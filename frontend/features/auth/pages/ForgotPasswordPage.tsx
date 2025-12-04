@@ -51,6 +51,7 @@ export default function ForgotPasswordPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                className="text-gray-800 dark:text-gray-200"
                             />
                         </div>
                         <Button className="w-full" type="submit" disabled={isLoading || !email}>

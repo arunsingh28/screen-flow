@@ -75,7 +75,7 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="bg-transparent border-slate-200"
+                                className="bg-transparent border-slate-200 text-gray-800 dark:text-gray-200"
                             />
                         </div>
                         <div className="grid gap-2">
@@ -98,7 +98,7 @@ export default function LoginPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="bg-transparent border-slate-200 pr-10"
+                                    className="bg-transparent border-slate-200 pr-10 text-gray-800 dark:text-gray-200"
                                 />
                                 <button
                                     type="button"

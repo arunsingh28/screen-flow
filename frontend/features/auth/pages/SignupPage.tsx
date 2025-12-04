@@ -84,7 +84,7 @@ export default function SignupPage() {
                                 autoCapitalize="words"
                                 autoComplete="name"
                                 autoCorrect="off"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
+                                className="text-gray-800 dark:text-gray-200 flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
                             />
                         </div>
 
@@ -104,7 +104,7 @@ export default function SignupPage() {
                                 autoCapitalize="none"
                                 autoComplete="email"
                                 autoCorrect="off"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
+                                className="text-gray-800 dark:text-gray-200 flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
                             />
                         </div>
 
@@ -121,7 +121,7 @@ export default function SignupPage() {
                                 onChange={(e) => setCompanyName(e.target.value)}
                                 placeholder="Enter company name"
                                 autoComplete="new-password"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
+                                className="text-gray-800 dark:text-gray-200 flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
                             />
                             <p className="text-xs text-slate-500">
                                 Must be at least 8 characters long.
