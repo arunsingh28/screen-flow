@@ -40,9 +40,16 @@ const CVPreviewModal: React.FC<CVPreviewModalProps> = ({
       if (isOpen && candidate.id) {
          setIsLoading(true);
          setError(null);
+         setDownloadUrl(null); // Reset URL when opening new candidate
+
+         console.log("Fetching download URL for candidate:", candidate.id);
          jobsApi.getDownloadUrl(candidate.id)
             .then(data => {
-               setDownloadUrl(data.url);
+               console.log("Download URL response:", data);
+               // Handle both data.url and data.download_url formats
+               const url = data.url || data.download_url;
+               console.log("Setting download URL:", url);
+               setDownloadUrl(url);
             })
             .catch(err => {
                console.error("Failed to get download URL:", err);
@@ -172,32 +179,50 @@ const CVPreviewModal: React.FC<CVPreviewModalProps> = ({
                            <Button variant="outline" size="sm" onClick={() => {
                               setIsLoading(true);
                               setError(null);
+                              setDownloadUrl(null);
                               jobsApi.getDownloadUrl(candidate.id)
-                                 .then(data => setDownloadUrl(data.url))
+                                 .then(data => {
+                                    const url = data.url || data.download_url;
+                                    setDownloadUrl(url);
+                                 })
                                  .catch(err => setError("Failed to retry loading."))
                                  .finally(() => setIsLoading(false));
                            }}>Retry</Button>
                         </div>
+                     ) : isLoading ? (
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
+                           <Loader2 className="h-12 w-12 animate-spin opacity-20" />
+                           <p className="text-center">Loading preview...</p>
+                        </div>
                      ) : downloadUrl ? (
-                        <PDFViewer url={downloadUrl} />
+                        <>
+                           {/* Debug info - remove after testing */}
+                           {process.env.NODE_ENV === 'development' && (
+                              <div className="absolute top-2 right-2 z-20 bg-black/80 text-white text-xs p-2 rounded max-w-xs overflow-hidden">
+                                 <div className="font-mono truncate" title={downloadUrl}>
+                                    URL: {downloadUrl.substring(0, 50)}...
+                                 </div>
+                              </div>
+                           )}
+                           <PDFViewer url={downloadUrl} />
+                        </>
                      ) : candidate.parsed_text ? (
                         <div className="p-8 whitespace-pre-wrap font-mono text-xs overflow-auto h-full bg-white m-4 shadow-sm rounded-md">
                            {candidate.parsed_text}
                         </div>
                      ) : (
                         <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-4">
-                           {isLoading ? (
-                              <>
-                                 <Loader2 className="h-12 w-12 animate-spin opacity-20" />
-                                 <p className="text-center">Loading preview...</p>
-                              </>
-                           ) : (
-                              <>
-                                 <FileText className="h-16 w-16 opacity-20" />
-                                 <p className="text-center">
-                                    No preview available.
-                                 </p>
-                              </>
+                           <FileText className="h-16 w-16 opacity-20" />
+                           <p className="text-center">
+                              No preview available.
+                           </p>
+                           <p className="text-xs text-center text-muted-foreground">
+                              Candidate ID: {candidate.id}
+                           </p>
+                           {downloadUrl !== null && (
+                              <p className="text-xs text-center text-orange-600">
+                                 Download URL is empty
+                              </p>
                            )}
                         </div>
                      )}
