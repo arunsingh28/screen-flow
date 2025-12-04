@@ -196,7 +196,7 @@ const JobsListPage: React.FC = () => {
                     onClick={(e) => handleStatusChange(e, job.id, job.status)}
                     title={job.status === 'active' ? "Close Job" : "Reopen Job"}
                   >
-                    {job.status === 'active' ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                    {job.status === 'active' ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                   </Button>
                   <Button
                     variant="ghost"

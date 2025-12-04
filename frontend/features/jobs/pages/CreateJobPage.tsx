@@ -82,10 +82,15 @@ const CreateJobPage: React.FC = () => {
       try {
         const text = await parseFile(file);
         setJdText(text);
-        alert("JD Parsed Successfully: The job description text has been extracted from the file.");
+        setError(null);
+        // Scroll the textarea into view
+        setTimeout(() => {
+          document.getElementById('jdText')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
       } catch (error) {
         console.error("Failed to parse JD:", error);
-        alert("Parsing Failed: Could not extract text from the file. Please try copy-pasting manually.");
+        setError("Failed to extract text from the file. Please try copy-pasting manually or use a different file format.");
+        setJdFile(null);
       } finally {
         setIsParsing(false);
       }
@@ -244,14 +249,25 @@ const CreateJobPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <Label htmlFor="jdText">Full Job Description</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {jdText ? `${jdText.length} characters` : '0 characters'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {jdFile && jdText && (
+                      <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Extracted from file
+                      </span>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {jdText ? `${jdText.length} characters` : '0 characters'}
+                    </span>
+                  </div>
                 </div>
                 <Textarea
                   id="jdText"
                   placeholder="Paste the full job description here..."
-                  className="min-h-[200px] font-mono text-sm"
+                  className={cn(
+                    "min-h-[200px] font-mono text-sm transition-all",
+                    jdFile && jdText && "border-green-300 dark:border-green-700 ring-1 ring-green-200 dark:ring-green-800"
+                  )}
                   value={jdText}
                   onChange={(e) => setJdText(e.target.value)}
                 />

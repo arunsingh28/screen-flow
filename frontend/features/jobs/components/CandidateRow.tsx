@@ -79,17 +79,35 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
         </div>
       </td>
       <td className="p-4">
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {formatDistanceToNow(candidate.appliedDate, { addSuffix: true })}
+        <span className={cn(
+          "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize",
+          candidate.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+          candidate.status === 'shortlisted' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+          candidate.status === 'rejected' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+          candidate.status === 'processing' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+        )}>
+          {candidate.status}
         </span>
       </td>
       <td className="p-4 text-right">
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" size="icon" onClick={() => onView(candidate)} title="View Analysis & CV">
-            <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onView(candidate)}
+            title="View Analysis & CV"
+            className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          >
+            <Eye className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </Button>
-          <Button variant="ghost" size="icon" title="Delete" onClick={() => onDelete(candidate.id)}>
-            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Delete"
+            onClick={() => onDelete(candidate.id)}
+            className="hover:bg-red-50 dark:hover:bg-red-900/20"
+          >
+            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
           </Button>
         </div>
       </td>
