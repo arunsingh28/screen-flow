@@ -107,14 +107,16 @@ const ActiveJobsWidget: React.FC = () => {
             ))
           )}
         </div>
-        <div className="mt-4 px-2">
-          <Button
-            variant="outline"
-            className="w-full text-xs h-8 border-dashed"
-            asChild
-          >
-            <Link to={ROUTES.CREATE_JOB}>+ Create New Job</Link>
-          </Button>
+        <div className="px-2 mt-2">
+          <Link to={ROUTES.CREATE_JOB}>
+            <Button
+              variant="outline"
+              className="w-full text-xs h-8 border-dashed"
+              asChild
+            >
+              + Create New Job
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>
