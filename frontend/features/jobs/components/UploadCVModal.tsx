@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Upload, X, File, Loader2, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { jobsApi } from '@/services/jobs.service';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useCredits } from '@/contexts/CreditContext';
 
 interface UploadCVModalProps {
     isOpen: boolean;

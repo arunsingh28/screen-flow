@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import {
   Search,
@@ -21,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Candidate } from '@/types';
+import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { getJobDetailsPath } from '@/config/routes.constants';
 

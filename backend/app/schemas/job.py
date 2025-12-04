@@ -14,6 +14,12 @@ class CVBatchCreate(BaseModel):
     description: Optional[str] = None
     job_description_text: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
+    employment_type: Optional[str] = None
+    seniority_level: Optional[str] = None
+    experience_range: Optional[List[int]] = None
+    company_type: Optional[str] = None
+    industry: Optional[str] = None
+    prior_roles: Optional[str] = None
 
 
 class CVBatchResponse(BaseModel):
@@ -29,6 +35,12 @@ class CVBatchResponse(BaseModel):
     is_active: bool
     is_archived: bool
     tags: List[str]
+    employment_type: Optional[str] = None
+    seniority_level: Optional[str] = None
+    experience_range: Optional[List[int]] = None
+    company_type: Optional[str] = None
+    industry: Optional[str] = None
+    prior_roles: Optional[str] = None
     total_cvs: int
     processed_cvs: int
     failed_cvs: int

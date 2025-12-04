@@ -1,14 +1,15 @@
-
 import React, { useState } from 'react';
 import { Bell, Monitor, Moon, Sun, Laptop, Shield, Eye, EyeOff } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../../components/ui/card';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { useTheme } from '../../../components/theme-provider';
-import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useTheme } from '@/components/theme-provider';
+import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { userService } from '@/services/user.service';
 
 const SettingsPage: React.FC = () => {

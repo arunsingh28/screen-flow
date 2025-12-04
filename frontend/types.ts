@@ -40,14 +40,6 @@ export interface ThemeProviderState {
 
 export type JobStatus = 'active' | 'closed' | 'draft';
 
-export interface MatchingConfig {
-  skillsWeight: number;
-  experienceWeight: number;
-  educationWeight: number;
-  minMatchThreshold: number;
-  strictMode: boolean;
-}
-
 export interface Job {
   id: string;
   title: string;
@@ -58,7 +50,6 @@ export interface Job {
   candidateCount: number;
   highMatchCount: number;
   description?: string;
-  config?: MatchingConfig; // Per-job configuration
 }
 
 export interface Candidate {

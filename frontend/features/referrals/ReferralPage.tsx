@@ -3,7 +3,9 @@ import { motion } from 'framer-motion';
 import { Copy, Share2, Gift, Users, CreditCard, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import toast from 'react-hot-toast';
 import axiosInstance from '@/lib/axios';
 import { HowItWorks } from './components/HowItWork';
 
@@ -46,9 +48,7 @@ export const ReferralPage = () => {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        toast.success("Copied!", {
-            description: "Referral link copied to clipboard.",
-        });
+        toast.success("Referral link copied to clipboard!");
     };
 
     const shareReferral = async () => {

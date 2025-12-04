@@ -123,6 +123,12 @@ async def create_cv_batch(
         description=batch_data.description,
         job_description_text=batch_data.job_description_text,
         tags=batch_data.tags,
+        employment_type=batch_data.employment_type,
+        seniority_level=batch_data.seniority_level,
+        experience_range=batch_data.experience_range,
+        company_type=batch_data.company_type,
+        industry=batch_data.industry,
+        prior_roles=batch_data.prior_roles,
     )
 
     db.add(new_batch)

@@ -266,6 +266,12 @@ const CreateJobPage: React.FC = () => {
         description: description || `Hiring for ${jobDetails.jobTitle}`,
         location: jobDetails.location,
         jd_text: jdText,
+        employment_type: jobDetails.employmentType,
+        seniority_level: jobDetails.seniorityLevel,
+        experience_range: jobDetails.experienceRange,
+        company_type: jobDetails.companyType,
+        industry: jobDetails.industry,
+        prior_roles: jobDetails.priorRoles,
       });
 
       // Refresh credits

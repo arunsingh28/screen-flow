@@ -76,6 +76,14 @@ class CVBatch(Base):
 
     tags = Column(ARRAY(String), default=[])
 
+    # Job Details (New Fields)
+    employment_type = Column(String, nullable=True)
+    seniority_level = Column(String, nullable=True)
+    experience_range = Column(ARRAY(Integer), nullable=True)
+    company_type = Column(String, nullable=True)
+    industry = Column(String, nullable=True)
+    prior_roles = Column(String, nullable=True)
+
     # Statistics
     total_cvs = Column(Integer, default=0)
     processed_cvs = Column(Integer, default=0)

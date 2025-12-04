@@ -6,7 +6,6 @@ import {
    Briefcase,
    Users,
    FileText,
-   Settings,
    Download,
    PlayCircle,
    PauseCircle,
@@ -15,7 +14,7 @@ import {
    RefreshCw,
    Upload
 } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,11 +28,10 @@ import {
    AlertDialogHeader,
    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Candidate, MatchingConfig } from '@/types';
+import { Candidate } from '@/types';
 import CandidateRow from '../components/CandidateRow';
 import CVPreviewModal from '../components/CVPreviewModal';
 import UploadCVModal from '../components/UploadCVModal';
-import MatchingConfigPanel from '@/components/shared/MatchingConfigPanel';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/routes.constants';
 import { jobsApi } from '@/services/jobs.service';
@@ -60,14 +58,6 @@ const JobDetailsPage: React.FC = () => {
    const [candidateToDelete, setCandidateToDelete] = useState<string | null>(null);
    const [isBulkDelete, setIsBulkDelete] = useState(false);
 
-   // Local config state (mock for now as backend doesn't support config yet)
-   const [localConfig, setLocalConfig] = useState<MatchingConfig>({
-      skillsWeight: 40,
-      experienceWeight: 30,
-      educationWeight: 20,
-      minMatchThreshold: 75,
-      strictMode: false
-   });
 
    const fetchJobDetails = async () => {
       if (!id) return;
@@ -133,10 +123,6 @@ const JobDetailsPage: React.FC = () => {
    const toggleStatus = () => {
       // Implement status toggle API call here
       // setJobStatus(prev => prev === 'active' ? 'closed' : 'active');
-   };
-
-   const handleConfigChange = (key: keyof MatchingConfig, value: number | boolean) => {
-      setLocalConfig(prev => ({ ...prev, [key]: value }));
    };
 
    const handleNextCandidate = () => {
@@ -276,15 +262,6 @@ const JobDetailsPage: React.FC = () => {
                   Candidates
                </button>
                <button
-                  onClick={() => setActiveTab('config')}
-                  className={cn(
-                     "pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
-                     activeTab === 'config' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-                  )}
-               >
-                  <Settings className="h-4 w-4" /> Configuration
-               </button>
-               <button
                   onClick={() => setActiveTab('jd')}
                   className={cn(
                      "pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
@@ -378,21 +355,6 @@ const JobDetailsPage: React.FC = () => {
                </Card>
             )}
 
-            {/* Configuration Tab */}
-            {activeTab === 'config' && (
-               <div className="space-y-6">
-                  <MatchingConfigPanel
-                     config={localConfig}
-                     onConfigChange={handleConfigChange}
-                     title="Job-Specific Matching Logic"
-                     description="Customize how AI ranks candidates for this specific role. Changes here override global settings."
-                  />
-                  <div className="mt-6 flex justify-end">
-                     <Button size="lg">Save Configuration</Button>
-                  </div>
-               </div>
-            )}
-
             {/* JD Tab */}
             {activeTab === 'jd' && (
                <Card className="dark:border-gray-700">
@@ -401,6 +363,32 @@ const JobDetailsPage: React.FC = () => {
                      <CardDescription>The source text used for AI analysis.</CardDescription>
                   </CardHeader>
                   <CardContent>
+                     <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                           <div className="text-sm font-medium text-muted-foreground">Employment Type</div>
+                           <div>{job.employment_type || 'N/A'}</div>
+                        </div>
+                        <div>
+                           <div className="text-sm font-medium text-muted-foreground">Seniority Level</div>
+                           <div>{job.seniority_level || 'N/A'}</div>
+                        </div>
+                        <div>
+                           <div className="text-sm font-medium text-muted-foreground">Experience Range</div>
+                           <div>{job.experience_range ? `${job.experience_range[0]} - ${job.experience_range[1]} Years` : 'N/A'}</div>
+                        </div>
+                        <div>
+                           <div className="text-sm font-medium text-muted-foreground">Company Type</div>
+                           <div>{job.company_type || 'N/A'}</div>
+                        </div>
+                        <div>
+                           <div className="text-sm font-medium text-muted-foreground">Industry</div>
+                           <div>{job.industry || 'N/A'}</div>
+                        </div>
+                        <div>
+                           <div className="text-sm font-medium text-muted-foreground">Prior Roles</div>
+                           <div>{job.prior_roles || 'N/A'}</div>
+                        </div>
+                     </div>
                      <div className="p-4 bg-muted/30 rounded-md whitespace-pre-wrap font-mono text-sm text-muted-foreground">
                         {job.job_description_text || job.description || "No description provided."}
                      </div>

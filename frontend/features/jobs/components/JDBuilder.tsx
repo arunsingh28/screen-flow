@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { jobsApi } from '@/services/jobs.service';
+import toast from 'react-hot-toast';
 
 // Types for the generated content
 interface Skill {
@@ -90,56 +92,16 @@ export const JDBuilder: React.FC<JDBuilderProps> = ({ jobDetails, onJdGenerated 
 
     const handleGenerate = async () => {
         setIsGenerating(true);
-        // Simulate API call
-        setTimeout(() => {
-            const mockData: GeneratedJD = {
-                must_have_skills: [
-                    { skill: "Node.js", proficiency: "advanced", confidence: 95, priority: "high", reasoning: "FinTech backend at growth stage requires production Node.js for API development" },
-                    { skill: "React", proficiency: "advanced", confidence: 90, priority: "high", reasoning: "Modern FinTech products need React for complex financial UIs" },
-                    { skill: "PostgreSQL", proficiency: "intermediate", confidence: 85, priority: "medium", reasoning: "Financial data integrity needs ACID-compliant DB" }
-                ],
-                nice_to_have_skills: [
-                    { skill: "TypeScript", confidence: 80, why_bonus: "Improves code quality and maintainability" },
-                    { skill: "AWS/GCP", confidence: 75, why_bonus: "Cloud infrastructure knowledge is a plus" }
-                ],
-                key_responsibilities: [
-                    { responsibility: "Ship 2-3 major features per quarter", priority: 1, time_allocation: "40%" },
-                    { responsibility: "Participate in on-call rotation", priority: 2, time_allocation: "10%" },
-                    { responsibility: "Mentor 1-2 junior engineers", priority: 3, time_allocation: "20%" }
-                ],
-                education: {
-                    requirement_level: "preferred",
-                    degree_level: "bachelor",
-                    field_of_study: ["Computer Science", "Software Engineering"],
-                    can_substitute_with_experience: true,
-                    reasoning: "CS fundamentals are important but practical experience is valued more"
-                },
-                additional_context: {
-                    industry: jobDetails.industry || "FinTech",
-                    domain_expertise: ["Payments", "Banking"],
-                    team_size: "6-8 engineers",
-                    reporting_to: "Engineering Manager",
-                    collaboration: ["Product Managers", "Designers"],
-                    tools: ["Git", "Jira", "Postman", "AWS Console", "Sentry", "DataDog"],
-                    certifications: [],
-                    work_environment: "Hybrid"
-                },
-                compensation: {
-                    salary_range_inr: { min: 1800000, max: 2800000, confidence: "high", note: "Market standard for Mid-level in Bangalore" },
-                    equity_rsu: "0.05% - 0.15%",
-                    notice_period_expectation: "30 days",
-                    other_benefits: ["Health Insurance", "Learning Budget"]
-                },
-                meta: {
-                    role_type: "technical",
-                    demand_level: "high",
-                    confidence_in_suggestions: "high",
-                    reasoning_summary: "Based on current market trends for FinTech startups in India."
-                }
-            };
-            setGeneratedJd(mockData);
+        try {
+            const data = await jobsApi.generateJD(jobDetails);
+            setGeneratedJd(data);
+            toast.success("Job Description generated successfully!");
+        } catch (error) {
+            console.error("Failed to generate JD:", error);
+            toast.error("Failed to generate JD. Please try again.");
+        } finally {
             setIsGenerating(false);
-        }, 2000);
+        }
     };
 
     const handleUseJD = () => {

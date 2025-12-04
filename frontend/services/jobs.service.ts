@@ -17,6 +17,11 @@ export const jobsApi = {
         return response.data;
     },
 
+    generateJD: async (jobDetails: any) => {
+        const response = await axiosInstance.post('/jobs/generate-jd', jobDetails);
+        return response.data;
+    },
+
     createJob: async (data: any) => {
         const response = await axiosInstance.post('/jobs/batches', data);
         return response.data;
