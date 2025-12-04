@@ -1,38 +1,38 @@
+"use client"
 
-import React from "react";
-import { cn } from "../../lib/utils";
+import * as React from "react"
+import * as SliderPrimitive from "@radix-ui/react-slider"
 
-interface SliderProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  value: number;
-  min?: number;
-  max?: number;
-  step?: number;
-  onValueChange?: (value: number) => void;
-}
+import { cn } from "@/lib/utils"
 
-const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
-  ({ className, value, min = 0, max = 100, step = 1, onValueChange, ...props }, ref) => {
-    return (
-      <div className="relative flex w-full touch-none select-none items-center">
-        <input
-          type="range"
-          className={cn(
-            "h-2 w-full cursor-pointer appearance-none rounded-full bg-secondary disabled:cursor-not-allowed disabled:opacity-50",
-            "accent-primary", 
-            className
-          )}
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          ref={ref}
-          onChange={(e) => onValueChange?.(Number(e.target.value))}
-          {...props}
+const Slider = React.forwardRef<
+  React.ElementRef<typeof SliderPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
+>(({ className, ...props }, ref) => {
+  const value = props.value || props.defaultValue || [0];
+  const thumbs = Array.isArray(value) ? value : [value];
+
+  return (
+    <SliderPrimitive.Root
+      ref={ref}
+      className={cn(
+        "relative flex w-full touch-none select-none items-center",
+        className
+      )}
+      {...props}
+    >
+      <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
+        <SliderPrimitive.Range className="absolute h-full bg-primary" />
+      </SliderPrimitive.Track>
+      {thumbs.map((_, i) => (
+        <SliderPrimitive.Thumb
+          key={i}
+          className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
         />
-      </div>
-    );
-  }
-);
-Slider.displayName = "Slider";
+      ))}
+    </SliderPrimitive.Root>
+  )
+})
+Slider.displayName = SliderPrimitive.Root.displayName
 
-export { Slider };
+export { Slider }

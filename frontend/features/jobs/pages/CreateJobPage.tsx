@@ -27,11 +27,172 @@ import { ROUTES, getJobDetailsPath } from '@/config/routes.constants';
 import { useCredits } from '@/contexts/CreditContext';
 import { JDBuilder, JobDetails } from '../components/JDBuilder';
 
-const DEPARTMENTS = ['Engineering', 'Sales', 'Marketing', 'Operations', 'Product', 'Design', 'HR', 'Finance', 'Other'];
-const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship'];
-const SENIORITY_LEVELS = ['Entry', 'Mid', 'Senior', 'Lead', 'Executive'];
-const COMPANY_TYPES = ['Early Startup', 'Growth Startup', 'Mid-size', 'MNC', 'Agency', 'Non-profit'];
-const INDUSTRIES = ['FinTech', 'HealthTech', 'E-commerce', 'SaaS', 'EdTech', 'Enterprise Software', 'Other'];
+const DEPARTMENTS = [
+  "Engineering",
+  "Software Development",
+  "IT Support",
+  "Infrastructure",
+  "Data Science",
+  "AI / ML",
+  "Cybersecurity",
+  "Quality Assurance",
+  "DevOps / SRE",
+
+  "Sales",
+  "Business Development",
+  "Pre-sales",
+  "Account Management",
+  "Customer Success",
+
+  "Marketing",
+  "Content",
+  "Performance Marketing",
+  "SEO",
+  "Brand",
+  "Product Marketing",
+  "Growth",
+
+  "Operations",
+  "Admin",
+  "Logistics",
+  "Procurement",
+  "Supply Chain",
+  "Facilities Management",
+
+  "Product",
+  "Project Management",
+  "Program Management",
+
+  "Design",
+  "UI/UX",
+  "Graphic Design",
+  "Motion Design",
+  "Creative",
+
+  "Human Resources",
+  "Talent Acquisition",
+  "L&D (Learning & Development)",
+  "HR Operations",
+
+  "Finance",
+  "Accounting",
+  "Audit",
+  "Legal",
+  "Compliance",
+  "Investor Relations",
+
+  "Support",
+  "Customer Service",
+  "Call Center",
+
+  "Medical",
+  "Nursing",
+  "Pharmacy",
+  "Clinical Operations",
+
+  "Manufacturing",
+  "Production",
+  "Quality Control",
+
+  "Research & Development",
+  "Scientific Research",
+
+  "Other"
+];
+const EMPLOYMENT_TYPES = [
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Internship",
+  "Freelance",
+  "Temporary",
+  "Consultant",
+  "Volunteer",
+  "Apprenticeship",
+  "Seasonal"
+];
+const SENIORITY_LEVELS = [
+  "Intern",
+  "Trainee",
+  "Entry",
+  "Junior",
+  "Mid",
+  "Senior",
+  "Lead",
+  "Principal",
+  "Staff",
+  "Manager",
+  "Senior Manager",
+  "Director",
+  "Senior Director",
+  "VP",
+  "SVP",
+  "C-level (CXO)",
+  "Founder",
+  "Executive"
+];
+
+const COMPANY_TYPES = [
+  "Early Startup",
+  "Seed Stage",
+  "Series A",
+  "Series B",
+  "Growth Startup",
+  "Unicorn",
+  "Mid-size",
+  "Enterprise",
+  "MNC",
+  "SMB",
+  "Agency",
+  "Consulting Firm",
+  "Government",
+  "Public Sector",
+  "Non-profit",
+  "NGO",
+  "Educational Institution"
+];
+const INDUSTRIES = [
+  "Technology",
+  "FinTech",
+  "HealthTech",
+  "EdTech",
+  "E-commerce",
+  "SaaS",
+  "AI / ML",
+  "Enterprise Software",
+  "Cybersecurity",
+  "Blockchain",
+  "IoT",
+  "Gaming",
+  "Biotech",
+  "Pharmaceuticals",
+  "Healthcare",
+  "Hospitality",
+  "Travel",
+  "Retail",
+  "Manufacturing",
+  "Automotive",
+  "Telecommunications",
+  "Energy",
+  "Oil & Gas",
+  "Aerospace",
+  "Agriculture",
+  "Construction",
+  "Media",
+  "Entertainment",
+  "Logistics",
+  "Transportation",
+  "Education",
+  "Finance",
+  "Banking",
+  "Insurance",
+  "Real Estate",
+  "Legal",
+  "Food & Beverages",
+  "Non-profit",
+  "Government",
+  "Other"
+];
 
 const CreateJobPage: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +202,7 @@ const CreateJobPage: React.FC = () => {
   const [isParsing, setIsParsing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [jdError, setJdError] = useState<string | null>(null);
 
   const jdInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,10 +231,10 @@ const CreateJobPage: React.FC = () => {
       try {
         const text = await parseFile(file);
         setJdText(text);
-        setError(null);
+        setJdError(null);
       } catch (error) {
         console.error("Failed to parse JD:", error);
-        setError("Failed to extract text from the file. Please try copy-pasting manually or use a different file format.");
+        setJdError("Failed to extract text from the file. Please try copy-pasting manually or use a different file format.");
         setJdFile(null);
       } finally {
         setIsParsing(false);
@@ -225,9 +387,11 @@ const CreateJobPage: React.FC = () => {
               <div className="space-y-2">
                 <Label>Experience (Years): {jobDetails.experienceRange[0]} - {jobDetails.experienceRange[1]}</Label>
                 <Slider
-                  defaultValue={[3, 5]}
+                  value={jobDetails.experienceRange}
+                  min={0}
                   max={20}
                   step={1}
+                  minStepsBetweenThumbs={1}
                   className="py-4"
                   onValueChange={(val) => setJobDetails({ ...jobDetails, experienceRange: val })}
                 />
@@ -298,6 +462,13 @@ const CreateJobPage: React.FC = () => {
             <CardDescription>Provide the detailed job description</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {jdError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{jdError}</AlertDescription>
+              </Alert>
+            )}
             <div className="grid w-full grid-cols-2 mb-4 p-1 bg-muted rounded-lg gap-1">
               <button
                 onClick={() => setJdSource('upload')}
