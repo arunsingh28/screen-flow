@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import toast from 'react-hot-toast';
+import { toast } from '@/components/ui/toast';
 import axiosInstance from '@/lib/axios';
 import { HowItWorks } from './components/HowItWork';
 

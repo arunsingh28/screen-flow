@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Upload, X, File, Loader2, AlertCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { jobsApi } from '@/services/jobs.service';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

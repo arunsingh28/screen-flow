@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <Card>
+        <Card className="border-none shadow-none hover:shadow-none">
             <CardHeader className="space-y-1">
                 <CardTitle className="text-2xl">Forgot password</CardTitle>
                 <CardDescription>
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
                                 required
                             />
                         </div>
-                        <Button className="w-full" type="submit" disabled={isLoading}>
+                        <Button className="w-full" type="submit" disabled={isLoading || !email}>
                             {isLoading ? 'Sending link...' : 'Send Reset Link'}
                         </Button>
                     </form>

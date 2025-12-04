@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Candidate } from '@/types';
-import toast from 'react-hot-toast';
+import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { getJobDetailsPath } from '@/config/routes.constants';
 

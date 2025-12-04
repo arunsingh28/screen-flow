@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = 'https://api.xowix.com/api/v1';
-// const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'https://api.xowix.com/api/v1';
+// const API_BASE_URL = 'https://api.xowix.com/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'https://api.xowix.com/api/v1';
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,

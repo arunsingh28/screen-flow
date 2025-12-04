@@ -33,7 +33,7 @@ class CVBatchResponse(BaseModel):
     description: Optional[str] = None
     job_description_text: Optional[str] = None
     is_active: bool
-    is_archived: bool
+    is_archived: Optional[bool] = False
     tags: List[str]
     employment_type: Optional[str] = None
     seniority_level: Optional[str] = None

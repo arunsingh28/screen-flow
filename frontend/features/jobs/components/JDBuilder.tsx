@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 import { jobsApi } from '@/services/jobs.service';
-import toast from 'react-hot-toast';
+import { toast } from '@/components/ui/toast';
 
 // Types for the generated content
 interface Skill {

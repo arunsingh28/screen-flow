@@ -14,7 +14,7 @@ import {
    RefreshCw,
    Upload
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

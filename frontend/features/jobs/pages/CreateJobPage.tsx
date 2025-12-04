@@ -26,6 +26,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ROUTES, getJobDetailsPath } from '@/config/routes.constants';
 import { useCredits } from '@/contexts/CreditContext';
 import { JDBuilder, JobDetails } from '../components/JDBuilder';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 const DEPARTMENTS = [
   "Engineering",
@@ -333,31 +334,25 @@ const CreateJobPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <select
-                    id="department"
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  <SearchableSelect
+                    options={DEPARTMENTS}
                     value={jobDetails.department}
-                    onChange={(e) => setJobDetails({ ...jobDetails, department: e.target.value })}
-                  >
-                    <option value="">Select Department</option>
-                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
+                    onChange={(val) => setJobDetails({ ...jobDetails, department: val })}
+                    placeholder="Select Department"
+                    searchPlaceholder="Search department..."
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="employmentType">Employment Type</Label>
                 <div className="relative">
-                  <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <select
-                    id="employmentType"
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  <SearchableSelect
+                    options={EMPLOYMENT_TYPES}
                     value={jobDetails.employmentType}
-                    onChange={(e) => setJobDetails({ ...jobDetails, employmentType: e.target.value })}
-                  >
-                    {EMPLOYMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                    onChange={(val) => setJobDetails({ ...jobDetails, employmentType: val })}
+                    placeholder="Select Employment Type"
+                  />
                 </div>
               </div>
 
@@ -378,15 +373,12 @@ const CreateJobPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="seniorityLevel">Seniority Level</Label>
                 <div className="relative">
-                  <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <select
-                    id="seniorityLevel"
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  <SearchableSelect
+                    options={SENIORITY_LEVELS}
                     value={jobDetails.seniorityLevel}
-                    onChange={(e) => setJobDetails({ ...jobDetails, seniorityLevel: e.target.value })}
-                  >
-                    {SENIORITY_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
+                    onChange={(val) => setJobDetails({ ...jobDetails, seniorityLevel: val })}
+                    placeholder="Select Seniority Level"
+                  />
                 </div>
               </div>
 
@@ -406,31 +398,25 @@ const CreateJobPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="companyType">Company Type</Label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <select
-                    id="companyType"
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  <SearchableSelect
+                    options={COMPANY_TYPES}
                     value={jobDetails.companyType}
-                    onChange={(e) => setJobDetails({ ...jobDetails, companyType: e.target.value })}
-                  >
-                    {COMPANY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                    onChange={(val) => setJobDetails({ ...jobDetails, companyType: val })}
+                    placeholder="Select Company Type"
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="industry">Industry / Domain</Label>
                 <div className="relative">
-                  <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <select
-                    id="industry"
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  <SearchableSelect
+                    options={INDUSTRIES}
                     value={jobDetails.industry}
-                    onChange={(e) => setJobDetails({ ...jobDetails, industry: e.target.value })}
-                  >
-                    <option value="">Select Industry</option>
-                    {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
-                  </select>
+                    onChange={(val) => setJobDetails({ ...jobDetails, industry: val })}
+                    placeholder="Select Industry"
+                    searchPlaceholder="Search industry..."
+                  />
                 </div>
               </div>
             </div>
