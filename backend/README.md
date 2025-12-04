@@ -66,12 +66,12 @@ cp .env.example .env
 
 **Option B: Using Docker Compose directly**
 ```bash
-docker compose up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 **Option C: Using Makefile**
 ```bash
-make up
+make dev-up
 ```
 
 This will start:
@@ -83,14 +83,14 @@ This will start:
 
 **View all logs:**
 ```bash
-docker compose logs -f
+docker compose -f docker-compose.dev.yml logs -f
 ```
 
 **View API logs only:**
 ```bash
-docker compose logs -f api
+docker compose -f docker-compose.dev.yml logs -f api
 # OR
-make logs-api
+make dev-logs
 ```
 
 **View recent logs:**

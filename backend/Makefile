@@ -59,3 +59,30 @@ status: ## Show status of all services
 	docker compose ps
 
 rebuild: down build up ## Rebuild and restart all services
+
+# Development targets using docker-compose.dev.yml
+dev-up: ## Start dev services
+	docker compose -f docker-compose.dev.yml up -d
+	@echo "Waiting for services to be healthy..."
+	@sleep 3
+	@echo "Services are running!"
+	@echo "API: http://localhost:8000"
+	@echo "Docs: http://localhost:8000/api/v1/docs"
+
+dev-down: ## Stop dev services
+	docker compose -f docker-compose.dev.yml down
+
+dev-build: ## Build dev services
+	docker compose -f docker-compose.dev.yml build
+
+dev-logs: ## View dev logs
+	docker compose -f docker-compose.dev.yml logs -f
+
+dev-restart: ## Restart dev services
+	docker compose -f docker-compose.dev.yml restart
+
+dev-shell: ## Open shell in dev API container
+	docker compose -f docker-compose.dev.yml exec api /bin/bash
+
+dev-migrate: ## Run migrations in dev
+	docker compose -f docker-compose.dev.yml exec api alembic upgrade head

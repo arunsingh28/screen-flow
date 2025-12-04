@@ -35,7 +35,7 @@ check_docker() {
 # Function to start services
 start_services() {
     echo -e "${BLUE}Starting services...${NC}"
-    docker compose up -d
+    docker compose -f docker-compose.dev.yml up -d
 
     echo -e "${YELLOW}Waiting for services to be healthy...${NC}"
     sleep 5
@@ -58,22 +58,22 @@ start_services() {
 # Function to view logs
 view_logs() {
     echo -e "${BLUE}Viewing logs (Ctrl+C to exit)...${NC}"
-    docker compose logs -f
+    docker compose -f docker-compose.dev.yml logs -f
 }
 
 # Function to stop services
 stop_services() {
     echo -e "${BLUE}Stopping services...${NC}"
-    docker compose down
+    docker compose -f docker-compose.dev.yml down
     echo -e "${GREEN}✓ Services stopped${NC}"
 }
 
 # Function to rebuild
 rebuild() {
     echo -e "${BLUE}Rebuilding services...${NC}"
-    docker compose down
-    docker compose build --no-cache
-    docker compose up -d
+    docker compose -f docker-compose.dev.yml down
+    docker compose -f docker-compose.dev.yml build --no-cache
+    docker compose -f docker-compose.dev.yml up -d
     echo -e "${GREEN}✓ Services rebuilt and started${NC}"
 }
 
@@ -92,7 +92,7 @@ case "${1:-start}" in
     restart)
         check_docker
         echo -e "${BLUE}Restarting services...${NC}"
-        docker compose restart
+        docker compose -f docker-compose.dev.yml restart
         echo -e "${GREEN}✓ Services restarted${NC}"
         ;;
     rebuild)
@@ -100,11 +100,11 @@ case "${1:-start}" in
         rebuild
         ;;
     shell)
-        docker compose exec api /bin/bash
+        docker compose -f docker-compose.dev.yml exec api /bin/bash
         ;;
     migrate)
         echo -e "${BLUE}Running database migrations...${NC}"
-        docker compose exec api alembic upgrade head
+        docker compose -f docker-compose.dev.yml exec api alembic upgrade head
         echo -e "${GREEN}✓ Migrations completed${NC}"
         ;;
     *)

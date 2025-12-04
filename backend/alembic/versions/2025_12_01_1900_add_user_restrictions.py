@@ -8,12 +8,13 @@ Create Date: 2025-12-01 19:00:00.000000
 
 from alembic import op
 import sqlalchemy as sa
+from typing import Sequence, Union
 
 
 # revision identifiers, used by Alembic.
-revision = "2025_12_01_1900"
-down_revision = "d9e8f7a6b5c4"
-branch_labels = None
+revision: str = "2025_12_01_1900"
+down_revision: Union[str, None] = "86aaca3f18ed"
+branch_labels: Union[str, Sequence[str], None] = None
 depends_on = None
 
 
