@@ -289,7 +289,7 @@ const CreateJobPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl animate-in fade-in duration-500">
+    <div className="container mx-auto py-8 px-4 max-w-6xl animate-in fade-in duration-500">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Create New Job</h1>
         <p className="text-muted-foreground mt-2">

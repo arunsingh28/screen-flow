@@ -26,16 +26,16 @@ const ToastCard = ({
     };
 
     const bgColors = {
-        success: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800',
-        error: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800',
-        loading: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800',
-        info: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800',
+        success: 'bg-white dark:bg-slate-950 border-emerald-500 dark:border-emerald-500 border',
+        error: 'bg-white dark:bg-slate-950 border-red-500 dark:border-red-500 border',
+        loading: 'bg-white dark:bg-slate-950 border-blue-500 dark:border-blue-500 border',
+        info: 'bg-white dark:bg-slate-950 border-blue-500 dark:border-blue-500 border',
     };
 
     return (
         <div
             className={cn(
-                'max-w-md w-full shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5',
+                'max-w-md w-full shadow-lg rounded-lg pointer-events-auto flex',
                 bgColors[type],
                 t.visible ? 'animate-enter' : 'animate-leave'
             )}
@@ -44,17 +44,18 @@ const ToastCard = ({
                 <div className="flex items-start">
                     <div className="flex-shrink-0 pt-0.5">{icons[type]}</div>
                     <div className="ml-3 flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{title}</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</p>
                         {description && (
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+                            <p className=" text-sm text-gray-600 dark:text-gray-300">{description}</p>
                         )}
                     </div>
                 </div>
             </div>
             <div className="flex border-l border-gray-200 dark:border-gray-700">
                 <button
+                    type="button"
                     onClick={() => toast.dismiss(t.id)}
-                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
                 >
                     <X className="h-5 w-5" />
                 </button>

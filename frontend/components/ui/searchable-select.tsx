@@ -50,7 +50,7 @@ export function SearchableSelect({
     // If options are few, use standard Select
     if (options.length <= 8) {
         return (
-            <Select value={value} onValueChange={onChange} disabled={disabled}>
+            <Select value={value} onValueChange={onChange} disabled={disabled} >
                 <SelectTrigger className={className}>
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
@@ -82,7 +82,7 @@ export function SearchableSelect({
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
+            <PopoverContent className="!w-full p-0" align="start">
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} />
                     <CommandList>
