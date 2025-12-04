@@ -16,7 +16,7 @@ function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CreditProvider initialCredits={100}>
-          <ThemeProvider defaultTheme="system" storageKey="screenflow-ui-theme">
+          <ThemeProvider defaultTheme="system" storageKey="hyrmate-ui-theme">
             <Outlet />
             <Toaster />
           </ThemeProvider>

@@ -31,7 +31,7 @@ export default function LoginPage() {
                     Welcome back
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
-                    Please sign in to your ScreenFlow account to manage your candidate pipeline.
+                    Please sign in to your Hyrmate account to manage your candidate pipeline.
                 </p>
             </div>
 

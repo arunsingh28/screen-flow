@@ -11,7 +11,7 @@ const steps = [
     {
         icon: Sparkles,
         title: "They Join",
-        description: "Your friends sign up for ScreenFlow using your link and verify their account."
+        description: "Your friends sign up for Hyrmate using your link and verify their account."
     },
     {
         icon: Coins,

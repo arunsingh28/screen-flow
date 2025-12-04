@@ -186,7 +186,7 @@ export const ReferralPage = () => {
                             </Button>
                             <Button
                                 className="w-full sm:w-auto bg-[#25D366] hover:bg-[#128C7E] text-white"
-                                onClick={() => window.open(`https://wa.me/?text=Join ScreenFlow using my referral code: ${codeData?.referral_code} ${window.location.origin}/signup?ref=${codeData?.referral_code}`, '_blank')}
+                                onClick={() => window.open(`https://wa.me/?text=Join Hyrmate using my referral code: ${codeData?.referral_code} ${window.location.origin}/signup?ref=${codeData?.referral_code}`, '_blank')}
                             >
                                 WhatsApp
                             </Button>

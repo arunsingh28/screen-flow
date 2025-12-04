@@ -38,7 +38,7 @@ export default function SignupPage() {
                     Create an account
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
-                    Get started with ScreenFlow to revolutionize your hiring process today.
+                    Get started with Hyrmate to revolutionize your hiring process today.
                 </p>
             </div>
 

@@ -22,7 +22,7 @@ export default function AuthLayout() {
 
                     <div className="mt-10 border-t border-slate-200 pt-6">
                         <p className="text-center text-xs text-slate-500">
-                            &copy; {new Date().getFullYear()} ScreenFlow AI. All rights reserved.
+                            &copy; {new Date().getFullYear()} Hyrmate AI. All rights reserved.
                         </p>
                     </div>
                 </div>
@@ -54,7 +54,7 @@ export default function AuthLayout() {
 
                     <blockquote className="space-y-6">
                         <p className="text-2xl font-medium leading-relaxed tracking-wide text-slate-100">
-                            &ldquo;ScreenFlow has revolutionized our hiring process. The AI analysis saves us nearly 20 hours every week, and the quality of candidates we interview has never been higher.&rdquo;
+                            &ldquo;Hyrmate has revolutionized our hiring process. The AI analysis saves us nearly 20 hours every week, and the quality of candidates we interview has never been higher.&rdquo;
                         </p>
                         <footer className="flex items-center gap-4">
                             <img
