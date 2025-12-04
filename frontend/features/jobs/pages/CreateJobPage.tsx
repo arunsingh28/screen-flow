@@ -23,6 +23,7 @@ import { jobsApi } from '@/services/jobs.service';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ROUTES } from '@/config/routes.constants';
 import { useCredits } from '@/contexts/CreditContext';
+import JDBuilder from '../components/JDBuilder';
 
 const CreateJobPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ const CreateJobPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; failed: number }>({ current: 0, total: 0, failed: 0 });
   const [error, setError] = useState<string | null>(null);
+  const [showJDBuilder, setShowJDBuilder] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const jdInputRef = useRef<HTMLInputElement>(null);
@@ -177,6 +179,38 @@ const CreateJobPage: React.FC = () => {
     }
   };
 
+  const handleJDBuilderComplete = (generatedJDText: string) => {
+    setJdText(generatedJDText);
+    setShowJDBuilder(false);
+    // Auto-fill job title if not already set (extract from first line)
+    if (!jobTitle && generatedJDText) {
+      const firstLine = generatedJDText.split('\n')[0];
+      if (firstLine.includes('Job Title:')) {
+        setJobTitle(firstLine.replace('Job Title:', '').trim());
+      }
+    }
+  };
+
+  const handleUploadJDClick = () => {
+    setShowJDBuilder(false);
+    // Trigger the file input click
+    setTimeout(() => {
+      jdInputRef.current?.click();
+    }, 100);
+  };
+
+  // Show JD Builder if requested
+  if (showJDBuilder) {
+    return (
+      <div className="container mx-auto px-4 py-8 animate-in fade-in duration-500">
+        <JDBuilder
+          onComplete={handleJDBuilderComplete}
+          onUploadJD={handleUploadJDClick}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col space-y-2">
@@ -278,7 +312,30 @@ const CreateJobPage: React.FC = () => {
                   <span className="w-full border-t border-slate-200 dark:border-slate-700" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or import from file</span>
+                  <span className="bg-card px-2 text-muted-foreground">Or use AI to generate</span>
+                </div>
+              </div>
+
+              {/* AI JD Builder Button */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2 border-2 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-300 dark:hover:border-purple-700"
+                onClick={() => setShowJDBuilder(true)}
+              >
+                <CheckCircle2 className="h-4 w-4 text-purple-600" />
+                <span className="font-medium">Build JD with AI</span>
+                <span className="ml-auto text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-full">
+                  Smart
+                </span>
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-slate-200 dark:border-slate-700" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or upload file</span>
                 </div>
               </div>
 
