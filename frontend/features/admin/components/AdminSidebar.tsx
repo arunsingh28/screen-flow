@@ -13,6 +13,7 @@ export default function AdminSidebar() {
         { path: '/admin/activity', label: 'Activity', icon: Activity },
         { path: '/admin/referrals', label: 'Referrals', icon: Gift },
         { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+        { path: '/admin/llm-usage', label: 'LLM Usage', icon: BarChart3 }, // Reusing BarChart3 or could use FileText
         { path: '/admin/sessions', label: 'Sessions', icon: Clock },
     ];
 

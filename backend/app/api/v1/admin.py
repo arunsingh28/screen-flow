@@ -152,7 +152,7 @@ def get_admin_stats(
     )
 
 
-@router.get("/users", response_model=List[AdminUserResponse])
+@router.get("/users")
 @limiter.limit(RateLimits.ADMIN_API)
 @cache_service.cache_response(ttl=120)
 async def get_all_users(
@@ -173,6 +173,22 @@ async def get_all_users(
             (User.email.ilike(f"%{search}%")) | (User.company_name.ilike(f"%{search}%"))
         )
 
+    users = query.offset(skip).limit(limit).all()
+    total = db.query(User).count()
+    if search:
+         # If searching, we need count of filtered results
+        total = query.count() # This query object already has filters applied before offset/limit?
+        # Re-check query construction:
+        # query = db.query(User)
+        # if search: query = query.filter(...) 
+        # So yes, query.count() works but we must call it BEFORE offset/limit. 
+        # The code above calls offset/limit on `query` but assigns to `users`.
+        # Wait, the lines `users = query.offset(skip).limit(limit).all()` modifies the query application but `query` variable itself is likely a query object.
+        # SQLAlchemy Query objects are immutable-ish, offset returns a new query.
+        pass
+
+    # Correct logic:
+    total_count = query.count()
     users = query.offset(skip).limit(limit).all()
 
     # Enrich with counts
@@ -200,7 +216,10 @@ async def get_all_users(
             )
         )
 
-    return result
+    return {
+        "total": total_count,
+        "items": result
+    }
 
 
 @router.get("/users/{user_id}")
@@ -519,4 +538,91 @@ async def get_referral_analytics(
             for r in top_referrers
         ],
         "recent_referrals": referral_details,
+    }
+
+@router.get("/llm-usage")
+@limiter.limit(RateLimits.ADMIN_API)
+@cache_service.cache_response(ttl=60)
+async def get_llm_usage(
+    request: Request,
+    response: Response,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, le=1000),
+    search: Optional[str] = Query(None),
+):
+    """Get LLM usage history with details."""
+    from app.models.jd_builder import LLMCall, JobDescription
+    from app.models.job import CV
+    from sqlalchemy import or_
+
+    query = db.query(LLMCall).join(User, LLMCall.user_id == User.id, isouter=True)
+
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                User.email.ilike(search_term),
+                LLMCall.model_name.ilike(search_term),
+                LLMCall.provider.ilike(search_term),
+                LLMCall.call_type.ilike(search_term),
+                # Note: Filtering by context name (JD/CV) would require more complex joins
+            )
+        )
+
+    query = query.order_by(LLMCall.created_at.desc()).offset(skip).limit(limit)
+
+    calls = query.all()
+    
+    results = []
+    for call in calls:
+        call_data = {
+            "id": str(call.id),
+            "created_at": call.created_at,
+            "user_email": call.user.email if call.user else "Unknown",
+            "call_type": call.call_type,
+            "model_name": call.model_name,
+            "provider": call.provider,
+            "total_tokens": call.total_tokens,
+            "total_cost": call.total_cost,
+            "latency_ms": call.latency_ms,
+            "success": call.success,
+            "error_message": call.error_message,
+        }
+        
+        # Add context details
+        if call.job_description:
+            call_data["context_type"] = "Job Description"
+            call_data["context_name"] = call.job_description.job_title
+            call_data["context_id"] = str(call.job_description.id)
+            if call.job_description.structured_jd:
+                 call_data["context_content"] = call.job_description.structured_jd
+        
+        elif call.cv:
+            call_data["context_type"] = "CV"
+            call_data["context_name"] = call.cv.filename
+            call_data["context_id"] = str(call.cv.id)
+            if call.cv.parsed_text:
+                call_data["context_content"] = call.cv.parsed_text
+                
+        elif call.cv_parse_detail: 
+             # Fallback if cv relation is missing but detail is there
+             pass
+
+        results.append(call_data)
+
+    total_count = db.query(LLMCall).count()
+    
+    # Calculate global totals
+    total_stats = db.query(
+        func.sum(LLMCall.total_cost).label("total_cost"),
+        func.sum(LLMCall.total_tokens).label("total_tokens")
+    ).first()
+
+    return {
+        "total": total_count,
+        "total_cost": total_stats.total_cost or 0.0,
+        "total_tokens": total_stats.total_tokens or 0,
+        "items": results
     }

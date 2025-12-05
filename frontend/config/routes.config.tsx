@@ -27,6 +27,7 @@ import AdminActivityPage from '@/features/admin/pages/AdminActivityPage';
 import AdminReferralsPage from '@/features/admin/pages/AdminReferralsPage';
 import AdminAnalyticsPage from '@/features/admin/pages/AdminAnalyticsPage';
 import AdminSessionsPage from '@/features/admin/pages/AdminSessionsPage';
+import LLMUsagePage from '@/features/admin/pages/LLMUsagePage';
 
 export const routes: RouteObject[] = [
   // Auth Routes
@@ -141,6 +142,10 @@ export const routes: RouteObject[] = [
       {
         path: 'sessions',
         element: <AdminSessionsPage />,
+      },
+      {
+        path: 'llm-usage',
+        element: <LLMUsagePage />,
       },
     ],
   },
