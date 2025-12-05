@@ -9,6 +9,7 @@ import { routes } from '@/config/routes.config';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { WebSocketConsole } from '@/components/debug/WebSocketConsole';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 import { usePageTracking } from '@/hooks/usePageTracking';
 
@@ -20,9 +21,11 @@ function RootLayout() {
         <AuthProvider>
           <CreditProvider initialCredits={100}>
             <ThemeProvider defaultTheme="system" storageKey="hyrmate-ui-theme">
-              <Outlet />
-              <Toaster />
-              <WebSocketConsole />
+              <TooltipProvider>
+                <Outlet />
+                <Toaster />
+                <WebSocketConsole />
+              </TooltipProvider>
             </ThemeProvider>
           </CreditProvider>
         </AuthProvider>

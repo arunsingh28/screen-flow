@@ -64,4 +64,5 @@ export interface Candidate {
   skillsMissing: string[];
   education: string;
   appliedDate: Date;
+  errorMessage?: string;
 }

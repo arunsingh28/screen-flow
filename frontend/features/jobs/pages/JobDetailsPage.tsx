@@ -77,7 +77,8 @@ const JobDetailsPage: React.FC = () => {
             skillsMissing: [],
             education: 'N/A',
             appliedDate: new Date(cv.created_at),
-            filename: cv.filename
+            filename: cv.filename,
+            errorMessage: cv.error_message
          }));
          setCandidates(mappedCandidates);
          setError(null);
