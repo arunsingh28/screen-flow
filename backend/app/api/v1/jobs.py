@@ -262,6 +262,10 @@ async def confirm_cv_upload(
     # Update status (e.g. trigger processing queue here if using async worker)
     # For now, we just confirm it's queued for processing
     cv.status = CVStatus.QUEUED
+    
+    # Trigger processing task
+    from app.tasks.cv_tasks import process_cv_task
+    process_cv_task.delay(cv_id=str(cv.id), user_id=str(current_user.id))
 
     # Update batch stats
     batch = cv.batch
@@ -504,11 +508,19 @@ async def get_cv_batch(
     db: Session = Depends(get_db),
 ):
     """Get a specific CV batch with all CVs"""
+    from sqlalchemy.orm import joinedload
+    
     batch = (
         db.query(CVBatch)
+        .options(joinedload(CVBatch.cvs).joinedload(CV.parse_detail))
         .filter(CVBatch.id == batch_id, CVBatch.user_id == current_user.id)
         .first()
     )
+    
+    # Sort CVs by score (highest first)
+    if batch and batch.cvs:
+        # Sort in-place
+        batch.cvs.sort(key=lambda x: x.cv_quality_score or 0, reverse=True)
 
     if not batch:
         raise HTTPException(

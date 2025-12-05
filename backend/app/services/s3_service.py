@@ -195,6 +195,14 @@ class S3Service:
         except ClientError as e:
             raise Exception(f"Failed to get file metadata: {str(e)}")
 
+    def download_file(self, s3_key: str) -> bytes:
+        """Download file content from S3 as bytes"""
+        try:
+            response = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
+            return response["Body"].read()
+        except ClientError as e:
+            raise Exception(f"Failed to download file from S3: {str(e)}")
+
 
 # Singleton instance
 s3_service = S3Service()

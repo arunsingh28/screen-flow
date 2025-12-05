@@ -59,7 +59,7 @@ export interface Candidate {
   currentRole: string;
   experienceYears: number;
   matchScore: number;
-  status: 'new' | 'reviewed' | 'interviewing' | 'rejected';
+  status: 'new' | 'reviewed' | 'interviewing' | 'rejected' | 'pending' | 'queued' | 'processing' | 'completed' | 'failed' | 'shortlisted';
   skillsMatched: string[];
   skillsMissing: string[];
   education: string;

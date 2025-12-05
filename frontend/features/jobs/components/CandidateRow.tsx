@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Eye, Trash2, XCircle, CheckCircle } from 'lucide-react';
+import { Eye, Trash2, XCircle, CheckCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Candidate } from '../../../types';
 import { cn } from '../../../lib/utils';
@@ -14,11 +14,30 @@ interface CandidateRowProps {
   onDelete: (candidateId: string) => void;
 }
 
+import { toast } from '@/components/ui/toast';
+import { jobsApi } from '@/services/jobs.service';
+
 const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSelect, onView, onDelete }) => {
+  const [isRetrying, setIsRetrying] = React.useState(false);
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600 ring-green-200 bg-green-50 dark:bg-green-950/20 dark:ring-green-900';
     if (score >= 50) return 'text-amber-600 ring-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:ring-amber-900';
     return 'text-red-600 ring-red-200 bg-red-50 dark:bg-red-950/20 dark:ring-red-900';
+  };
+
+  const handleRetry = async () => {
+    try {
+      setIsRetrying(true);
+      await jobsApi.retryCV(candidate.id);
+      toast.success("CV queued for retry");
+      // Ideally we should update the parent state, but the polling in JobDetailsPage will pick it up
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to retry CV");
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   return (
@@ -81,16 +100,28 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
       <td className="p-4">
         <span className={cn(
           "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize",
-          candidate.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-          candidate.status === 'shortlisted' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-          candidate.status === 'rejected' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-          candidate.status === 'processing' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+          (candidate.status === 'processing' || candidate.status === 'queued') && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+          (candidate.status === 'completed' || candidate.status === 'shortlisted') && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+          (candidate.status === 'failed' || candidate.status === 'rejected') && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+          candidate.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
         )}>
           {candidate.status}
         </span>
       </td>
       <td className="p-4 text-right">
         <div className="flex justify-end gap-2">
+          {candidate.status === 'failed' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRetry}
+              disabled={isRetrying}
+              title="Scan Again / Retry"
+              className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            >
+              <RefreshCw className={cn("h-4 w-4 text-blue-600 dark:text-blue-400", isRetrying && "animate-spin")} />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"

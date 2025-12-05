@@ -128,5 +128,10 @@ export const jobsApi = {
             is_archived: isArchived
         });
         return response.data;
+    },
+
+    retryCV: async (cvId: string) => {
+        const response = await axiosInstance.post(`/cv-processing/cv/${cvId}/retry`);
+        return response.data;
     }
 };

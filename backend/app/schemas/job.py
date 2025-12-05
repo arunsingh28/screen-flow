@@ -97,6 +97,15 @@ class CVResponse(BaseModel):
         None, alias="batch_id"
     )  # Alias batch_id to job_id for frontend clarity
     job_title: Optional[str] = None
+    
+    # Details from CVParseDetail (populated via properties or relationship)
+    cv_quality_score: Optional[int] = None
+    candidate_name: Optional[str] = None
+    candidate_email: Optional[str] = None
+    current_role: Optional[str] = None
+    total_experience_years: Optional[float] = None
+    skills_matched: List[str] = []
+    match_score: Optional[int] = 0
 
     class Config:
         from_attributes = True

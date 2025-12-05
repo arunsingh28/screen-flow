@@ -148,6 +148,49 @@ class CV(Base):
     llm_calls = relationship("LLMCall", back_populates="cv", cascade="all, delete-orphan")
     parse_detail = relationship("CVParseDetail", back_populates="cv", uselist=False, cascade="all, delete-orphan")
 
+    @property
+    def cv_quality_score(self):
+        return self.parse_detail.cv_quality_score if self.parse_detail else None
+
+    @property
+    def candidate_name(self):
+        return self.parse_detail.candidate_name if self.parse_detail else None
+    
+    @property
+    def candidate_email(self):
+        return self.parse_detail.candidate_email if self.parse_detail else None
+
+    @property
+    def current_role(self):
+        return self.parse_detail.current_role if self.parse_detail else None
+        
+    @property
+    def total_experience_years(self):
+        return self.parse_detail.total_experience_years if self.parse_detail else None
+    
+    @property
+    def skills_matched(self):
+        # Extract skills from parsed_data
+        if self.parse_detail and self.parse_detail.parsed_data:
+             skills_data = self.parse_detail.parsed_data.get("skills", [])
+             if isinstance(skills_data, list):
+                 return [str(s) for s in skills_data] # Ensure strings
+             if isinstance(skills_data, dict):
+                 # Flatten values from categories (e.g. tools, languages)
+                 all_skills = []
+                 for val in skills_data.values():
+                     if isinstance(val, list):
+                         all_skills.extend([str(v) for v in val])
+                     elif isinstance(val, str):
+                         all_skills.append(val)
+                 return all_skills
+        return []
+
+    # Alias for frontend consistency if needed
+    @property
+    def match_score(self):
+        return self.cv_quality_score or 0
+
 
 class JobSearch(Base):
     """Job search/screening sessions"""

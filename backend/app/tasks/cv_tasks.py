@@ -77,6 +77,16 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
                 "cv_id": cv_id,
             },
         )
+        
+        # Publish to Redis
+        from app.core.redis_events import redis_event_bus
+        redis_event_bus.publish_cv_progress(
+            user_id=user_id,
+            cv_id=cv_id,
+            batch_id=str(cv.batch_id),
+            progress=10,
+            status="Downloading CV from S3..."
+        )
 
         # Download file from S3
         file_content = s3_service.download_file(cv.s3_key)
@@ -91,6 +101,14 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
                 "status": "Extracting text from CV...",
                 "cv_id": cv_id,
             },
+        )
+        
+        redis_event_bus.publish_cv_progress(
+            user_id=user_id,
+            cv_id=cv_id,
+            batch_id=str(cv.batch_id),
+            progress=30,
+            status="Extracting text from CV..."
         )
 
         # Parse CV using LLM (async)
@@ -107,6 +125,14 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
                 "status": "Finalizing...",
                 "cv_id": cv_id,
             },
+        )
+        
+        redis_event_bus.publish_cv_progress(
+            user_id=user_id,
+            cv_id=cv_id,
+            batch_id=str(cv.batch_id),
+            progress=90,
+            status="Finalizing..."
         )
 
         if result["success"]:
@@ -131,6 +157,23 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
                     "usage": result["usage"],
                     "cost": result["cost"],
                 },
+            )
+            
+            redis_event_bus.publish_cv_progress(
+                user_id=user_id,
+                cv_id=cv_id,
+                batch_id=str(cv.batch_id),
+                progress=100,
+                status="Completed successfully",
+                parse_detail_id=result["parse_detail_id"]
+            )
+            
+            # Publish batch status update too
+            queue_status = get_queue_status(str(cv.batch_id))
+            redis_event_bus.publish_batch_progress(
+                user_id=user_id,
+                batch_id=str(cv.batch_id),
+                queue_status=queue_status
             )
 
             return {

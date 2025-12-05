@@ -13,6 +13,8 @@ from app.tasks.cv_tasks import process_cv_task, get_queue_status
 from app.core.websocket import manager
 from sqlalchemy import desc
 import logging
+import asyncio
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -227,20 +229,112 @@ async def get_batch_parsed_cvs(
         logger.error(f"Error getting parsed CVs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/cv/{cv_id}/retry", response_model=CVProcessResponse)
+async def retry_cv_processing(
+    cv_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retry processing a failed CV
+    """
+    try:
+        # Get CV
+        cv = db.query(CV).filter(
+            CV.id == cv_id,
+            CV.user_id == current_user.id,
+        ).first()
+
+        if not cv:
+            raise HTTPException(status_code=404, detail="CV not found")
+
+        # Reset status
+        cv.status = CVStatus.QUEUED
+        cv.error_message = None
+        db.commit()
+
+        # Trigger task
+        task = process_cv_task.delay(cv_id=str(cv.id), user_id=str(current_user.id))
+
+        # Send WebSocket update
+        from app.core.redis_events import redis_event_bus
+        redis_event_bus.publish_cv_progress(
+            user_id=str(current_user.id),
+            cv_id=str(cv.id),
+            batch_id=str(cv.batch_id),
+            progress=0,
+            status="Queued for retry",
+        )
+
+        return CVProcessResponse(
+            success=True,
+            message="CV queued for retry",
+            batch_id=str(cv.batch_id),
+            total_cvs=1,
+            task_ids=[task.id],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrying CV: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.websocket("/ws/{user_id}")
 async def cv_processing_websocket(websocket: WebSocket, user_id: str):
     """
     WebSocket endpoint for real-time CV processing updates
+    Subscribes to Redis events for the user and forwards to client
     """
     await manager.connect(websocket, user_id)
+    
+    redis_conn = None
+    pubsub = None
+    
     try:
-        while True:
-            # Keep connection alive
-            data = await websocket.receive_text()
-            # Can handle client messages if needed
-    except WebSocketDisconnect:
-        manager.disconnect(websocket, user_id)
+        import redis.asyncio as redis
+        from app.core.config import settings
+        
+        # Connect to Redis
+        redis_conn = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        pubsub = redis_conn.pubsub()
+        channel = f"user:{user_id}:events"
+        
+        # Subscribe to user's event channel
+        await pubsub.subscribe(channel)
+        
+        # Create a task to listen for Redis messages
+        async def listen_to_redis():
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    try:
+                        event_data = json.loads(message["data"])
+                        await websocket.send_json(event_data)
+                    except Exception as e:
+                        logger.error(f"Error forwarding Redis event: {e}")
+
+        # Run listener in background
+        redis_task = asyncio.create_task(listen_to_redis())
+        
+        # Keep connection open and handle client disconnects
+        # We also need to wait for the client to close or task to fail
+        try:
+            while True:
+                # Wait for any message from client (ping/pong) to keep alive
+                # or just wait indefinitely if one-way
+                data = await websocket.receive_text()
+                # Optional: handle client messages
+        except WebSocketDisconnect:
+            pass
+        finally:
+            redis_task.cancel()
+            
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
+    finally:
+        if pubsub:
+            await pubsub.unsubscribe()
+        if redis_conn:
+            await redis_conn.close()
         manager.disconnect(websocket, user_id)

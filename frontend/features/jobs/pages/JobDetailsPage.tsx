@@ -67,13 +67,13 @@ const JobDetailsPage: React.FC = () => {
          // Map backend CVs to frontend Candidate type
          const mappedCandidates = data.cvs.map((cv: any) => ({
             id: cv.id,
-            name: cv.filename.split('.')[0], // Placeholder name
-            email: 'N/A', // Email extraction not yet implemented
-            currentRole: 'N/A',
-            experienceYears: 0,
-            matchScore: 0, // Scoring not yet implemented
+            name: cv.candidate_name || cv.filename.split('.')[0],
+            email: cv.candidate_email || 'N/A',
+            currentRole: cv.current_role || 'N/A',
+            experienceYears: cv.total_experience_years || 0,
+            matchScore: cv.match_score || cv.cv_quality_score || 0,
             status: cv.status.toLowerCase(),
-            skillsMatched: [],
+            skillsMatched: cv.skills_matched || [],
             skillsMissing: [],
             education: 'N/A',
             appliedDate: new Date(cv.created_at),

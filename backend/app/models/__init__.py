@@ -21,6 +21,7 @@ from app.models.jd_builder import (
     JDSource,
     LLMCallType,
 )
+from app.models.activity import Activity
 
 __all__ = [
     "User",
@@ -42,4 +43,5 @@ __all__ = [
     "JDStatus",
     "JDSource",
     "LLMCallType",
+    "Activity",
 ]
