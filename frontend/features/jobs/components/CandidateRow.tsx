@@ -112,15 +112,17 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
-          <span className={cn(
-            "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize",
-            (candidate.status === 'processing' || candidate.status === 'queued') && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-            (candidate.status === 'completed' || candidate.status === 'shortlisted') && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-            (candidate.status === 'failed' || candidate.status === 'rejected') && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-            candidate.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-          )}>
-            {candidate.status}
-          </span>
+          {candidate.status !== 'processing' && (
+            <span className={cn(
+              "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize",
+              (candidate.status === 'queued') && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+              (candidate.status === 'completed' || candidate.status === 'shortlisted') && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+              (candidate.status === 'failed' || candidate.status === 'rejected') && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+              candidate.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+            )}>
+              {candidate.status}
+            </span>
+          )}
           {(candidate.status === 'failed' || candidate.status === 'rejected') && candidate.errorMessage && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -139,6 +141,7 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
               </span>
             </div>
           )}
+
         </div>
       </td>
       <td className="p-4 text-right">

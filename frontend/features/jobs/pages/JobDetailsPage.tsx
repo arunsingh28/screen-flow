@@ -59,6 +59,9 @@ const JobDetailsPage: React.FC = () => {
    const [candidateToDelete, setCandidateToDelete] = useState<string | null>(null);
    const [isBulkDelete, setIsBulkDelete] = useState(false);
 
+   const [currentPage, setCurrentPage] = useState(1);
+   const [itemsPerPage] = useState(10);
+
    const { lastMessage } = useCVWebSocket();
 
    // Handle real-time updates
@@ -363,10 +366,10 @@ const JobDetailsPage: React.FC = () => {
                      )}
                   </div>
 
-                  <div className="rounded-md border bg-card dark:border-gray-700">
-                     <div className="relative w-full overflow-auto">
-                        <table className="w-full caption-bottom text-sm">
-                           <thead className="[&_tr]:border-b">
+                  <div className="rounded-md border bg-card dark:border-gray-700 flex flex-col h-[calc(100vh-280px)]">
+                     <div className="relative w-full overflow-y-auto flex-1">
+                        <table className="w-full caption-bottom text-sm relative">
+                           <thead className="[&_tr]:border-b sticky top-0 bg-card z-10 shadow-sm">
                               <tr className="border-b dark:border-gray-700 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[50px]">
                                     <input
@@ -392,23 +395,49 @@ const JobDetailsPage: React.FC = () => {
                                     </td>
                                  </tr>
                               ) : (
-                                 candidates.map((candidate) => (
-                                    <CandidateRow
-                                       key={candidate.id}
-                                       candidate={candidate}
-                                       isSelected={selectedCandidates.has(candidate.id)}
-                                       onSelect={() => handleSelectOne(candidate.id)}
-                                       onView={setViewingCandidate}
-                                       onDelete={(id) => {
-                                          setCandidateToDelete(id);
-                                          setIsBulkDelete(false);
-                                          setIsDeleteDialogOpen(true);
-                                       }}
-                                    />
-                                 ))
+                                 candidates
+                                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                                    .map((candidate) => (
+                                       <CandidateRow
+                                          key={candidate.id}
+                                          candidate={candidate}
+                                          isSelected={selectedCandidates.has(candidate.id)}
+                                          onSelect={() => handleSelectOne(candidate.id)}
+                                          onView={setViewingCandidate}
+                                          onDelete={(id) => {
+                                             setCandidateToDelete(id);
+                                             setIsBulkDelete(false);
+                                             setIsDeleteDialogOpen(true);
+                                          }}
+                                       />
+                                    ))
                               )}
                            </tbody>
                         </table>
+                     </div>
+                     {/* Pagination Controls */}
+                     <div className="flex items-center justify-between px-4 py-2 border-t dark:border-gray-700">
+                        <div className="text-xs text-muted-foreground">
+                           Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, candidates.length)} of {candidates.length} candidates
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                              disabled={currentPage === 1}
+                           >
+                              Previous
+                           </Button>
+                           <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(candidates.length / itemsPerPage)))}
+                              disabled={currentPage >= Math.ceil(candidates.length / itemsPerPage)}
+                           >
+                              Next
+                           </Button>
+                        </div>
                      </div>
                   </div>
                </Card>
