@@ -40,7 +40,7 @@ class OpenAIService:
         self.client = None
         if settings.OPENAI_API_KEY:
             self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self.default_model = "gpt-4o"
+        self.default_model = "gpt-4o-mini"
 
     def _calculate_cost(self, model_name: str, input_tokens: int, output_tokens: int) -> Dict[str, float]:
         """Calculate cost based on token usage"""
