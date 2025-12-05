@@ -8,7 +8,7 @@ import { queryClient } from '@/lib/react-query';
 import { routes } from '@/config/routes.config';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { WebSocketConsole } from '@/components/debug/WebSocketConsole';
+// import { WebSocketConsole } from '@/components/debug/WebSocketConsole';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 import { usePageTracking } from '@/hooks/usePageTracking';
@@ -20,11 +20,11 @@ function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <CreditProvider initialCredits={100}>
-            <ThemeProvider defaultTheme="system" storageKey="hyrmate-ui-theme">
+            <ThemeProvider defaultTheme="system" storageKey="H-mate-ui-theme">
               <TooltipProvider>
                 <Outlet />
                 <Toaster />
-                <WebSocketConsole />
+                {/* <WebSocketConsole /> */}
               </TooltipProvider>
             </ThemeProvider>
           </CreditProvider>

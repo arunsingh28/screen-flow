@@ -65,4 +65,6 @@ export interface Candidate {
   education: string;
   appliedDate: Date;
   errorMessage?: string;
+  progress?: number;
+  statusMessage?: string;
 }

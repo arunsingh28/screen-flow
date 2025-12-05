@@ -3,6 +3,7 @@ import React from 'react';
 import { Eye, Trash2, XCircle, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
 import { Candidate } from '../../../types';
 import { cn } from '../../../lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -129,6 +130,14 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
                 <p className="max-w-xs">{candidate.errorMessage}</p>
               </TooltipContent>
             </Tooltip>
+          )}
+          {candidate.status === 'processing' && (
+            <div className="w-24 space-y-1">
+              <Progress value={candidate.progress || 0} className="h-1.5" />
+              <span className="text-[10px] text-muted-foreground truncate block max-w-full">
+                {candidate.statusMessage || "Processing..."}
+              </span>
+            </div>
           )}
         </div>
       </td>

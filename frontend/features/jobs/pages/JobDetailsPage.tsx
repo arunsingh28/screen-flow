@@ -35,6 +35,7 @@ import UploadCVModal from '../components/UploadCVModal';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/routes.constants';
 import { jobsApi } from '@/services/jobs.service';
+import { useCVWebSocket } from '@/hooks/useCVWebSocket';
 
 const JobDetailsPage: React.FC = () => {
    const { id } = useParams<{ id: string }>();
@@ -42,7 +43,7 @@ const JobDetailsPage: React.FC = () => {
    // const { toast } = useToast(); // Commented out as useToast is missing
 
    const [job, setJob] = useState<any>(null);
-   const [candidates, setCandidates] = useState<any[]>([]);
+   const [candidates, setCandidates] = useState<Candidate[]>([]);
    const [loading, setLoading] = useState(true);
    const [refreshing, setRefreshing] = useState(false);
    const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,32 @@ const JobDetailsPage: React.FC = () => {
    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
    const [candidateToDelete, setCandidateToDelete] = useState<string | null>(null);
    const [isBulkDelete, setIsBulkDelete] = useState(false);
+
+   const { lastMessage } = useCVWebSocket();
+
+   // Handle real-time updates
+   useEffect(() => {
+      if (!lastMessage) return;
+
+      if (lastMessage.type === 'cv_progress') {
+         setCandidates(prev => prev.map(c => {
+            if (c.id === lastMessage.cv_id) {
+               // If completed, trigger a full refresh to get final scores
+               if (lastMessage.progress === 100) {
+                  fetchJobDetails(); // Non-blocking refresh
+                  return { ...c, status: 'completed', progress: 100, statusMessage: 'Completed' };
+               }
+               return {
+                  ...c,
+                  status: 'processing',
+                  progress: lastMessage.progress,
+                  statusMessage: lastMessage.status
+               };
+            }
+            return c;
+         }));
+      }
+   }, [lastMessage]);
 
 
    const fetchJobDetails = async () => {
@@ -80,7 +107,38 @@ const JobDetailsPage: React.FC = () => {
             filename: cv.filename,
             errorMessage: cv.error_message
          }));
-         setCandidates(mappedCandidates);
+
+         const typedCandidates: Candidate[] = mappedCandidates;
+
+         // Smart merge: prevent overwriting active 'processing' state with stale 'queued' state from API
+         setCandidates(prev => {
+            const prevMap = new Map<string, Candidate>(prev.map(c => [c.id, c]));
+
+            return typedCandidates.map(newC => {
+               const prevC = prevMap.get(newC.id);
+
+               // If we have a local candidate that is processing, and the API says queued, assume API is stale
+               if (prevC?.status === 'processing' && newC.status === 'queued') {
+                  return {
+                     ...newC,
+                     status: 'processing',
+                     progress: prevC.progress,
+                     statusMessage: prevC.statusMessage
+                  };
+               }
+
+               // If API confirms processing, preserve the granular progress from local state
+               if (prevC?.status === 'processing' && newC.status === 'processing') {
+                  return {
+                     ...newC,
+                     progress: prevC.progress,
+                     statusMessage: prevC.statusMessage
+                  };
+               }
+
+               return newC;
+            });
+         });
          setError(null);
       } catch (err) {
          console.error("Failed to fetch job details:", err);
