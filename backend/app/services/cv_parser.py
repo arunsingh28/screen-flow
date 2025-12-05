@@ -11,7 +11,7 @@ import PyPDF2
 import pdfplumber
 from docx import Document
 from sqlalchemy.orm import Session
-from app.services.bedrock import bedrock_service
+from app.services.llm_factory import llm_factory
 from app.services.toon_service import toon_service
 from app.models.jd_builder import LLMCallType, CVParseDetail
 from app.models.job import CV
@@ -338,7 +338,7 @@ class CVParserService:
             prompt = CV_PARSING_PROMPT.format(cv_text=cv_text)
 
             # Call LLM to parse CV
-            result = await bedrock_service.invoke_claude(
+            result = await llm_factory.get_service().invoke_model(
                 prompt=prompt,
                 db=db,
                 user_id=user_id,
