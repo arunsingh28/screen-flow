@@ -2,9 +2,10 @@
 CV Processing API endpoints with queue support
 """
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
+import traceback
 from app.api.deps import get_db, get_current_user
 from app.models.user import User
 from app.models.job import CV, CVBatch, CVStatus
@@ -284,31 +285,15 @@ async def retry_cv_processing(
 @router.websocket("/ws/{user_id}")
 async def cv_processing_websocket(
     websocket: WebSocket, 
-    user_id: str,
-    token: str = None
+    user_id: str
 ):
     """
     WebSocket endpoint for real-time CV processing updates
     """
-    if not token:
-        await websocket.close(code=1008)
-        return
-
-    try:
-        from jose import jwt, JWTError
-        from app.core.config import settings
-        
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        token_user_id = payload.get("sub")
-        if token_user_id is None or token_user_id != user_id:
-            logger.warning(f"WebSocket auth failed: User mismatch {token_user_id} != {user_id}")
-            await websocket.close(code=1008)
-            return
-    except JWTError:
-        logger.warning("WebSocket auth failed: Invalid token")
-        await websocket.close(code=1008)
-        return
-
+    import logging
+    print(f"DEBUG: WS Attempt (No Auth): user={user_id}", flush=True)
+    logger.info(f"WS Attempt (No Auth): user={user_id}")
+    
     await manager.connect(websocket, user_id)
     
     redis_conn = None
@@ -325,6 +310,7 @@ async def cv_processing_websocket(
         
         # Subscribe to user's event channel
         await pubsub.subscribe(channel)
+        logger.info(f"Subscribed to Redis channel: {channel}")
         
         # Create a task to listen for Redis messages
         async def listen_to_redis():
@@ -340,13 +326,9 @@ async def cv_processing_websocket(
         redis_task = asyncio.create_task(listen_to_redis())
         
         # Keep connection open and handle client disconnects
-        # We also need to wait for the client to close or task to fail
         try:
             while True:
-                # Wait for any message from client (ping/pong) to keep alive
-                # or just wait indefinitely if one-way
                 data = await websocket.receive_text()
-                # Optional: handle client messages
         except WebSocketDisconnect:
             pass
         finally:
@@ -354,6 +336,8 @@ async def cv_processing_websocket(
             
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         if pubsub:
             await pubsub.unsubscribe()

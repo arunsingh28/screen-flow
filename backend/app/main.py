@@ -28,6 +28,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+print(f"DEBUG: CORS Origins = {settings.BACKEND_CORS_ORIGINS}", flush=True)
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
