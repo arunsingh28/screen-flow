@@ -282,11 +282,33 @@ async def retry_cv_processing(
 
 
 @router.websocket("/ws/{user_id}")
-async def cv_processing_websocket(websocket: WebSocket, user_id: str):
+async def cv_processing_websocket(
+    websocket: WebSocket, 
+    user_id: str,
+    token: str = None
+):
     """
     WebSocket endpoint for real-time CV processing updates
-    Subscribes to Redis events for the user and forwards to client
     """
+    if not token:
+        await websocket.close(code=1008)
+        return
+
+    try:
+        from jose import jwt, JWTError
+        from app.core.config import settings
+        
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        token_user_id = payload.get("sub")
+        if token_user_id is None or token_user_id != user_id:
+            logger.warning(f"WebSocket auth failed: User mismatch {token_user_id} != {user_id}")
+            await websocket.close(code=1008)
+            return
+    except JWTError:
+        logger.warning("WebSocket auth failed: Invalid token")
+        await websocket.close(code=1008)
+        return
+
     await manager.connect(websocket, user_id)
     
     redis_conn = None

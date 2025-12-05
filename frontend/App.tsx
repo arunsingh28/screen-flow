@@ -8,6 +8,7 @@ import { queryClient } from '@/lib/react-query';
 import { routes } from '@/config/routes.config';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { WebSocketConsole } from '@/components/debug/WebSocketConsole';
 
 import { usePageTracking } from '@/hooks/usePageTracking';
 
@@ -21,6 +22,7 @@ function RootLayout() {
             <ThemeProvider defaultTheme="system" storageKey="hyrmate-ui-theme">
               <Outlet />
               <Toaster />
+              <WebSocketConsole />
             </ThemeProvider>
           </CreditProvider>
         </AuthProvider>

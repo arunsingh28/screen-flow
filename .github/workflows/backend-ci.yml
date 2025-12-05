@@ -63,7 +63,7 @@ jobs:
           script: |
             cd /var/www/screenflow
 
-            echo "📝 Writing .env file..."
+            echo "Writing .env file..."
             cat > .env <<EOF
             ECR_REGISTRY=${{ secrets.ECR_REGISTRY }}
             ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}
@@ -88,23 +88,23 @@ jobs:
             S3_PRESIGNED_URL_EXPIRATION=${{ secrets.S3_PRESIGNED_URL_EXPIRATION }}
             EOF
 
-            echo "🔐 Logging into Amazon ECR..."
+            echo "Logging into Amazon ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
               | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-            echo "📥 Pulling latest API image..."
+            echo "Pulling latest API image..."
             docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
-            echo "🛑 Stopping old containers..."
+            echo "Stopping old containers..."
             docker-compose down
 
-            echo "🧹 Cleaning up old images..."
+            echo "Cleaning up old images..."
             docker image prune -f
 
-            echo "🚀 Starting new containers..."
+            echo "Starting new containers..."
             docker-compose up -d
 
-            echo "⏳ Waiting for containers to be healthy..."
+            echo "Waiting for containers to be healthy..."
             timeout=60
             elapsed=0
             while [ $elapsed -lt $timeout ]; do
@@ -117,19 +117,19 @@ jobs:
               echo "Waiting... ($elapsed/$timeout seconds)"
             done
 
-            echo "📊 Container status:"
+            echo "Container status:"
             docker-compose ps
 
-            echo "📝 Recent logs:"
+            echo "Recent logs:"
             docker-compose logs --tail=100 api
 
-            echo "🔍 Checking for errors..."
+            echo "Checking for errors..."
             if docker-compose logs api | grep -i "error\|traceback\|exception" | tail -20; then
-              echo "⚠️  Found errors in logs"
+              echo "Found errors in logs"
               exit 1
             fi
 
-            echo "✅ Deployment complete!"
+            echo "Deployment complete!"
 
       # ---- Verify Deployment ----
       - name: Verify deployment

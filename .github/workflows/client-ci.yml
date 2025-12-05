@@ -15,13 +15,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Setup Node.js for frontend build
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # Install frontend dependencies & build
+      # Create .env file for Vite
+      - name: Create .env file
+        working-directory: ./frontend
+        run: |
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env
+          echo ".env file created:"
+          cat .env
+
+      # Install dependencies & build
       - name: Install and Build Frontend
         working-directory: ./frontend
         run: |
@@ -41,7 +48,7 @@ jobs:
         run: |
           aws s3 sync ./frontend/dist s3://${{ secrets.FRONT_S3_BUCKET_NAME }} --delete
 
-      # Create CloudFront invalidation
+      # Invalidate cache
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
