@@ -106,8 +106,18 @@ export const JDBuilder: React.FC<JDBuilderProps> = ({ jobDetails, onJdGenerated 
                 prior_roles: jobDetails.priorRoles,
             };
             const data = await jobsApi.generateJD(payload);
-            setGeneratedJd(data);
-            toast.success("Job Description generated successfully!");
+            // The backend returns { success: true, structured_jd: { ... }, ... }
+            // We need to set the structured_jd part to state
+            if (data.structured_jd) {
+                setGeneratedJd(data.structured_jd);
+                toast.success("Job Description generated successfully!");
+            } else if (data.success === false) {
+                toast.error(data.error || "Failed to generate JD");
+            } else {
+                // Fallback if structure is different
+                setGeneratedJd(data);
+                toast.success("Job Description generated successfully!");
+            }
         } catch (error) {
             console.error("Failed to generate JD:", error);
             toast.error("Failed to generate JD. Please try again.");
@@ -129,30 +139,30 @@ Location: ${jobDetails.location}
 Employment Type: ${jobDetails.employmentType}
 
 About the Role:
-${generatedJd.meta.reasoning_summary}
+${generatedJd.meta?.reasoning_summary || ''}
 
 Key Responsibilities:
-${generatedJd.key_responsibilities.map(r => `- ${r.responsibility} (${r.time_allocation})`).join('\n')}
+${generatedJd.key_responsibilities?.map(r => `- ${r.responsibility} (${r.time_allocation})`).join('\n') || ''}
 
 Must-Have Skills:
-${generatedJd.must_have_skills.map(s => `- ${s.skill} (${s.proficiency}): ${s.reasoning}`).join('\n')}
+${generatedJd.must_have_skills?.map(s => `- ${s.skill} (${s.proficiency}): ${s.reasoning}`).join('\n') || ''}
 
 Nice-to-Have Skills:
-${generatedJd.nice_to_have_skills.map(s => `- ${s.skill}: ${s.why_bonus}`).join('\n')}
+${generatedJd.nice_to_have_skills?.map(s => `- ${s.skill}: ${s.why_bonus}`).join('\n') || ''}
 
 Education:
-${generatedJd.education.degree_level} in ${generatedJd.education.field_of_study.join(', ')} (${generatedJd.education.requirement_level})
-${generatedJd.education.can_substitute_with_experience ? '(Can substitute with experience)' : ''}
+${generatedJd.education?.degree_level || ''} in ${generatedJd.education?.field_of_study?.join(', ') || ''} (${generatedJd.education?.requirement_level || ''})
+${generatedJd.education?.can_substitute_with_experience ? '(Can substitute with experience)' : ''}
 
 Tools & Environment:
-Tools: ${generatedJd.additional_context.tools.join(', ')}
-Team Size: ${generatedJd.additional_context.team_size}
-Work Environment: ${generatedJd.additional_context.work_environment}
+Tools: ${generatedJd.additional_context?.tools?.join(', ') || ''}
+Team Size: ${generatedJd.additional_context?.team_size || ''}
+Work Environment: ${generatedJd.additional_context?.work_environment || ''}
 
 Compensation:
-Salary: ₹${(generatedJd.compensation.salary_range_inr.min / 100000).toFixed(1)}L - ₹${(generatedJd.compensation.salary_range_inr.max / 100000).toFixed(1)}L
-Equity: ${generatedJd.compensation.equity_rsu}
-Notice Period: ${generatedJd.compensation.notice_period_expectation}
+Salary: ${generatedJd.compensation?.salary_range_inr ? `₹${(generatedJd.compensation.salary_range_inr.min / 100000).toFixed(1)}L - ₹${(generatedJd.compensation.salary_range_inr.max / 100000).toFixed(1)}L` : 'Not specified'}
+Equity: ${generatedJd.compensation?.equity_rsu || 'None'}
+Notice Period: ${generatedJd.compensation?.notice_period_expectation || 'Not specified'}
     `.trim();
 
         onJdGenerated({
@@ -212,7 +222,7 @@ Notice Period: ${generatedJd.compensation.notice_period_expectation}
                                 <CardTitle className="text-base">Must-Have Skills</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {generatedJd.must_have_skills.map((skill, idx) => (
+                                {generatedJd.must_have_skills?.map((skill, idx) => (
                                     <div key={idx} className="flex items-start gap-3 p-3 rounded-lg border bg-card/50">
                                         <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                                         <div className="space-y-1">
@@ -223,7 +233,7 @@ Notice Period: ${generatedJd.compensation.notice_period_expectation}
                                             <p className="text-xs text-muted-foreground">{skill.reasoning}</p>
                                         </div>
                                     </div>
-                                ))}
+                                )) || <p className="text-sm text-muted-foreground">No must-have skills generated.</p>}
                             </CardContent>
                         </Card>
 
@@ -234,12 +244,12 @@ Notice Period: ${generatedJd.compensation.notice_period_expectation}
                             </CardHeader>
                             <CardContent>
                                 <ul className="space-y-2">
-                                    {generatedJd.key_responsibilities.map((resp, idx) => (
+                                    {generatedJd.key_responsibilities?.map((resp, idx) => (
                                         <li key={idx} className="flex gap-3 text-sm">
                                             <span className="font-mono text-xs text-muted-foreground shrink-0 w-12">{resp.time_allocation}</span>
                                             <span>{resp.responsibility}</span>
                                         </li>
-                                    ))}
+                                    )) || <li className="text-sm text-muted-foreground">No responsibilities generated.</li>}
                                 </ul>
                             </CardContent>
                         </Card>
@@ -253,20 +263,22 @@ Notice Period: ${generatedJd.compensation.notice_period_expectation}
                                 <div>
                                     <div className="text-xs text-muted-foreground">Salary Range</div>
                                     <div className="font-semibold">
-                                        ₹{(generatedJd.compensation.salary_range_inr.min / 100000).toFixed(1)}L - ₹{(generatedJd.compensation.salary_range_inr.max / 100000).toFixed(1)}L
+                                        {generatedJd.compensation?.salary_range_inr ?
+                                            `₹${(generatedJd.compensation.salary_range_inr.min / 100000).toFixed(1)}L - ₹${(generatedJd.compensation.salary_range_inr.max / 100000).toFixed(1)}L`
+                                            : 'Not specified'}
                                     </div>
                                 </div>
                                 <div>
                                     <div className="text-xs text-muted-foreground">Equity</div>
-                                    <div className="font-medium">{generatedJd.compensation.equity_rsu}</div>
+                                    <div className="font-medium">{generatedJd.compensation?.equity_rsu || 'None'}</div>
                                 </div>
                                 <div>
                                     <div className="text-xs text-muted-foreground">Education</div>
-                                    <div className="font-medium capitalize">{generatedJd.education.degree_level}</div>
+                                    <div className="font-medium capitalize">{generatedJd.education?.degree_level || 'Not specified'}</div>
                                 </div>
                                 <div>
                                     <div className="text-xs text-muted-foreground">Notice Period</div>
-                                    <div className="font-medium">{generatedJd.compensation.notice_period_expectation}</div>
+                                    <div className="font-medium">{generatedJd.compensation?.notice_period_expectation || 'Not specified'}</div>
                                 </div>
                             </CardContent>
                         </Card>

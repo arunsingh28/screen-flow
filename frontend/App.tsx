@@ -7,22 +7,25 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/react-query';
 import { routes } from '@/config/routes.config';
 import { cn } from '@/lib/utils';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 import { usePageTracking } from '@/hooks/usePageTracking';
 
 function RootLayout() {
   usePageTracking();
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CreditProvider initialCredits={100}>
-          <ThemeProvider defaultTheme="system" storageKey="hyrmate-ui-theme">
-            <Outlet />
-            <Toaster />
-          </ThemeProvider>
-        </CreditProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <CreditProvider initialCredits={100}>
+            <ThemeProvider defaultTheme="system" storageKey="hyrmate-ui-theme">
+              <Outlet />
+              <Toaster />
+            </ThemeProvider>
+          </CreditProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 const router = createBrowserRouter([
