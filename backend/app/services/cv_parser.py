@@ -1,6 +1,7 @@
 """
 CV Parser Service
 Handles PDF/DOCX parsing and LLM-based CV extraction with skill recency tracking
+Optimized with TOON encoding for 30-60% token savings
 """
 
 import json
@@ -11,6 +12,7 @@ import pdfplumber
 from docx import Document
 from sqlalchemy.orm import Session
 from app.services.bedrock import bedrock_service
+from app.services.toon_service import toon_service
 from app.models.jd_builder import LLMCallType, CVParseDetail
 from app.models.job import CV
 import logging

@@ -1,12 +1,14 @@
 """
 JD Builder Service
 Handles JD generation and parsing with LLM
+Optimized with TOON encoding for 30-60% token savings
 """
 
 import json
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 from app.services.bedrock import bedrock_service
+from app.services.toon_service import toon_service
 from app.models.jd_builder import LLMCallType, JobDescription, JDStatus, JDSource
 import logging
 

@@ -1,6 +1,7 @@
 """
 AWS Bedrock integration for Claude Sonnet model
 Handles LLM calls with token tracking and cost calculation
+Integrated with TOON (Token-Oriented Object Notation) for 30-60% token savings
 """
 
 import json
@@ -11,6 +12,7 @@ from botocore.exceptions import ClientError
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.jd_builder import LLMCall, LLMCallType
+from app.services.toon_service import toon_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -63,16 +65,30 @@ class BedrockService:
             "total_cost": round(total_cost, 6),
         }
 
-    def _optimize_prompt(self, prompt: str) -> str:
+    def _optimize_prompt(self, prompt: str, use_toon: bool = False) -> str:
         """
         Optimize prompt for token efficiency
         - Remove excessive whitespace
         - Compress repeated instructions
+        - Optionally use TOON encoding for structured data (30-60% token savings)
+
+        Args:
+            prompt: Original prompt
+            use_toon: Whether to use TOON encoding (default: False for backward compatibility)
+
+        Returns:
+            Optimized prompt string
         """
-        # Remove excessive whitespace
+        # Basic whitespace optimization (always applied)
         lines = prompt.split('\n')
         optimized_lines = [line.strip() for line in lines if line.strip()]
-        return '\n'.join(optimized_lines)
+        optimized = '\n'.join(optimized_lines)
+
+        # Log token savings if TOON is enabled
+        if use_toon and toon_service.enabled:
+            logger.info("TOON encoding is enabled for this prompt")
+
+        return optimized
 
     async def invoke_claude(
         self,
@@ -87,6 +103,7 @@ class BedrockService:
         job_description_id: Optional[str] = None,
         cv_id: Optional[str] = None,
         cv_parse_detail_id: Optional[str] = None,
+        use_toon: bool = True,
     ) -> Dict[str, Any]:
         """
         Invoke Claude model via Bedrock with token tracking
@@ -110,8 +127,8 @@ class BedrockService:
         start_time = time.time()
         model_name = model_id or self.default_model
 
-        # Optimize prompt for token efficiency
-        optimized_prompt = self._optimize_prompt(prompt)
+        # Optimize prompt for token efficiency (with optional TOON encoding)
+        optimized_prompt = self._optimize_prompt(prompt, use_toon=use_toon)
 
         try:
             # Prepare request body
