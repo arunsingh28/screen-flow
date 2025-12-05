@@ -93,7 +93,19 @@ export const JDBuilder: React.FC<JDBuilderProps> = ({ jobDetails, onJdGenerated 
     const handleGenerate = async () => {
         setIsGenerating(true);
         try {
-            const data = await jobsApi.generateJD(jobDetails);
+            const payload = {
+                job_title: jobDetails.jobTitle,
+                department: jobDetails.department,
+                employment_type: jobDetails.employmentType,
+                location: jobDetails.location,
+                seniority_level: jobDetails.seniorityLevel,
+                min_years_experience: jobDetails.experienceRange[0],
+                max_years_experience: jobDetails.experienceRange[1],
+                company_type: jobDetails.companyType,
+                industry: jobDetails.industry,
+                prior_roles: jobDetails.priorRoles,
+            };
+            const data = await jobsApi.generateJD(payload);
             setGeneratedJd(data);
             toast.success("Job Description generated successfully!");
         } catch (error) {

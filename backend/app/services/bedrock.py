@@ -49,7 +49,7 @@ class BedrockService:
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
-        self.default_model = "anthropic.claude-sonnet-4-20250514"
+        self.default_model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
     def _calculate_cost(self, model_name: str, input_tokens: int, output_tokens: int) -> Dict[str, float]:
         """Calculate cost based on token usage"""
