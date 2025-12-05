@@ -94,13 +94,8 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
         )
 
         # Parse CV using LLM (async)
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If event loop is already running, create a new one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        result = loop.run_until_complete(
+        # Use asyncio.run for robust event loop management in sync context
+        result = asyncio.run(
             cv_parser_service.parse_cv(cv, file_content, db, user_id)
         )
 

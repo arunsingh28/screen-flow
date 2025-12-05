@@ -7,7 +7,7 @@ import json
 from typing import Dict, Any, Optional
 from github import Github, GithubException
 from sqlalchemy.orm import Session
-from app.services.bedrock import bedrock_service
+from app.services.llm_factory import llm_factory
 from app.models.jd_builder import LLMCallType, GitHubAnalysis, CVParseDetail
 from datetime import datetime, timezone
 import logging
@@ -304,7 +304,7 @@ class GitHubAnalyzerService:
             )
 
             # Call LLM to analyze
-            result = await bedrock_service.invoke_claude(
+            result = await llm_factory.get_service().invoke_model(
                 prompt=prompt,
                 db=db,
                 user_id=user_id,
