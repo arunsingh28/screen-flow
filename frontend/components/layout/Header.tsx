@@ -122,9 +122,9 @@ const Header: React.FC = () => {
           {/* Logo */}
           <Link to={ROUTES.DASHBOARD} className="flex items-center space-x-2">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xl">
-              S
+              H
             </div>
-            <span className="text-xl font-bold tracking-tight hidden sm:inline-block">QuikHR</span>
+            <span className="text-xl font-bold tracking-tight hidden sm:inline-block">HyrMate</span>
           </Link>
 
           {/* Desktop Navigation */}

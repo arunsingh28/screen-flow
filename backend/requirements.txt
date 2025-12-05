@@ -52,3 +52,4 @@ aiohttp==3.9.1
 # TOON - Token-Oriented Object Notation for LLM optimization
 git+https://github.com/toon-format/toon-python.git
 
+openai>=1.0.0

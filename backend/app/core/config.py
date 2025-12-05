@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 
 
 class Settings(BaseSettings):
@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     AWS_REGION: str = "us-east-1"
     S3_BUCKET_NAME: str
     S3_PRESIGNED_URL_EXPIRATION: int = 3600  # 1 hour
+
+    # LLM Configuration
+    LLM_PROVIDER: str = "bedrock"  # Options: "bedrock", "openai"
+    OPENAI_API_KEY: Optional[str] = None
 
     class Config:
         env_file = ".env"

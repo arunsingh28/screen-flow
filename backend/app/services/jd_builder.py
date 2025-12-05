@@ -7,7 +7,7 @@ Optimized with TOON encoding for 30-60% token savings
 import json
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
-from app.services.bedrock import bedrock_service
+from app.services.llm_factory import llm_factory
 from app.services.toon_service import toon_service
 from app.models.jd_builder import LLMCallType, JobDescription, JDStatus, JDSource
 import logging
@@ -262,7 +262,8 @@ class JDBuilderService:
             db.commit()
 
             # Call LLM to generate JD
-            result = await bedrock_service.invoke_claude(
+            llm_service = llm_factory.get_service()
+            result = await llm_service.invoke_model(
                 prompt=prompt,
                 db=db,
                 user_id=user_id,
@@ -336,7 +337,8 @@ class JDBuilderService:
             prompt = JD_PARSING_PROMPT.format(jd_text=jd_text)
 
             # Call LLM to parse JD
-            result = await bedrock_service.invoke_claude(
+            llm_service = llm_factory.get_service()
+            result = await llm_service.invoke_model(
                 prompt=prompt,
                 db=db,
                 user_id=user_id,
