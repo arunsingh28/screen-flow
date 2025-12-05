@@ -10,9 +10,17 @@ from app.models.job import (
     SearchStatus,
 )
 from app.models.analytics import PageVisit
-
 from app.models.referral import Referral
 from app.models.credit_transaction import CreditTransaction
+from app.models.jd_builder import (
+    JobDescription,
+    LLMCall,
+    CVParseDetail,
+    GitHubAnalysis,
+    JDStatus,
+    JDSource,
+    LLMCallType,
+)
 
 __all__ = [
     "User",
@@ -27,4 +35,11 @@ __all__ = [
     "Referral",
     "CreditTransaction",
     "PageVisit",
+    "JobDescription",
+    "LLMCall",
+    "CVParseDetail",
+    "GitHubAnalysis",
+    "JDStatus",
+    "JDSource",
+    "LLMCallType",
 ]

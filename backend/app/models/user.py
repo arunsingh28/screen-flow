@@ -58,3 +58,15 @@ class User(Base):
     page_visits = relationship(
         "PageVisit", back_populates="user", cascade="all, delete-orphan"
     )
+    job_descriptions = relationship(
+        "JobDescription", back_populates="user", cascade="all, delete-orphan"
+    )
+    llm_calls = relationship(
+        "LLMCall", back_populates="user", cascade="all, delete-orphan"
+    )
+    cv_parse_details = relationship(
+        "CVParseDetail", back_populates="user", cascade="all, delete-orphan"
+    )
+    github_analyses = relationship(
+        "GitHubAnalysis", back_populates="user", cascade="all, delete-orphan"
+    )

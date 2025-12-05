@@ -145,6 +145,8 @@ class CV(Base):
     search_results = relationship(
         "SearchResult", back_populates="cv", cascade="all, delete-orphan"
     )
+    llm_calls = relationship("LLMCall", back_populates="cv", cascade="all, delete-orphan")
+    parse_detail = relationship("CVParseDetail", back_populates="cv", uselist=False, cascade="all, delete-orphan")
 
 
 class JobSearch(Base):
