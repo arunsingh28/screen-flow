@@ -124,8 +124,10 @@ jobs:
             docker-compose logs --tail=100 api
 
             echo "Checking for errors..."
-            if docker-compose logs api | grep -i "error\|traceback\|exception" | tail -20; then
-              echo "Found errors in logs"
+            ERRORS=$(docker-compose logs api | grep -i "error\|traceback\|exception" | tail -20)
+            if [ -n "$ERRORS" ]; then
+              echo "⚠️  Found errors in logs:"
+              echo "$ERRORS"
               exit 1
             fi
 

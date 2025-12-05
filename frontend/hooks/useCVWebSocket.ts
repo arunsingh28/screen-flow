@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useCVWebSocket = () => {
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const [isConnected, setIsConnected] = useState(false);
     const [lastMessage, setLastMessage] = useState<any>(null);
     const socketRef = useRef<WebSocket | null>(null);
@@ -13,14 +13,14 @@ export const useCVWebSocket = () => {
     }, []);
 
     useEffect(() => {
-        if (!user?.id) return;
+        if (!user?.id || !token) return;
 
         // Determine WS URL
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
         // Replace http/https with ws/wss
         const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
         const wsBase = apiUrl.replace(/^https?/, wsProtocol);
-        const wsUrl = `${wsBase}/cv-processing/ws/${user.id}`;
+        const wsUrl = `${wsBase}/cv-processing/ws/${user.id}?token=${token}`;
 
         addLog(`Connecting to ${wsUrl}...`);
 
@@ -62,7 +62,7 @@ export const useCVWebSocket = () => {
         } catch (err) {
             addLog(`Setup Error: ${err}`);
         }
-    }, [user?.id, addLog]);
+    }, [user?.id, token, addLog]);
 
     return { isConnected, lastMessage, logs };
 };

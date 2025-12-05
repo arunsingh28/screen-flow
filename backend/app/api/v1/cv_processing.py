@@ -298,7 +298,7 @@ async def cv_processing_websocket(
         from jose import jwt, JWTError
         from app.core.config import settings
         
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         token_user_id = payload.get("sub")
         if token_user_id is None or token_user_id != user_id:
             logger.warning(f"WebSocket auth failed: User mismatch {token_user_id} != {user_id}")
