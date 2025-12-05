@@ -1,7 +1,7 @@
 """add jd builder and llm tracking models
 
 Revision ID: add_jd_builder_llm
-Revises: 2025_12_04_2130_add_job_details_columns
+Revises: 2025_12_04_2130
 Create Date: 2025-12-05 00:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'add_jd_builder_llm'
-down_revision = '2025_12_04_2130_add_job_details_columns'
+down_revision = '2025_12_04_2130'
 branch_labels = None
 depends_on = None
 

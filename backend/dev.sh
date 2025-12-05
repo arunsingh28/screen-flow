@@ -99,6 +99,10 @@ case "${1:-start}" in
         check_docker
         rebuild
         ;;
+    install)
+        check_docker
+        rebuild
+        ;;
     shell)
         docker compose -f docker-compose.dev.yml exec api /bin/bash
         ;;
@@ -108,7 +112,7 @@ case "${1:-start}" in
         echo -e "${GREEN}✓ Migrations completed${NC}"
         ;;
     *)
-        echo "Usage: ./dev.sh {start|logs|stop|restart|rebuild|shell|migrate}"
+        echo "Usage: ./dev.sh {start|logs|stop|restart|rebuild|install|shell|migrate}"
         echo ""
         echo "Commands:"
         echo "  start   - Start all services (default)"
@@ -116,6 +120,7 @@ case "${1:-start}" in
         echo "  stop    - Stop all services"
         echo "  restart - Restart all services"
         echo "  rebuild - Rebuild and restart services"
+        echo "  install - Rebuild and restart services (alias for rebuild)"
         echo "  shell   - Open shell in API container"
         echo "  migrate - Run database migrations"
         exit 1

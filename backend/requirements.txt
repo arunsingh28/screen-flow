@@ -12,7 +12,6 @@ alembic==1.12.1
 # Redis
 redis==5.0.1
 hiredis==2.2.3
-slowapi==0.1.9
 
 # Authentication
 python-jose[cryptography]==3.3.0
