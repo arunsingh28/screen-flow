@@ -353,7 +353,15 @@ class CVParserService:
 
             # Parse JSON response
             try:
-                parsed_data = json.loads(result["response"])
+                # Clean response (remove ```json ... ``` wrapper if present)
+                response_text = result["response"].strip()
+                if response_text.startswith("```"):
+                    response_text = response_text.strip("`")
+                    if response_text.startswith("json"):
+                        response_text = response_text[4:]
+                response_text = response_text.strip()
+                
+                parsed_data = json.loads(response_text)
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse LLM response as JSON: {e}")
                 logger.error(f"Response: {result['response'][:500]}")
@@ -395,7 +403,7 @@ class CVParserService:
                 "parse_detail_id": str(cv_parse_detail.id),
                 "parsed_data": parsed_data,
                 "usage": result["usage"],
-                "cost": result["cost"],
+                "cost": result["cost"]["total_cost"],
             }
 
         except Exception as e:

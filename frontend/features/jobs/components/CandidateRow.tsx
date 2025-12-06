@@ -146,7 +146,9 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
       </td>
       <td className="p-4 text-right">
         <div className="flex justify-end gap-2">
-          {candidate.status === 'failed' && !isPermanentError(candidate.errorMessage) && (
+
+          {/* Retry button hidden for all failed candidates as requested */}
+          {/* {candidate.status === 'failed' && !isPermanentError(candidate.errorMessage) && (
             <Button
               variant="ghost"
               size="icon"
@@ -157,7 +159,20 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
             >
               <RefreshCw className={cn("h-4 w-4 text-blue-600 dark:text-blue-400", isRetrying && "animate-spin")} />
             </Button>
+          )} */}
+          {(candidate.status === 'failed' || candidate.status === 'rejected') && candidate.errorMessage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-xs text-red-500 mr-2 max-w-[200px] truncate cursor-help">
+                  {candidate.errorMessage}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[400px] max-h-[200px] overflow-y-auto">
+                <p>{candidate.errorMessage}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
+
           <Button
             variant="ghost"
             size="icon"
