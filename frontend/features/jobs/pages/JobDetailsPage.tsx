@@ -44,6 +44,7 @@ const JobDetailsPage: React.FC = () => {
 
    const [job, setJob] = useState<any>(null);
    const [candidates, setCandidates] = useState<Candidate[]>([]);
+   const [totalCandidates, setTotalCandidates] = useState(0);
    const [loading, setLoading] = useState(true);
    const [refreshing, setRefreshing] = useState(false);
    const [error, setError] = useState<string | null>(null);
@@ -59,21 +60,32 @@ const JobDetailsPage: React.FC = () => {
    const [candidateToDelete, setCandidateToDelete] = useState<string | null>(null);
    const [isBulkDelete, setIsBulkDelete] = useState(false);
 
+   // Server-side state
    const [currentPage, setCurrentPage] = useState(1);
    const [itemsPerPage] = useState(10);
+   const [searchQuery, setSearchQuery] = useState('');
+   const [statusFilter, setStatusFilter] = useState('');
+
+   // Debounce search
+   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+   useEffect(() => {
+      const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+      return () => clearTimeout(timer);
+   }, [searchQuery]);
 
    const { lastMessage } = useCVWebSocket();
 
-   // Handle real-time updates
+   // Handle real-time updates (update existing candidates in list)
    useEffect(() => {
       if (!lastMessage) return;
 
       if (lastMessage.type === 'cv_progress') {
          setCandidates(prev => prev.map(c => {
             if (c.id === lastMessage.cv_id) {
-               // If completed, trigger a full refresh to get final scores
+               // If completed, trigger a refresh to get final scores and updated list if status changed
                if (lastMessage.progress === 100) {
-                  fetchJobDetails(); // Non-blocking refresh
+                  fetchCVs(); // targeted refresh
                   return { ...c, status: 'completed', progress: 100, statusMessage: 'Completed' };
                }
                return {
@@ -94,8 +106,25 @@ const JobDetailsPage: React.FC = () => {
       try {
          const data = await jobsApi.getJobDetails(id);
          setJob(data);
-         // Map backend CVs to frontend Candidate type
-         const mappedCandidates = data.cvs.map((cv: any) => ({
+         // Initial stats are in data, but CV list is separate now
+         setError(null);
+      } catch (err) {
+         console.error("Failed to fetch job details:", err);
+         setError("Failed to load job details.");
+      } finally {
+         setLoading(false);
+         setRefreshing(false);
+      }
+   };
+
+   const fetchCVs = async () => {
+      if (!id) return;
+      try {
+         const data = await jobsApi.getBatchCVs(id, currentPage, itemsPerPage, statusFilter, debouncedSearch);
+
+         setTotalCandidates(data.total);
+
+         const mappedCandidates = data.items.map((cv: any) => ({
             id: cv.id,
             name: cv.candidate_name || cv.filename.split('.')[0],
             email: cv.candidate_email || 'N/A',
@@ -111,50 +140,27 @@ const JobDetailsPage: React.FC = () => {
             errorMessage: cv.error_message
          }));
 
-         const typedCandidates: Candidate[] = mappedCandidates;
+         setCandidates(mappedCandidates);
 
-         // Smart merge: prevent overwriting active 'processing' state with stale 'queued' state from API
-         setCandidates(prev => {
-            const prevMap = new Map<string, Candidate>(prev.map(c => [c.id, c]));
-
-            return typedCandidates.map(newC => {
-               const prevC = prevMap.get(newC.id);
-
-               // If we have a local candidate that is processing, and the API says queued, assume API is stale
-               if (prevC?.status === 'processing' && newC.status === 'queued') {
-                  return {
-                     ...newC,
-                     status: 'processing',
-                     progress: prevC.progress,
-                     statusMessage: prevC.statusMessage
-                  };
-               }
-
-               // If API confirms processing, preserve the granular progress from local state
-               if (prevC?.status === 'processing' && newC.status === 'processing') {
-                  return {
-                     ...newC,
-                     progress: prevC.progress,
-                     statusMessage: prevC.statusMessage
-                  };
-               }
-
-               return newC;
-            });
-         });
-         setError(null);
       } catch (err) {
-         console.error("Failed to fetch job details:", err);
-         setError("Failed to load job details.");
-      } finally {
-         setLoading(false);
-         setRefreshing(false);
+         console.error("Failed to fetch CVs:", err);
+         // Don't set main error state to avoid blocking the whole page
+         toast.error("Failed to load candidates");
       }
    };
 
+   // Initial load
    useEffect(() => {
       fetchJobDetails();
-      // Poll every 10 seconds for updates
+   }, [id]);
+
+   // Fetch CVs on params change
+   useEffect(() => {
+      fetchCVs();
+   }, [id, currentPage, itemsPerPage, statusFilter, debouncedSearch]);
+
+   // Poll stats periodically (job details only)
+   useEffect(() => {
       const interval = setInterval(fetchJobDetails, 10000);
       return () => clearInterval(interval);
    }, [id]);
@@ -343,7 +349,25 @@ const JobDetailsPage: React.FC = () => {
                <Card className="border-none shadow-none bg-transparent">
                   <div className="flex items-center justify-between mb-4">
                      <div className="flex items-center gap-2">
-                        <Input placeholder="Search candidates..." className="w-[300px] h-9" />
+                        <Input
+                           placeholder="Search candidates..."
+                           className="w-[300px] h-9"
+                           value={searchQuery}
+                           onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        <select
+                           className="h-9 w-[150px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                           value={statusFilter}
+                           onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                           <option value="">All Status</option>
+                           <option value="queued">Queued</option>
+                           <option value="processing">Processing</option>
+                           <option value="completed">Completed</option>
+                           <option value="failed">Failed</option>
+                           <option value="shortlisted">Shortlisted</option>
+                           <option value="rejected">Rejected</option>
+                        </select>
                         <Button variant="outline" size="sm" className="h-9 gap-2">
                            <Filter className="h-4 w-4" /> Filter
                         </Button>
@@ -395,22 +419,21 @@ const JobDetailsPage: React.FC = () => {
                                     </td>
                                  </tr>
                               ) : (
-                                 candidates
-                                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                                    .map((candidate) => (
-                                       <CandidateRow
-                                          key={candidate.id}
-                                          candidate={candidate}
-                                          isSelected={selectedCandidates.has(candidate.id)}
-                                          onSelect={() => handleSelectOne(candidate.id)}
-                                          onView={setViewingCandidate}
-                                          onDelete={(id) => {
-                                             setCandidateToDelete(id);
-                                             setIsBulkDelete(false);
-                                             setIsDeleteDialogOpen(true);
-                                          }}
-                                       />
-                                    ))
+                                 // Server-side mapped candidates
+                                 candidates.map((candidate) => (
+                                    <CandidateRow
+                                       key={candidate.id}
+                                       candidate={candidate}
+                                       isSelected={selectedCandidates.has(candidate.id)}
+                                       onSelect={() => handleSelectOne(candidate.id)}
+                                       onView={setViewingCandidate}
+                                       onDelete={(id) => {
+                                          setCandidateToDelete(id);
+                                          setIsBulkDelete(false);
+                                          setIsDeleteDialogOpen(true);
+                                       }}
+                                    />
+                                 ))
                               )}
                            </tbody>
                         </table>
@@ -418,7 +441,7 @@ const JobDetailsPage: React.FC = () => {
                      {/* Pagination Controls */}
                      <div className="flex items-center justify-between px-4 py-2 border-t dark:border-gray-700">
                         <div className="text-xs text-muted-foreground">
-                           Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, candidates.length)} of {candidates.length} candidates
+                           Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalCandidates)} of {totalCandidates} candidates
                         </div>
                         <div className="flex items-center gap-2">
                            <Button
@@ -432,8 +455,11 @@ const JobDetailsPage: React.FC = () => {
                            <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(candidates.length / itemsPerPage)))}
-                              disabled={currentPage >= Math.ceil(candidates.length / itemsPerPage)}
+                              onClick={() => {
+                                 const maxPage = Math.ceil(totalCandidates / itemsPerPage);
+                                 setCurrentPage(prev => Math.min(prev + 1, maxPage));
+                              }}
+                              disabled={currentPage >= Math.ceil(totalCandidates / itemsPerPage)}
                            >
                               Next
                            </Button>

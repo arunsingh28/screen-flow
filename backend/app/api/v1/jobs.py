@@ -24,6 +24,7 @@ from app.schemas.job import (
     DashboardStatsResponse,
     StatsHistoryResponse,
     DailyStats,
+    CVListResponse,
 )
 from app.models.activity import Activity
 from app.models.job import JobSearch, SearchResult
@@ -541,6 +542,82 @@ async def get_cv_batch(
                 cv.download_url = None
 
     return response
+
+
+@router.get("/batches/{batch_id}/cvs", response_model=CVListResponse)
+@cache_service.cache_response(ttl=30)
+async def list_batch_cvs(
+    batch_id: UUID,
+    page: int = 1,
+    page_size: int = 10,
+    status: Optional[CVStatus] = None,
+    q: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    List CVs in a batch with pagination, status filtering, and search.
+    Search looks into candidate name, email, and filename.
+    """
+    from sqlalchemy import or_
+    from app.models.jd_builder import CVParseDetail
+
+    # Base query: Join CV with ParseDetail for search fields
+    query = (
+        db.query(CV)
+        .outerjoin(CVParseDetail, CV.id == CVParseDetail.cv_id)
+        .filter(CV.batch_id == batch_id, CV.user_id == current_user.id)
+    )
+
+    # Filter by status
+    if status:
+        query = query.filter(CV.status == status)
+
+    # Search filter
+    if q:
+        search_term = f"%{q}%"
+        query = query.filter(
+            or_(
+                CV.filename.ilike(search_term),
+                CVParseDetail.candidate_name.ilike(search_term),
+                CVParseDetail.candidate_email.ilike(search_term),
+            )
+        )
+
+    # Get total count
+    total = query.count()
+
+    # Apply pagination
+    cvs = (
+        query.order_by(CV.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    # Add download URLs
+    # Note: Generating 10-20 presigned URLs is fast enough to do on-the-fly
+    cv_responses = []
+    for cv in cvs:
+        # Convert to Pydantic model
+        cv_resp = CVResponse.from_orm(cv)
+        
+        # Add download URL
+        try:
+            cv_resp.download_url = s3_service.generate_presigned_url(
+                s3_key=cv.s3_key, filename=cv.filename
+            )
+        except Exception:
+            cv_resp.download_url = None
+            
+        cv_responses.append(cv_resp)
+
+    return CVListResponse(
+        items=cv_responses,
+        total=total,
+        page=page,
+        page_size=page_size
+    )
 
 
 class BatchStatusUpdate(BaseModel):

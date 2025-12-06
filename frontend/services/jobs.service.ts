@@ -59,6 +59,15 @@ export const jobsApi = {
         return response.data;
     },
 
+    getBatchCVs: async (batchId: string, page = 1, pageSize = 10, status = '', q = '') => {
+        const params: any = { page, page_size: pageSize };
+        if (status && status !== 'all') params.status = status;
+        if (q) params.q = q;
+
+        const response = await axiosInstance.get(`/jobs/batches/${batchId}/cvs`, { params });
+        return response.data;
+    },
+
     getJobDetails: async (id: string) => {
         const response = await axiosInstance.get(`/jobs/batches/${id}`);
         return response.data;
