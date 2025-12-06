@@ -284,63 +284,84 @@ async def retry_cv_processing(
 
 @router.websocket("/ws/{user_id}")
 async def cv_processing_websocket(
-    websocket: WebSocket, 
+    websocket: WebSocket,
     user_id: str
 ):
     """
     WebSocket endpoint for real-time CV processing updates
+    Forwards events from Redis (published by Celery) to WebSocket clients
     """
-    import logging
-    print(f"DEBUG: WS Attempt (No Auth): user={user_id}", flush=True)
-    logger.info(f"WS Attempt (No Auth): user={user_id}")
-    
+    import asyncio
+    import json as json_lib
+    from app.core.config import settings
+
     await manager.connect(websocket, user_id)
-    
-    redis_conn = None
-    pubsub = None
-    
-    try:
-        import redis.asyncio as redis
-        from app.core.config import settings
-        
-        # Connect to Redis
-        redis_conn = redis.from_url(settings.REDIS_URL, decode_responses=True)
-        pubsub = redis_conn.pubsub()
-        channel = f"user:{user_id}:events"
-        
-        # Subscribe to user's event channel
-        await pubsub.subscribe(channel)
-        logger.info(f"Subscribed to Redis channel: {channel}")
-        
-        # Create a task to listen for Redis messages
-        async def listen_to_redis():
+    logger.info(f"WebSocket connected for user {user_id}")
+
+    # Create Redis subscription for this user
+    async def listen_redis_events():
+        """Listen to Redis pub/sub and forward events to WebSocket"""
+        try:
+            import redis.asyncio as aioredis
+
+            # Create async Redis client
+            redis = await aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+            pubsub = redis.pubsub()
+
+            # Subscribe to user-specific channel
+            channel = f"user:{user_id}:events"
+            await pubsub.subscribe(channel)
+            logger.info(f"Subscribed to Redis channel: {channel}")
+
+            # Listen for messages
             async for message in pubsub.listen():
                 if message["type"] == "message":
                     try:
-                        event_data = json.loads(message["data"])
-                        await websocket.send_json(event_data)
+                        event = json_lib.loads(message["data"])
+                        await websocket.send_json(event)
+                        logger.debug(f"Forwarded {event.get('type')} event to WebSocket")
                     except Exception as e:
-                        logger.error(f"Error forwarding Redis event: {e}")
+                        logger.error(f"Error forwarding event: {e}")
+                        break
 
-        # Run listener in background
-        redis_task = asyncio.create_task(listen_to_redis())
-        
-        # Keep connection open and handle client disconnects
-        try:
-            while True:
-                data = await websocket.receive_text()
-        except WebSocketDisconnect:
-            pass
+        except Exception as e:
+            logger.error(f"Redis subscription error: {e}")
         finally:
-            redis_task.cancel()
-            
+            try:
+                await pubsub.unsubscribe(channel)
+                await redis.close()
+            except:
+                pass
+
+    # Start Redis listener task
+    redis_task = asyncio.create_task(listen_redis_events())
+
+    try:
+        # Keep connection alive and handle client messages
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
+
+                # Handle ping/pong
+                if data == "ping":
+                    await websocket.send_json({"type": "pong"})
+
+            except asyncio.TimeoutError:
+                # Send periodic heartbeat
+                try:
+                    await websocket.send_json({"type": "heartbeat"})
+                except:
+                    break
+
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected for user {user_id}")
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"WebSocket error for user {user_id}: {e}")
     finally:
-        if pubsub:
-            await pubsub.unsubscribe()
-        if redis_conn:
-            await redis_conn.close()
+        # Cleanup
+        redis_task.cancel()
+        try:
+            await redis_task
+        except asyncio.CancelledError:
+            pass
         manager.disconnect(websocket, user_id)

@@ -8,6 +8,7 @@ from typing import Dict, Any
 from celery import Task
 from sqlalchemy.orm import Session
 from app.core.celery_config import celery_app
+from app.core.redis_events import redis_event_bus
 from app.database import SessionLocal
 from app.models.job import CV, CVStatus, CVBatch
 from app.services.cv_parser import cv_parser_service
@@ -67,6 +68,16 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
         cv.status = CVStatus.PROCESSING
         db.commit()
 
+        # Publish WebSocket event
+        redis_event_bus.publish_cv_progress(
+            user_id=user_id,
+            cv_id=cv_id,
+            batch_id=str(cv.batch_id),
+            progress=10,
+            status="Downloading CV from S3...",
+            filename=cv.filename,
+        )
+
         # Update task progress (0-100)
         self.update_state(
             state="PROGRESS",
@@ -93,12 +104,22 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
         if not file_content:
             raise ValueError(f"Failed to download file from S3: {cv.s3_key}")
 
+        # Publish WebSocket event
+        redis_event_bus.publish_cv_progress(
+            user_id=user_id,
+            cv_id=cv_id,
+            batch_id=str(cv.batch_id),
+            progress=30,
+            status="Parsing CV with AI...",
+            filename=cv.filename,
+        )
+
         self.update_state(
             state="PROGRESS",
             meta={
                 "current": 30,
                 "total": 100,
-                "status": "Extracting text from CV...",
+                "status": "Parsing CV with AI...",
                 "cv_id": cv_id,
             },
         )
@@ -145,6 +166,25 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
             if batch:
                 batch.processed_cvs += 1
                 db.commit()
+
+            # Publish completion event
+            redis_event_bus.publish_cv_progress(
+                user_id=user_id,
+                cv_id=cv_id,
+                batch_id=str(cv.batch_id),
+                progress=100,
+                status="Completed successfully",
+                filename=cv.filename,
+                parse_detail_id=result["parse_detail_id"],
+            )
+
+            # Publish batch progress update
+            queue_status = get_queue_status(str(cv.batch_id))
+            redis_event_bus.publish_batch_progress(
+                user_id=user_id,
+                batch_id=str(cv.batch_id),
+                queue_status=queue_status,
+            )
 
             self.update_state(
                 state="SUCCESS",
