@@ -55,13 +55,16 @@ class CVBatch(Base):
     user_id = Column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
+    job_description_id = Column(
+        UUID(as_uuid=True), ForeignKey("job_descriptions.id"), nullable=True, index=True
+    )
 
     # Job Details
     title = Column(String, nullable=False)  # Previously batch_name
     department = Column(String, nullable=True)
     location = Column(String, nullable=True)
     description = Column(Text, nullable=True)  # Internal notes
-    job_description_text = Column(Text, nullable=True)  # Full JD text
+    job_description_text = Column(Text, nullable=True)  # Full JD text (legacy, prefer job_description relationship)
     is_active = Column(Boolean, default=True)
     is_archived = Column(Boolean, default=False)
 
@@ -101,6 +104,7 @@ class CVBatch(Base):
     # Relationships
     user = relationship("User", back_populates="cv_batches")
     cvs = relationship("CV", back_populates="batch", cascade="all, delete-orphan")
+    job_description = relationship("JobDescription", backref="batches")
 
 
 class CV(Base):
@@ -123,6 +127,10 @@ class CV(Base):
 
     # Processing data
     parsed_text = Column(Text, nullable=True)
+
+    # JD Matching
+    jd_match_score = Column(Integer, nullable=True)  # 0-100 match score against JD
+    jd_match_data = Column(JSONB, nullable=True)  # Detailed matching analysis
 
     # Status
     status = Column(
@@ -189,6 +197,9 @@ class CV(Base):
     # Alias for frontend consistency if needed
     @property
     def match_score(self):
+        # Prefer JD match score, fallback to quality score
+        if self.jd_match_score is not None:
+            return self.jd_match_score
         return self.cv_quality_score or 0
 
 
