@@ -245,7 +245,7 @@ const JobDetailsPage: React.FC = () => {
 
    const handleBulkDelete = async () => {
       try {
-         const ids = Array.from(selectedCandidates);
+         const ids = Array.from(selectedCandidates) as string[];
          await jobsApi.deleteCVs(ids);
          setCandidates(prev => prev.filter(c => !selectedCandidates.has(c.id)));
          setSelectedCandidates(new Set());
