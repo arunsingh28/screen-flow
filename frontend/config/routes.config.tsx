@@ -4,6 +4,7 @@ import DashboardPage from '@/features/dashboard/pages/DashboardPage';
 import CreateJobPage from '@/features/jobs/pages/CreateJobPage';
 import JobsListPage from '@/features/jobs/pages/JobsListPage';
 import JobDetailsPage from '@/features/jobs/pages/JobDetailsPage';
+import CandidateAnalysisPage from '@/features/jobs/pages/CandidateAnalysisPage';
 import SettingsPage from '@/features/settings/pages/SettingsPage';
 import CVLibraryPage from '@/features/library/pages/CVLibraryPage';
 import SearchPage from '@/features/search/pages/SearchPage';
@@ -71,6 +72,10 @@ export const routes: RouteObject[] = [
       {
         path: ROUTES.JOB_DETAILS,
         element: <JobDetailsPage />,
+      },
+      {
+        path: ROUTES.CANDIDATE_DETAILS,
+        element: <CandidateAnalysisPage />,
       },
       {
         path: ROUTES.CREATE_JOB,

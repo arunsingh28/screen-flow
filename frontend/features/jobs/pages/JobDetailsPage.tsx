@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
@@ -30,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Candidate } from '@/types';
 import CandidateRow from '../components/CandidateRow';
-import CVPreviewModal from '../components/CVPreviewModal';
+// import CVPreviewModal from '../components/CVPreviewModal'; // Removed as per instruction
 import UploadCVModal from '../components/UploadCVModal';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/config/routes.constants';
@@ -51,7 +50,7 @@ const JobDetailsPage: React.FC = () => {
 
    const [activeTab, setActiveTab] = useState<'candidates' | 'config' | 'jd'>('candidates');
    const [selectedCandidates, setSelectedCandidates] = useState<Set<string>>(new Set());
-   const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null);
+   // const [viewingCandidate, setViewingCandidate] = useState<Candidate | null>(null); // Removed as per instruction
 
    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
@@ -193,21 +192,26 @@ const JobDetailsPage: React.FC = () => {
       // setJobStatus(prev => prev === 'active' ? 'closed' : 'active');
    };
 
-   const handleNextCandidate = () => {
-      if (!viewingCandidate) return;
-      const currentIndex = candidates.findIndex(c => c.id === viewingCandidate.id);
-      if (currentIndex < candidates.length - 1) {
-         setViewingCandidate(candidates[currentIndex + 1]);
-      }
+   const handleViewCandidate = (candidate: Candidate) => {
+      navigate(`/jobs/${id}/candidate/${candidate.id}`);
    };
 
-   const handlePreviousCandidate = () => {
-      if (!viewingCandidate) return;
-      const currentIndex = candidates.findIndex(c => c.id === viewingCandidate.id);
-      if (currentIndex > 0) {
-         setViewingCandidate(candidates[currentIndex - 1]);
-      }
-   };
+   // Removed handleNextCandidate and handlePreviousCandidate as per instruction
+   // const handleNextCandidate = () => {
+   //    if (!viewingCandidate) return;
+   //    const currentIndex = candidates.findIndex(c => c.id === viewingCandidate.id);
+   //    if (currentIndex < candidates.length - 1) {
+   //       setViewingCandidate(candidates[currentIndex + 1]);
+   //    }
+   // };
+
+   // const handlePreviousCandidate = () => {
+   //    if (!viewingCandidate) return;
+   //    const currentIndex = candidates.findIndex(c => c.id === viewingCandidate.id);
+   //    if (currentIndex > 0) {
+   //       setViewingCandidate(candidates[currentIndex - 1]);
+   //    }
+   // };
 
    const handleUpdateStatus = async (candidate: Candidate, status: string) => {
       try {
@@ -216,10 +220,6 @@ const JobDetailsPage: React.FC = () => {
          setCandidates(prev => prev.map(c =>
             c.id === candidate.id ? { ...c, status: status } : c
          ));
-         // Also update viewing candidate if it's the same
-         if (viewingCandidate?.id === candidate.id) {
-            setViewingCandidate(prev => prev ? { ...prev, status: status } : null);
-         }
          toast.success(`Candidate status updated to ${status}`);
       } catch (err) {
          console.error("Failed to update status:", err);
@@ -227,26 +227,40 @@ const JobDetailsPage: React.FC = () => {
       }
    };
 
-   const handleConfirmDelete = async () => {
+   const handleDelete = async (id: string) => {
       try {
-         if (isBulkDelete) {
-            await jobsApi.deleteCVs(Array.from(selectedCandidates));
-            setSelectedCandidates(new Set());
-            toast.success("Candidates deleted successfully");
-         } else if (candidateToDelete) {
-            await jobsApi.deleteCVs([candidateToDelete]);
-            toast.success("Candidate deleted successfully");
-         }
-         fetchJobDetails();
+         await jobsApi.deleteCVs([id]);
+         setCandidates(prev => prev.filter(c => c.id !== id));
+         toast.success("Candidate deleted successfully");
+         // Optionally refresh total count
+         setTotalCandidates(prev => prev - 1);
+      } catch (err) {
+         console.error("Failed to delete candidate:", err);
+         toast.error("Failed to delete candidate");
+      } finally {
+         setIsDeleteDialogOpen(false);
+         setCandidateToDelete(null);
+      }
+   };
+
+   const handleBulkDelete = async () => {
+      try {
+         const ids = Array.from(selectedCandidates);
+         await jobsApi.deleteCVs(ids);
+         setCandidates(prev => prev.filter(c => !selectedCandidates.has(c.id)));
+         setSelectedCandidates(new Set());
+         setTotalCandidates(prev => prev - ids.length);
+         toast.success("Candidates deleted successfully");
       } catch (err) {
          console.error("Failed to delete candidates:", err);
          toast.error("Failed to delete candidates");
       } finally {
          setIsDeleteDialogOpen(false);
-         setCandidateToDelete(null);
          setIsBulkDelete(false);
       }
    };
+
+
 
    if (loading) {
       return (
@@ -426,7 +440,7 @@ const JobDetailsPage: React.FC = () => {
                                        candidate={candidate}
                                        isSelected={selectedCandidates.has(candidate.id)}
                                        onSelect={() => handleSelectOne(candidate.id)}
-                                       onView={setViewingCandidate}
+                                       onView={handleViewCandidate}
                                        onDelete={(id) => {
                                           setCandidateToDelete(id);
                                           setIsBulkDelete(false);
@@ -513,19 +527,7 @@ const JobDetailsPage: React.FC = () => {
          </div>
 
          {/* CV Modal */}
-         {viewingCandidate && (
-            <CVPreviewModal
-               candidate={viewingCandidate}
-               isOpen={!!viewingCandidate}
-               onClose={() => setViewingCandidate(null)}
-               onNext={handleNextCandidate}
-               onPrevious={handlePreviousCandidate}
-               hasNext={candidates.findIndex(c => c.id === viewingCandidate.id) < candidates.length - 1}
-               hasPrevious={candidates.findIndex(c => c.id === viewingCandidate.id) > 0}
-               onShortlist={(c) => handleUpdateStatus(c, 'shortlisted')}
-               onReject={(c) => handleUpdateStatus(c, 'rejected')}
-            />
-         )}
+         {/* Modal removed - now navigating to dedicated page */}
 
          {/* Upload Modal */}
          {job && (
@@ -543,16 +545,21 @@ const JobDetailsPage: React.FC = () => {
          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <AlertDialogContent>
                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                     {isBulkDelete
-                        ? `This action cannot be undone. This will permanently delete ${selectedCandidates.size} selected candidates.`
-                        : "This action cannot be undone. This will permanently delete this candidate."}
+                     This action cannot be undone. This will permanently delete {isBulkDelete ? `${selectedCandidates.size} selected candidates` : "this candidate"} and remove their data from our servers.
                   </AlertDialogDescription>
                </AlertDialogHeader>
                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+                  <AlertDialogCancel onClick={() => {
+                     setIsDeleteDialogOpen(false);
+                     setCandidateToDelete(null);
+                     setIsBulkDelete(false);
+                  }}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                     className="bg-red-600 hover:bg-red-700"
+                     onClick={isBulkDelete ? handleBulkDelete : () => candidateToDelete && handleDelete(candidateToDelete)}
+                  >
                      Delete
                   </AlertDialogAction>
                </AlertDialogFooter>

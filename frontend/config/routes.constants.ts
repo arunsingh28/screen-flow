@@ -2,6 +2,7 @@ export const ROUTES = {
   DASHBOARD: '/',
   JOBS_LIST: '/jobs',
   JOB_DETAILS: '/jobs/:id',
+  CANDIDATE_DETAILS: '/jobs/:id/candidate/:candidateId',
   CREATE_JOB: '/jobs/create',
   SETTINGS: '/settings',
   SEARCH: '/search',

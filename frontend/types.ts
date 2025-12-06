@@ -67,4 +67,6 @@ export interface Candidate {
   errorMessage?: string;
   progress?: number;
   statusMessage?: string;
+  filename?: string;
+  parsed_text?: string;
 }
