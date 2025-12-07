@@ -178,7 +178,7 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
             </Tooltip>
           )}
 
-          <div>
+          <div className="flex gap-2 justify-end w-full">
             <Button
               variant="ghost"
               size="icon"
