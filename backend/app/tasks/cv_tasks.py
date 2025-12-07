@@ -8,6 +8,7 @@ import asyncio
 import time
 from typing import Dict, Any, Optional
 from celery import Task
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.celery_config import celery_app
 from app.core.redis_events import redis_event_bus
@@ -218,7 +219,7 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
 
         # Update CV status
         cv.status = CVStatus.COMPLETED
-        cv.processed_at = db.query(db.func.now()).scalar()
+        cv.processed_at = db.query(func.now()).scalar()
         db.commit()
 
         # Update batch stats
