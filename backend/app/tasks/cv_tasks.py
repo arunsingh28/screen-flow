@@ -164,7 +164,12 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
         # Track usage and cost
         total_usage["input_tokens"] += result["usage"].get("input_tokens", 0)
         total_usage["output_tokens"] += result["usage"].get("output_tokens", 0)
-        total_cost += result["cost"]
+        
+        # Safe cost handling
+        task_cost = result.get("cost", 0.0)
+        if isinstance(task_cost, dict):
+            task_cost = float(task_cost.get("total_cost", task_cost.get("cost", 0.0)))
+        total_cost += float(task_cost)
 
         parsed_data = result["parsed_data"]
 
@@ -196,7 +201,12 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
                 # Track usage
                 total_usage["input_tokens"] += match_result["usage"].get("input_tokens", 0)
                 total_usage["output_tokens"] += match_result["usage"].get("output_tokens", 0)
-                total_cost += match_result["cost"]
+                
+                # Safe cost handling for matching
+                match_cost = match_result.get("cost", 0.0)
+                if isinstance(match_cost, dict):
+                    match_cost = float(match_cost.get("total_cost", match_cost.get("cost", 0.0)))
+                total_cost += float(match_cost)
 
                 logger.info(f"CV {cv_id} matched with score: {match_result['match_score']}%")
             else:

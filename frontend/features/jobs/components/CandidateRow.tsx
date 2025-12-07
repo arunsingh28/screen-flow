@@ -90,11 +90,29 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
               {skill}
             </span>
           ))}
-          {candidate.skillsMatched.length > 3 && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
-              +{candidate.skillsMatched.length - 3}
-            </span>
-          )}
+          {
+            candidate.skillsMatched.length > 3 && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+                +{candidate.skillsMatched.length - 3}
+              </span>
+            )
+          }
+          {/* {candidate.skillsMatched.length > 3 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground cursor-help">
+                  +{candidate.skillsMatched.length - 3}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="flex flex-wrap gap-1">
+                  {candidate.skillsMatched.slice(3).map(s => (
+                    <span key={s} className="text-xs bg-primary/10 text-primary px-1 rounded">{s}</span>
+                  ))}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )} */}
           {candidate.skillsMissing.length > 0 && (
             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" title={`Missing: ${candidate.skillsMissing.join(', ')}`}>
               -{candidate.skillsMissing.length}
