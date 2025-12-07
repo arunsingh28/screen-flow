@@ -103,36 +103,37 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
         </div>
       </td>
       <td className="p-4">
-        <div className={cn(
-          "inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ring-inset",
-          getScoreColor(candidate.matchScore)
-        )}>
-          {candidate.matchScore}%
-        </div>
+        {candidate.status !== 'failed' && candidate.status !== 'rejected' && candidate.status !== 'queued' && candidate.status !== 'processing' && (
+          <div className={cn(
+            "inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ring-inset",
+            getScoreColor(candidate.matchScore)
+          )}>
+            {candidate.matchScore}%
+          </div>
+        )}
+        {(candidate.status === 'failed' || candidate.status === 'rejected') && (
+          <span className="text-xs text-muted-foreground">-</span>
+        )}
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           {candidate.status !== 'processing' && (
-            <span className={cn(
-              "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize",
-              (candidate.status === 'queued') && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-              (candidate.status === 'completed' || candidate.status === 'shortlisted') && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-              (candidate.status === 'failed' || candidate.status === 'rejected') && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-              candidate.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-            )}>
-              {candidate.status}
-            </span>
+            <div className="flex flex-col gap-1">
+              <span className={cn(
+                "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize w-fit",
+                (candidate.status === 'queued') && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                (candidate.status === 'completed' || candidate.status === 'shortlisted') && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                (candidate.status === 'failed' || candidate.status === 'rejected') && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                candidate.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+              )}>
+                {candidate.status}
+              </span>
+              {candidate.status === 'queued' && candidate.statusMessage && (
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">{candidate.statusMessage}</span>
+              )}
+            </div>
           )}
-          {(candidate.status === 'failed' || candidate.status === 'rejected') && candidate.errorMessage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AlertCircle className="h-4 w-4 text-red-500 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">{candidate.errorMessage}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+          {/* Error tooltip removed from here to reduce clutter, kept in actions column */}
           {candidate.status === 'processing' && (
             <div className="w-24 space-y-1">
               <Progress value={candidate.progress || 0} className="h-1.5" />
@@ -145,25 +146,11 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
         </div>
       </td>
       <td className="p-4 text-right">
-        <div className="flex justify-end gap-2">
-
-          {/* Retry button hidden for all failed candidates as requested */}
-          {/* {candidate.status === 'failed' && !isPermanentError(candidate.errorMessage) && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRetry}
-              disabled={isRetrying}
-              title="Scan Again / Retry"
-              className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            >
-              <RefreshCw className={cn("h-4 w-4 text-blue-600 dark:text-blue-400", isRetrying && "animate-spin")} />
-            </Button>
-          )} */}
+        <div className="flex justify-between gap-2">
           {(candidate.status === 'failed' || candidate.status === 'rejected') && candidate.errorMessage && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="text-xs text-red-500 mr-2 max-w-[200px] truncate cursor-help">
+                <div className="text-xs text-red-500 max-w-[250px] text-left break-words cursor-help">
                   {candidate.errorMessage}
                 </div>
               </TooltipTrigger>
@@ -173,24 +160,26 @@ const CandidateRow: React.FC<CandidateRowProps> = ({ candidate, isSelected, onSe
             </Tooltip>
           )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onView(candidate)}
-            title="View Analysis & CV"
-            className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
-          >
-            <Eye className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            title="Delete"
-            onClick={() => onDelete(candidate.id)}
-            className="hover:bg-red-50 dark:hover:bg-red-900/20"
-          >
-            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-          </Button>
+          <div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onView(candidate)}
+              title="View Analysis & CV"
+              className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            >
+              <Eye className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Delete"
+              onClick={() => onDelete(candidate.id)}
+              className="hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+            </Button>
+          </div>
         </div>
       </td>
     </tr>

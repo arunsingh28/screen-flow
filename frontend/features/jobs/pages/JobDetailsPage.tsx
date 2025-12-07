@@ -97,6 +97,36 @@ const JobDetailsPage: React.FC = () => {
             return c;
          }));
       }
+      if (lastMessage.type === 'batch_progress') {
+         // Update candidates with queue estimates
+         if (lastMessage.queue_details && Array.isArray(lastMessage.queue_details)) {
+            const queueMap = new Map(lastMessage.queue_details.map((q: any) => [q.cv_id, q.estimated_wait_seconds]));
+
+            setCandidates(prev => prev.map(c => {
+               if (c.status === 'queued' && queueMap.has(c.id)) {
+                  const seconds = Number(queueMap.get(c.id)) || 0;
+                  const mins = Math.ceil(seconds / 60);
+                  return {
+                     ...c,
+                     statusMessage: `Est. wait: ${mins} min${mins !== 1 ? 's' : ''}`
+                  };
+               }
+               return c;
+            }));
+         }
+
+         // Redundancy: If batch is fully processed but we still show some as processing/queued, force refresh
+         // simple heuristic: if batch says completed+failed == total, but we have non-final states
+         if (lastMessage.completed + lastMessage.failed === lastMessage.total_cvs) {
+            // Check if we have any pending items
+            const hasPending = candidates.some(c =>
+               c.status === 'queued' || c.status === 'processing'
+            );
+            if (hasPending) {
+               fetchCVs();
+            }
+         }
+      }
    }, [lastMessage]);
 
 

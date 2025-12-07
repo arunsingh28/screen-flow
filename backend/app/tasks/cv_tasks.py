@@ -202,20 +202,28 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
             else:
                 logger.warning(f"JD matching failed for CV {cv_id}: {match_result.get('error')}")
 
-        # Stage 6: Analyzing GitHub (80%) - Optional, skip for now
-        # Can be implemented later if github_username is found
-        github_username = parsed_data.get("personal_info", {}).get("github", "").split("/")[-1] if parsed_data.get("personal_info", {}).get("github") else None
-        if github_username:
-            _publish_progress(
-                user_id, cv_id, str(cv.batch_id), "ANALYZING_GITHUB", cv.filename,
-                github_username=github_username
-            )
-            self.update_state(state="PROGRESS", meta={"progress": 80, "stage": "ANALYZING_GITHUB"})
-            time.sleep(0.5)  # Placeholder for future GitHub analysis
+        # Stage 6 & 7: Optional Analysis (GitHub) & Finalizing
+        # We wrap this in a sub-try block to ensure that if these optional steps fail
+        # but the CV was already successfully scored, we don't mark the whole CV as FAILED.
+        try:
+            # Stage 6: Analyzing GitHub (80%) - Optional
+            # Can be implemented later if github_username is found
+            github_username = parsed_data.get("personal_info", {}).get("github", "").split("/")[-1] if parsed_data.get("personal_info", {}).get("github") else None
+            if github_username:
+                _publish_progress(
+                    user_id, cv_id, str(cv.batch_id), "ANALYZING_GITHUB", cv.filename,
+                    github_username=github_username
+                )
+                self.update_state(state="PROGRESS", meta={"progress": 80, "stage": "ANALYZING_GITHUB"})
+                time.sleep(0.5)  # Placeholder for future GitHub analysis
 
-        # Stage 7: Finalizing (90%)
-        _publish_progress(user_id, cv_id, str(cv.batch_id), "FINALIZING", cv.filename)
-        self.update_state(state="PROGRESS", meta={"progress": 90, "stage": "FINALIZING"})
+            # Stage 7: Finalizing (90%)
+            _publish_progress(user_id, cv_id, str(cv.batch_id), "FINALIZING", cv.filename)
+            self.update_state(state="PROGRESS", meta={"progress": 90, "stage": "FINALIZING"})
+        
+        except Exception as step_error:
+            logger.error(f"Optional step failed for CV {cv_id}: {step_error}")
+            # Continue to completion - core analysis was successful
 
         # Update CV status
         cv.status = CVStatus.COMPLETED
@@ -276,15 +284,28 @@ def process_cv_task(self, cv_id: str, user_id: str) -> Dict[str, Any]:
         try:
             cv = db.query(CV).filter(CV.id == cv_id).first()
             if cv:
-                cv.status = CVStatus.FAILED
-                cv.error_message = str(e)
+                # CRITICAL FIX: If we have a match score, do not mark as FAILED.
+                # Treat as COMPLETED with a warning in the error message.
+                if cv.jd_match_score is not None:
+                     cv.status = CVStatus.COMPLETED
+                     cv.error_message = f"Completed with warning: {str(e)}"
+                     logger.warning(f"Marking CV {cv_id} as COMPLETED despite error: {e}")
+                     # Ensure we increment processed stats if not already done?
+                     # Since we are in the main except, we failed before lines 226.
+                     # We should check if we need to increment processed count.
+                     # For safety, let's treat it as a success for the batch too.
+                     batch = db.query(CVBatch).filter(CVBatch.id == cv.batch_id).first()
+                     if batch:
+                         batch.processed_cvs += 1
+                else:
+                    cv.status = CVStatus.FAILED
+                    cv.error_message = str(e)
+                    # Update batch stats (failure)
+                    batch = db.query(CVBatch).filter(CVBatch.id == cv.batch_id).first()
+                    if batch:
+                        batch.failed_cvs += 1
+                
                 db.commit()
-
-                # Update batch stats
-                batch = db.query(CVBatch).filter(CVBatch.id == cv.batch_id).first()
-                if batch:
-                    batch.failed_cvs += 1
-                    db.commit()
 
                 # Publish error event
                 redis_event_bus.publish_cv_progress(

@@ -60,7 +60,7 @@ services:
     container_name: screenflow-worker
     env_file:
       - .env
-    command: celery -A app.core.celery_config worker --loglevel=info
+    command: celery -A app.core.celery_config worker --loglevel=info --concurrency=10
     depends_on:
       postgres:
         condition: service_healthy
