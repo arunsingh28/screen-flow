@@ -1,8 +1,8 @@
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Upload, Search, Trash, CheckCircle, FileText } from 'lucide-react';
-import { Activity } from '../../../types';
-import StatusBadge from '../../../components/shared/StatusBadge';
+import { Activity } from '@/types';
+import StatusBadge from '@/components/shared/StatusBadge';
 
 interface RecentActivityItemProps {
   activity: Activity;
