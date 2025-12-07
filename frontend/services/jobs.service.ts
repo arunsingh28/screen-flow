@@ -82,7 +82,8 @@ export const jobsApi = {
 
     getActivities: async (skip = 0, limit = 50) => {
         const response = await axiosInstance.get(`/jobs/activities`, {
-            params: { skip, limit }
+            params: { skip, limit },
+            withCredentials: true
         });
         return response.data;
     },
