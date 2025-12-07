@@ -537,7 +537,7 @@ const JobDetailsPage: React.FC = () => {
                jobId={job.id}
                onUploadComplete={() => {
                   fetchJobDetails();
-                  // Optionally show a success toast here
+                  fetchCVs();
                }}
             />
          )}
