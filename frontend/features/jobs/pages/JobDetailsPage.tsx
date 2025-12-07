@@ -282,7 +282,7 @@ const JobDetailsPage: React.FC = () => {
    }
 
    return (
-      <div className="container mx-auto px-4 py-6 space-y-6 animate-in fade-in duration-500 min-h-screen flex flex-col">
+      <div className="container mx-auto px-4 py-4 space-y-4 animate-in fade-in duration-500 h-screen flex flex-col overflow-hidden">
 
          {/* Top Navigation / Breadcrumb */}
          <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -356,11 +356,11 @@ const JobDetailsPage: React.FC = () => {
          </div>
 
          {/* Main Content Area */}
-         <div className="flex-1">
+         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
             {/* Candidates Tab */}
             {activeTab === 'candidates' && (
-               <Card className="border-none shadow-none bg-transparent">
+               <Card className="border-none shadow-none bg-transparent flex flex-col h-full">
                   <div className="flex items-center justify-between mb-4">
                      <div className="flex items-center gap-2">
                         <Input
@@ -404,7 +404,7 @@ const JobDetailsPage: React.FC = () => {
                      )}
                   </div>
 
-                  <div className="rounded-md border bg-card dark:border-gray-700 flex flex-col h-[calc(100vh-280px)]">
+                  <div className="rounded-md border bg-card dark:border-gray-700 flex flex-col flex-1 min-h-0">
                      <div className="relative w-full overflow-y-auto flex-1">
                         <table className="w-full caption-bottom text-sm relative">
                            <thead className="[&_tr]:border-b sticky top-0 bg-card z-10 shadow-sm">
@@ -485,7 +485,7 @@ const JobDetailsPage: React.FC = () => {
 
             {/* JD Tab */}
             {activeTab === 'jd' && (
-               <Card className="dark:border-gray-700">
+               <Card className="dark:border-gray-700 h-full overflow-y-auto">
                   <CardHeader>
                      <CardTitle>Job Description Text</CardTitle>
                      <CardDescription>The source text used for AI analysis.</CardDescription>
