@@ -97,7 +97,7 @@ class CVResponse(BaseModel):
         None, alias="batch_id"
     )  # Alias batch_id to job_id for frontend clarity
     job_title: Optional[str] = None
-    
+
     # Details from CVParseDetail (populated via properties or relationship)
     cv_quality_score: Optional[int] = None
     candidate_name: Optional[str] = None
@@ -106,6 +106,11 @@ class CVResponse(BaseModel):
     total_experience_years: Optional[float] = None
     skills_matched: List[str] = []
     match_score: Optional[int] = 0
+
+    # Detailed matching and analysis data
+    jd_match_data: Optional[dict] = None  # Full CV-JD matching analysis with scores, strengths, gaps, etc.
+    parsed_data: Optional[dict] = None  # Parsed CV data from CVParseDetail
+    github_data: Optional[dict] = None  # GitHub profile analysis data
 
     class Config:
         from_attributes = True

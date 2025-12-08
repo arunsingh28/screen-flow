@@ -13,7 +13,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-CV_JD_MATCHING_PROMPT = """You are a STRICT technical recruiter evaluating CV-JD match. Most candidates do NOT meet requirements. Be CRITICAL and REALISTIC with scores.
+CV_JD_MATCHING_PROMPT = """You are an EXTREMELY STRICT technical recruiter. Your job is to ELIMINATE weak candidates, not find reasons to pass them.
+
+DEFAULT ASSUMPTION: This candidate is probably NOT qualified (40-50% match). Only score higher if they PROVE exceptional fit with concrete evidence.
 
 JOB DESCRIPTION:
 {jd_text}
@@ -21,53 +23,118 @@ JOB DESCRIPTION:
 CANDIDATE CV DATA:
 {cv_data}
 
-SCORING RUBRIC (BE STRICT - most CVs score 30-60):
-- 0-20: Poor fit, lacks most critical requirements
-- 21-40: Weak fit, missing several important requirements
-- 41-60: Moderate fit, meets some requirements but has gaps
-- 61-75: Good fit, meets most requirements with minor gaps
-- 76-85: Strong fit, meets all requirements well
-- 86-95: Excellent fit, exceeds requirements
-- 96-100: Perfect fit, exceptional candidate (VERY RARE)
+⚠️  CRITICAL: The average score should be 35-55, NOT 70-85. If you consistently score above 65, you are TOO GENEROUS.
 
-WEIGHTED SCORING FORMULA:
+REALISTIC SCORING DISTRIBUTION (BE HONEST):
+- 0-25: Completely unqualified, wrong field/level
+- 26-40: Poor fit, missing most critical skills (MOST junior candidates applying for senior roles)
+- 41-55: Below requirements, has some skills but significant gaps (COMMON - career switchers, partial matches)
+- 56-65: Meets minimum requirements, notable concerns (AVERAGE qualified candidate)
+- 66-75: Solid candidate, meets requirements with minor gaps (GOOD candidate, top 20%)
+- 76-85: Strong candidate, exceeds some requirements (VERY GOOD, top 10%)
+- 86-95: Exceptional candidate, exceeds most requirements (TOP 5% - RARE)
+- 96-100: Perfect unicorn candidate (TOP 1% - EXTREMELY RARE, maybe 1 in 100 CVs)
+
+MANDATORY SCORING RULES - FOLLOW EXACTLY:
+1. Start at 50 (neutral baseline, NOT 80)
+2. For EACH required skill:
+   - Has skill with 3+ years recent experience: +3 points
+   - Has skill with <3 years or older experience: +1 point
+   - Partial/related skill: +0.5 points
+   - Missing skill: -5 points
+3. Experience comparison:
+   - Exceeds required by 3+ years: +10 points
+   - Meets required exactly (±1 year): +5 points
+   - 75-99% of required: 0 points
+   - 50-74% of required: -10 points
+   - <50% of required: -20 points
+4. Apply ALL penalties from penalty system below
+
+AGGRESSIVE PENALTY SYSTEM (MANDATORY - DO NOT SKIP):
+- Missing 1 critical skill: -15 points
+- Missing 2 critical skills: -25 points
+- Missing 3+ critical skills: -40 points (score should be <45)
+- Experience < 75% required: -15 points
+- Experience < 50% required: -30 points
+- Outdated primary skill (>2 years): -12 points per skill
+- Job hopping (<1 year avg tenure): -20 points
+- Education below requirement: -10 points
+- Employment gap >1 year: -15 points
+- No relevant industry experience: -20 points
+- Critical red flag (lying, major gaps): -25 points
+
+CONCRETE EXAMPLES (LEARN FROM THESE):
+
+Example 1 - Score: 38 (TYPICAL for mismatched candidate)
+JD: "Senior React Developer, 5+ years React, Node.js, AWS, TypeScript"
+CV: "3 years experience, knows React and JavaScript, worked on 2 small projects"
+Analysis: Missing Node.js (-5), AWS (-5), TypeScript (-5), only 60% experience required (-10), outdated projects (-12) = 50 - 37 penalties = 38
+NEVER score this above 45!
+
+Example 2 - Score: 52 (AVERAGE qualified candidate)
+JD: "Mid-level Python Developer, 3+ years Python, Django, PostgreSQL"
+CV: "3.5 years Python, strong Django experience, some PostgreSQL, MySQL instead"
+Analysis: Has main skills (+3+3+1), meets experience (+5), minor DB difference (0) = 62, no major penalties = 62
+This is a TYPICAL acceptable candidate - NOT an 80% match!
+
+Example 3 - Score: 68 (GOOD candidate - top 20%)
+JD: "Full-stack Engineer, React, Node, MongoDB, 4+ years"
+CV: "5 years experience, expert React/Node, built scalable apps, MongoDB + Redis experience"
+Analysis: Exceeds all requirements (+3+3+3), extra experience (+10), bonus skills (+3) = 72, minor concerns (-4) = 68
+This is already a STRONG candidate - NOT everyone should score this high!
+
+Example 4 - Score: 89 (EXCEPTIONAL - top 5%, RARE)
+JD: "Senior Engineer, React, Node, AWS, CI/CD, 5+ years"
+CV: "8 years experience, React expert, architected AWS infrastructure, built CI/CD pipelines, led teams, open source contributions"
+Analysis: Exceeds everything significantly, leadership, proven track record, no gaps = 89
+YOU WILL RARELY SEE CANDIDATES LIKE THIS - don't give 85+ casually!
+
+WEIGHTED SCORING FORMULA (Apply AFTER calculating component scores):
 overall_score = (technical_skills × 0.40) + (experience × 0.30) + (education × 0.15) + (soft_skills × 0.15)
 
-PENALTY SYSTEM (SUBTRACT FROM FINAL SCORE):
-- Missing 1 critical skill: -15 points
-- Missing 2+ critical skills: -30 points
-- Experience < 50% required: -20 points
-- Outdated skills (>2 years): -10 points per skill
-- Job hopping (avg tenure < 12 months): -15 points
-- Education below requirement: -10 points
-- Critical red flag: -20 points
+COMPONENT SCORE GUIDELINES:
+Technical Skills (0-100):
+- Start at 40 (not 70!)
+- +8 per critical skill matched with strong evidence
+- +4 per important skill matched
+- +2 per nice-to-have skill
+- -10 per critical skill missing
+- MOST CANDIDATES: 30-60 range
 
-CALIBRATION EXAMPLES:
-- Score 30: Junior applying for senior role, missing 60% skills
-- Score 45: Career switcher, transferable skills but no direct experience
-- Score 60: Meets 70% requirements, some gaps in critical areas
-- Score 75: Solid match, meets requirements, minor skill gaps
-- Score 85: Strong candidate, all requirements met, 1-2 years extra experience
-- Score 95: Exceptional, exceeds all requirements significantly (RARE)
+Experience (0-100):
+- <50% required: 0-30
+- 50-75% required: 31-50
+- 75-100% required: 51-70
+- 100-125% required: 71-85
+- >125% required with leadership: 86-95
 
-EVALUATION PROCESS:
-1. List EVERY required skill from JD
-2. Check if candidate has EACH skill with evidence
-3. Calculate exact match percentage for technical skills
-4. Compare years of experience (be strict: 3 years means 3+ years)
-5. Apply penalties for gaps
-6. Calculate weighted score
-7. Verify score matches rubric
+Education (0-100):
+- Below requirement: 0-40
+- Meets minimum: 50-70
+- Exceeds requirement: 71-90
+- Top tier + relevant: 91-100
 
-CRITICAL INSTRUCTIONS:
-❌ DO NOT be generous - most candidates are 40-60% matches
-❌ DO NOT give benefit of doubt - require explicit evidence
-❌ DO NOT inflate scores - be HARSH and REALISTIC
-❌ DO NOT give 80+ unless truly exceptional
-✅ BE STRICT on years of experience (2 years != 3+ years required)
-✅ REQUIRE evidence for every skill claimed
-✅ PENALIZE heavily for missing critical requirements
-✅ CONSIDER skill recency (React 2018 experience is outdated in 2024)
+EVALUATION PROCESS (MANDATORY STEPS):
+1. List ALL required skills from JD (technical, tools, frameworks)
+2. For EACH skill, find EXPLICIT evidence in CV (job descriptions, projects)
+3. Calculate skill_match_percentage = (matched_skills / total_required) × 100
+4. Compare years: Calculate experience_ratio = candidate_years / required_years
+5. List ALL penalties that apply (be thorough)
+6. Calculate component scores using guidelines above
+7. Apply weighted formula
+8. Subtract total penalties
+9. VERIFY final score against rubric and examples
+
+CRITICAL QUALITY CHECKS (MUST PASS BEFORE SUBMITTING):
+✅ If skill_match_percentage < 60%, score MUST be < 55
+✅ If missing 2+ critical skills, score MUST be < 50
+✅ If experience < 75% required, score MUST be < 60
+✅ If scoring above 75, write a paragraph justifying why candidate is exceptional
+✅ If scoring above 85, candidate must exceed ALL requirements significantly
+❌ DO NOT give benefit of doubt - "might have used X" = doesn't count
+❌ DO NOT inflate for "good personality" - stick to requirements
+❌ DO NOT ignore outdated skills - React 2019 experience is 5 years old in 2024
+❌ DO NOT score 80+ unless you're willing to recommend immediate hire
 
 Return ONLY this JSON:
 
@@ -100,7 +167,9 @@ Return ONLY this JSON:
         "years_experience": number,
         "last_used": "YYYY-MM",
         "match_quality": "exact/strong/partial/weak",
-        "recency_concern": "if skill is outdated (>2 years old)"
+        "recency_concern": "if skill is outdated (>2 years old)",
+        "points_earned": number,
+        "scoring_reason": "Detailed explanation: why this many points (e.g., '3+ years recent experience = +3 points')"
       }}
     ],
     "required_skills_missing": [
@@ -108,7 +177,9 @@ Return ONLY this JSON:
         "skill": "skill name",
         "importance": "critical/important/nice-to-have",
         "impact_on_score": "Explain impact",
-        "alternatives_found": ["related skills"]
+        "alternatives_found": ["related skills"],
+        "points_deducted": number,
+        "scoring_reason": "Detailed explanation: why this deduction (e.g., 'Missing critical skill = -5 points')"
       }}
     ],
     "bonus_skills": ["additional relevant skills"]
@@ -178,13 +249,24 @@ Return ONLY this JSON:
 
   "score_calculation": {{
     "technical_skills_score": 0-100,
+    "technical_skills_reasoning": "Explain: Started at 40, added X points for skills, deducted Y for missing",
     "experience_score": 0-100,
+    "experience_reasoning": "Explain: Candidate has X years vs Y required, ratio Z%",
     "education_score": 0-100,
+    "education_reasoning": "Explain: Level match, field relevance",
     "soft_skills_score": 0-100,
+    "soft_skills_reasoning": "Explain: Leadership, communication evidence",
     "weighted_base_score": "calculation: (tech×0.4 + exp×0.3 + edu×0.15 + soft×0.15)",
+    "weighted_calculation_breakdown": {{
+      "technical_contribution": "tech_score × 0.40 = X",
+      "experience_contribution": "exp_score × 0.30 = Y",
+      "education_contribution": "edu_score × 0.15 = Z",
+      "soft_skills_contribution": "soft_score × 0.15 = W"
+    }},
     "total_penalties": number,
     "final_score_before_rounding": number,
-    "overall_match_score": 0-100
+    "overall_match_score": 0-100,
+    "final_reasoning": "One sentence: Why this final score makes sense given all factors"
   }},
 
   "overall_match_score": 0-100,
@@ -206,6 +288,20 @@ FINAL VALIDATION:
 - If score >80, you MUST justify why candidate is exceptional
 - Verify overall_match_score = weighted_base_score - total_penalties
 
+CRITICAL: SCORING TRANSPARENCY (MUST INCLUDE):
+Every skill MUST have:
+1. points_earned or points_deducted (exact number)
+2. scoring_reason explaining the calculation (e.g., "React: 5 years recent experience = +3 points, Expert level = bonus +2")
+
+Every component score MUST have detailed reasoning showing the math:
+- Technical: "Started at 40, added +18 for 6 matched skills, deducted -15 for 3 missing = 43"
+- Experience: "7 years vs 5 required = 140% ratio = 75 points (exceeds by 40%)"
+- weighted_calculation_breakdown MUST show exact numbers: "43 × 0.40 = 17.2"
+
+The final_reasoning MUST tie everything together in one clear sentence explaining why the score is trustworthy.
+
+This transparency ensures recruiters understand EXACTLY why we scored this candidate at X%.
+
 Return ONLY valid JSON, no additional text."""
 
 
@@ -214,9 +310,9 @@ class CVJDMatcherService:
 
     def _validate_and_adjust_score(self, match_data: Dict[str, Any]) -> int:
         """
-        Validate the LLM-generated score and adjust if needed to prevent score inflation
+        AGGRESSIVELY validate the LLM score and enforce strict caps to prevent score inflation
 
-        This is a safeguard against overly generous LLM scoring
+        This enforces mathematical rules that override LLM leniency
         """
         try:
             # Get component scores
@@ -238,71 +334,142 @@ class CVJDMatcherService:
             skill_match_pct = eval_process.get("skill_match_percentage", 100)
             critical_missing = eval_process.get("critical_skills_missing", [])
             total_penalty = eval_process.get("total_penalty", 0)
+            total_required = eval_process.get("total_required_skills", 1)
+            skills_missing_count = eval_process.get("skills_missing_count", 0)
 
             # Get experience gap
             exp_match = match_data.get("experience_match", {})
             years_required = exp_match.get("years_required", 0)
             years_candidate = exp_match.get("years_candidate", 0)
 
-            # Apply strict validation rules
+            # Start with calculated score
             calculated_score = int(weighted_score - total_penalty)
             llm_score = match_data.get("overall_match_score", calculated_score)
 
-            # Validation checks - enforce stricter scoring
+            # AGGRESSIVE validation rules - multiple caps apply
             adjustments = []
 
-            # Rule 1: Missing critical skills caps score
-            if len(critical_missing) >= 2:
-                if calculated_score > 55:
-                    adjustments.append(f"Missing {len(critical_missing)} critical skills, capping at 55")
-                    calculated_score = min(calculated_score, 55)
-            elif len(critical_missing) == 1:
-                if calculated_score > 70:
-                    adjustments.append("Missing 1 critical skill, capping at 70")
-                    calculated_score = min(calculated_score, 70)
-
-            # Rule 2: Skill match percentage enforcement
-            if skill_match_pct < 50:
+            # Rule 1: Missing critical skills - STRICT CAPS
+            if len(critical_missing) >= 3:
                 if calculated_score > 45:
-                    adjustments.append(f"Only {skill_match_pct}% skills matched, capping at 45")
+                    adjustments.append(f"Missing {len(critical_missing)} critical skills, HARD CAP at 45")
                     calculated_score = min(calculated_score, 45)
-            elif skill_match_pct < 70:
+            elif len(critical_missing) == 2:
+                if calculated_score > 50:
+                    adjustments.append("Missing 2 critical skills, capping at 50")
+                    calculated_score = min(calculated_score, 50)
+            elif len(critical_missing) == 1:
                 if calculated_score > 65:
-                    adjustments.append(f"Only {skill_match_pct}% skills matched, capping at 65")
+                    adjustments.append("Missing 1 critical skill, capping at 65")
                     calculated_score = min(calculated_score, 65)
 
-            # Rule 3: Experience gap enforcement
+            # Rule 2: Total skills missing percentage - AGGRESSIVE
+            if total_required > 0:
+                missing_pct = (skills_missing_count / total_required) * 100
+                if missing_pct >= 50 and calculated_score > 40:
+                    adjustments.append(f"Missing {missing_pct:.0f}% of skills, capping at 40")
+                    calculated_score = min(calculated_score, 40)
+                elif missing_pct >= 40 and calculated_score > 50:
+                    adjustments.append(f"Missing {missing_pct:.0f}% of skills, capping at 50")
+                    calculated_score = min(calculated_score, 50)
+                elif missing_pct >= 30 and calculated_score > 58:
+                    adjustments.append(f"Missing {missing_pct:.0f}% of skills, capping at 58")
+                    calculated_score = min(calculated_score, 58)
+
+            # Rule 3: Skill match percentage - STRICTER THRESHOLDS
+            if skill_match_pct < 40:
+                if calculated_score > 35:
+                    adjustments.append(f"Only {skill_match_pct:.0f}% skills matched, capping at 35")
+                    calculated_score = min(calculated_score, 35)
+            elif skill_match_pct < 50:
+                if calculated_score > 42:
+                    adjustments.append(f"Only {skill_match_pct:.0f}% skills matched, capping at 42")
+                    calculated_score = min(calculated_score, 42)
+            elif skill_match_pct < 60:
+                if calculated_score > 52:
+                    adjustments.append(f"Only {skill_match_pct:.0f}% skills matched, capping at 52")
+                    calculated_score = min(calculated_score, 52)
+            elif skill_match_pct < 70:
+                if calculated_score > 60:
+                    adjustments.append(f"Only {skill_match_pct:.0f}% skills matched, capping at 60")
+                    calculated_score = min(calculated_score, 60)
+            elif skill_match_pct < 80:
+                if calculated_score > 68:
+                    adjustments.append(f"Only {skill_match_pct:.0f}% skills matched, capping at 68")
+                    calculated_score = min(calculated_score, 68)
+
+            # Rule 4: Experience gap - MORE AGGRESSIVE
             if years_required > 0 and years_candidate > 0:
                 exp_ratio = years_candidate / years_required
-                if exp_ratio < 0.5 and calculated_score > 40:
-                    adjustments.append(f"Experience {exp_ratio:.0%} of required, capping at 40")
-                    calculated_score = min(calculated_score, 40)
-                elif exp_ratio < 0.75 and calculated_score > 60:
-                    adjustments.append(f"Experience {exp_ratio:.0%} of required, capping at 60")
-                    calculated_score = min(calculated_score, 60)
+                if exp_ratio < 0.5 and calculated_score > 35:
+                    adjustments.append(f"Experience only {exp_ratio:.0%} of required, capping at 35")
+                    calculated_score = min(calculated_score, 35)
+                elif exp_ratio < 0.6 and calculated_score > 45:
+                    adjustments.append(f"Experience {exp_ratio:.0%} of required, capping at 45")
+                    calculated_score = min(calculated_score, 45)
+                elif exp_ratio < 0.75 and calculated_score > 55:
+                    adjustments.append(f"Experience {exp_ratio:.0%} of required, capping at 55")
+                    calculated_score = min(calculated_score, 55)
+                elif exp_ratio < 0.9 and calculated_score > 63:
+                    adjustments.append(f"Experience {exp_ratio:.0%} of required, capping at 63")
+                    calculated_score = min(calculated_score, 63)
 
-            # Rule 4: Prevent score inflation - if LLM score is >15 points higher than calculated
-            if llm_score > calculated_score + 15:
-                adjustments.append(f"LLM score {llm_score} too high vs calculated {calculated_score}, using calculated")
+            # Rule 5: Component score caps - don't allow inflated component scores
+            if tech_score < 50 and calculated_score > 50:
+                adjustments.append(f"Technical score only {tech_score}, capping at 50")
+                calculated_score = min(calculated_score, 50)
+            if tech_score < 40 and calculated_score > 42:
+                adjustments.append(f"Technical score only {tech_score}, capping at 42")
+                calculated_score = min(calculated_score, 42)
+
+            # Rule 6: Prevent score inflation - LLM vs calculated difference
+            if llm_score > calculated_score + 12:
+                adjustments.append(f"LLM score {llm_score} too generous vs calculated {calculated_score}")
                 final_score = calculated_score
+            elif llm_score > calculated_score + 8:
+                adjustments.append(f"LLM score {llm_score} slightly high, averaging with calculated {calculated_score}")
+                final_score = int((llm_score + calculated_score) / 2)
             else:
-                final_score = llm_score
+                final_score = min(llm_score, calculated_score)
 
-            # Rule 5: Cap unrealistic high scores
-            if final_score > 90 and skill_match_pct < 95:
-                adjustments.append("Score >90 requires 95%+ skill match, capping at 85")
-                final_score = min(final_score, 85)
+            # Rule 7: High score must justify with perfect metrics
+            if final_score > 85:
+                if skill_match_pct < 95 or exp_ratio < 1.2:
+                    adjustments.append(f"Score >85 requires 95%+ skills AND 120%+ experience, capping at 75")
+                    final_score = min(final_score, 75)
+            elif final_score > 75:
+                if skill_match_pct < 85:
+                    adjustments.append(f"Score >75 requires 85%+ skill match, capping at 68")
+                    final_score = min(final_score, 68)
+            elif final_score > 65:
+                if skill_match_pct < 75:
+                    adjustments.append(f"Score >65 requires 75%+ skill match, capping at 58")
+                    final_score = min(final_score, 58)
+
+            # Rule 8: Apply global cap based on combined factors
+            max_possible = 100
+            if len(critical_missing) > 0:
+                max_possible = min(max_possible, 70)
+            if skill_match_pct < 80:
+                max_possible = min(max_possible, 65 + int(skill_match_pct / 5))
+            if years_required > 0 and exp_ratio < 1.0:
+                max_possible = min(max_possible, 60 + int(exp_ratio * 20))
+
+            if final_score > max_possible:
+                adjustments.append(f"Combined factors cap maximum at {max_possible}")
+                final_score = min(final_score, max_possible)
 
             # Log adjustments
             if adjustments:
-                logger.info(f"Score adjusted from {llm_score} to {final_score}: {', '.join(adjustments)}")
+                logger.warning(f"Score ADJUSTED from {llm_score} to {final_score}: {' | '.join(adjustments)}")
 
+            # Ensure score is in valid range
             return max(0, min(100, final_score))
 
         except Exception as e:
             logger.error(f"Error validating score: {e}")
-            # Fall back to LLM score if validation fails
-            return match_data.get("overall_match_score", 0)
+            # Fall back to a conservative score if validation fails
+            return min(match_data.get("overall_match_score", 50), 50)
 
     async def match_cv_to_jd(
         self,
