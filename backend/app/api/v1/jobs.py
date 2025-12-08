@@ -595,13 +595,13 @@ async def list_batch_cvs(
         .all()
     )
 
-    # Add download URLs
+    # Add download URLs and detailed data
     # Note: Generating 10-20 presigned URLs is fast enough to do on-the-fly
     cv_responses = []
     for cv in cvs:
         # Convert to Pydantic model
         cv_resp = CVResponse.from_orm(cv)
-        
+
         # Add download URL
         try:
             cv_resp.download_url = s3_service.generate_presigned_url(
@@ -609,7 +609,15 @@ async def list_batch_cvs(
             )
         except Exception:
             cv_resp.download_url = None
-            
+
+        # Add detailed match data (from CV)
+        cv_resp.jd_match_data = cv.jd_match_data
+
+        # Add parsed data and github data (from CVParseDetail)
+        if cv.parse_detail:
+            cv_resp.parsed_data = cv.parse_detail.parsed_data
+            cv_resp.github_data = cv.parse_detail.github_data
+
         cv_responses.append(cv_resp)
 
     return CVListResponse(
