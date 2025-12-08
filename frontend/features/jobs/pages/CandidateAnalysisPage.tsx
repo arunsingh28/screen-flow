@@ -325,7 +325,7 @@ const CandidateAnalysisPage = () => {
                                             <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Interview Focus Areas</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {recommendation.interview_focus_areas.map((area: string, idx: number) => (
-                                                    <Badge key={idx} variant="outline" className="text-xs">{area}</Badge>
+                                                    <Badge variant="outline" className="text-xs">{area}</Badge>
                                                 ))}
                                             </div>
                                         </div>
@@ -348,8 +348,8 @@ const CandidateAnalysisPage = () => {
                                         <div key={idx} className={cn(
                                             "p-3 rounded-lg border-l-4",
                                             flag.severity === 'critical' ? "border-red-600 bg-red-100" :
-                                            flag.severity === 'high' ? "border-orange-500 bg-orange-50" :
-                                            "border-amber-400 bg-amber-50"
+                                                flag.severity === 'high' ? "border-orange-500 bg-orange-50" :
+                                                    "border-amber-400 bg-amber-50"
                                         )}>
                                             <div className="flex items-start justify-between gap-2 mb-1">
                                                 <p className="font-bold text-sm">{flag.flag}</p>
@@ -553,7 +553,7 @@ const CandidateAnalysisPage = () => {
                                         </TooltipProvider>
                                         <span className={cn(
                                             candidate.matchScore >= 76 ? "text-green-600" :
-                                            candidate.matchScore >= 56 ? "text-amber-600" : "text-red-600"
+                                                candidate.matchScore >= 56 ? "text-amber-600" : "text-red-600"
                                         )}>{candidate.matchScore}%</span>
                                     </div>
                                 </div>
@@ -580,7 +580,7 @@ const CandidateAnalysisPage = () => {
                                                 <p className="font-semibold text-red-700 mb-1">Critical Skills Missing:</p>
                                                 <div className="flex flex-wrap gap-1">
                                                     {evalProcess.critical_skills_missing.map((skill: string, idx: number) => (
-                                                        <Badge key={idx} variant="destructive" className="text-xs">{skill}</Badge>
+                                                        <Badge variant="destructive" className="text-xs">{skill}</Badge>
                                                     ))}
                                                 </div>
                                             </div>
@@ -647,8 +647,8 @@ const CandidateAnalysisPage = () => {
                                         <div key={idx} className={cn(
                                             "p-3 rounded-lg border",
                                             gap.impact === 'critical' ? "bg-red-50 border-red-200" :
-                                            gap.impact === 'high' ? "bg-orange-50 border-orange-200" :
-                                            "bg-amber-50 border-amber-200"
+                                                gap.impact === 'high' ? "bg-orange-50 border-orange-200" :
+                                                    "bg-amber-50 border-amber-200"
                                         )}>
                                             <div className="flex items-start justify-between gap-2 mb-1">
                                                 <p className="font-semibold text-sm">{gap.gap}</p>
@@ -709,8 +709,8 @@ const CandidateAnalysisPage = () => {
                                                     <div className="flex items-center gap-2">
                                                         <Badge variant={
                                                             skill.match_quality === 'exact' ? 'default' :
-                                                            skill.match_quality === 'strong' ? 'secondary' :
-                                                            'outline'
+                                                                skill.match_quality === 'strong' ? 'secondary' :
+                                                                    'outline'
                                                         } className="text-xs">
                                                             {skill.match_quality}
                                                         </Badge>
@@ -719,30 +719,30 @@ const CandidateAnalysisPage = () => {
                                                         </Badge>
                                                     </div>
                                                 </div>
-                                            <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                                                <div>
-                                                    <span className="font-medium">Experience:</span> {skill.years_experience} years
+                                                <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                                                    <div>
+                                                        <span className="font-medium">Experience:</span> {skill.years_experience} years
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-medium">Last Used:</span> {skill.last_used || 'N/A'}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-medium">Required:</span> {skill.jd_requirement}
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <span className="font-medium">Last Used:</span> {skill.last_used || 'N/A'}
-                                                </div>
-                                                <div>
-                                                    <span className="font-medium">Required:</span> {skill.jd_requirement}
-                                                </div>
+                                                {skill.cv_evidence && (
+                                                    <p className="text-xs text-muted-foreground italic border-l-2 border-primary pl-2">
+                                                        {skill.cv_evidence}
+                                                    </p>
+                                                )}
+                                                {skill.recency_concern && (
+                                                    <div className="flex items-center gap-1 text-xs text-amber-600">
+                                                        <AlertCircle className="h-3 w-3" />
+                                                        {skill.recency_concern}
+                                                    </div>
+                                                )}
                                             </div>
-                                            {skill.cv_evidence && (
-                                                <p className="text-xs text-muted-foreground italic border-l-2 border-primary pl-2">
-                                                    {skill.cv_evidence}
-                                                </p>
-                                            )}
-                                            {skill.recency_concern && (
-                                                <div className="flex items-center gap-1 text-xs text-amber-600">
-                                                    <AlertCircle className="h-3 w-3" />
-                                                    {skill.recency_concern}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                        ))}
 
                                         {technicalMatch.required_skills_missing && technicalMatch.required_skills_missing.length > 0 && (
                                             <div className="mt-4 pt-4 border-t">
@@ -808,7 +808,7 @@ const CandidateAnalysisPage = () => {
                                     </div>
                                     <CardDescription>
                                         <a href={`https://github.com/${githubProfile.username}`} target="_blank" rel="noopener noreferrer"
-                                           className="text-primary hover:underline">
+                                            className="text-primary hover:underline">
                                             @{githubProfile.username}
                                         </a>
                                         {githubProfile.company && ` • ${githubProfile.company}`}
@@ -825,7 +825,7 @@ const CandidateAnalysisPage = () => {
                                             <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Programming Languages</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {Object.entries(languages).map(([lang, count]: [string, any]) => (
-                                                    <Badge key={lang} variant="secondary" className="text-xs">
+                                                    <Badge variant="secondary" className="text-xs">
                                                         {lang}: {count} repos
                                                     </Badge>
                                                 ))}
@@ -842,7 +842,7 @@ const CandidateAnalysisPage = () => {
                                                     <div key={idx} className="p-2 bg-muted/30 rounded text-xs">
                                                         <div className="flex items-center justify-between mb-1">
                                                             <a href={repo.url} target="_blank" rel="noopener noreferrer"
-                                                               className="font-semibold text-primary hover:underline flex items-center gap-1">
+                                                                className="font-semibold text-primary hover:underline flex items-center gap-1">
                                                                 <GitBranch className="h-3 w-3" />
                                                                 {repo.name}
                                                             </a>
@@ -874,7 +874,7 @@ const CandidateAnalysisPage = () => {
                                                     <p className="text-xs text-green-700 font-medium mb-1">✓ Verified Skills:</p>
                                                     <div className="flex flex-wrap gap-1">
                                                         {githubAnalysis.skills_verified.map((skill: string, idx: number) => (
-                                                            <Badge key={idx} variant="default" className="text-xs bg-green-600">
+                                                            <Badge variant="default" className="text-xs bg-green-600">
                                                                 {skill}
                                                             </Badge>
                                                         ))}
@@ -930,8 +930,8 @@ const CandidateAnalysisPage = () => {
                                             <span className="text-muted-foreground">Match Assessment:</span>
                                             <Badge variant={
                                                 experienceMatch.match_assessment === 'exceeds' ? 'default' :
-                                                experienceMatch.match_assessment === 'meets' ? 'secondary' :
-                                                'destructive'
+                                                    experienceMatch.match_assessment === 'meets' ? 'secondary' :
+                                                        'destructive'
                                             }>
                                                 {experienceMatch.match_assessment}
                                             </Badge>
@@ -956,13 +956,13 @@ const CandidateAnalysisPage = () => {
                                                 <Badge variant="outline">{experienceMatch.industry_relevance.score}/100</Badge>
                                             </div>
                                             {experienceMatch.industry_relevance.relevant_industries &&
-                                             experienceMatch.industry_relevance.relevant_industries.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 mb-2">
-                                                    {experienceMatch.industry_relevance.relevant_industries.map((ind: string, idx: number) => (
-                                                        <Badge key={idx} variant="secondary" className="text-xs">{ind}</Badge>
-                                                    ))}
-                                                </div>
-                                            )}
+                                                experienceMatch.industry_relevance.relevant_industries.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mb-2">
+                                                        {experienceMatch.industry_relevance.relevant_industries.map((ind: string, idx: number) => (
+                                                            <Badge variant="secondary" className="text-xs">{ind}</Badge>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             {experienceMatch.industry_relevance.transferable_experience && (
                                                 <p className="text-xs text-muted-foreground">
                                                     {experienceMatch.industry_relevance.transferable_experience}

@@ -616,7 +616,8 @@ async def list_batch_cvs(
         # Add parsed data and github data (from CVParseDetail)
         if cv.parse_detail:
             cv_resp.parsed_data = cv.parse_detail.parsed_data
-            cv_resp.github_data = cv.parse_detail.github_data
+            if cv.parse_detail.github_analysis:
+                cv_resp.github_data = cv.parse_detail.github_analysis.analysis_data
 
         cv_responses.append(cv_resp)
 
