@@ -16,6 +16,13 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 
 interface CandidateData {
     id: string;
@@ -374,36 +381,126 @@ const CandidateAnalysisPage = () => {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {/* Component Scores */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="font-medium">Technical Skills (40%)</span>
-                                            <span className="font-bold">{scoreCalc.technical_skills_score || technicalMatch.score || 0}/100</span>
+                                <TooltipProvider>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-medium">Technical Skills (40%)</span>
+                                                    {scoreCalc.technical_skills_reasoning && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <button className="inline-flex items-center">
+                                                                    <Info className="h-3.5 w-3.5 text-primary hover:text-primary/80 cursor-help" />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="max-w-sm">
+                                                                <div className="space-y-1">
+                                                                    <p className="font-semibold text-xs">Technical Score Calculation</p>
+                                                                    <p className="text-xs">{scoreCalc.technical_skills_reasoning}</p>
+                                                                    {scoreCalc.weighted_calculation_breakdown?.technical_contribution && (
+                                                                        <p className="text-xs text-primary font-bold mt-1">
+                                                                            Contribution: {scoreCalc.weighted_calculation_breakdown.technical_contribution}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+                                                </div>
+                                                <span className="font-bold">{scoreCalc.technical_skills_score || technicalMatch.score || 0}/100</span>
+                                            </div>
+                                            <Progress value={scoreCalc.technical_skills_score || technicalMatch.score || 0} className="h-2" />
                                         </div>
-                                        <Progress value={scoreCalc.technical_skills_score || technicalMatch.score || 0} className="h-2" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="font-medium">Experience (30%)</span>
-                                            <span className="font-bold">{scoreCalc.experience_score || experienceMatch.score || 0}/100</span>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-medium">Experience (30%)</span>
+                                                    {scoreCalc.experience_reasoning && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <button className="inline-flex items-center">
+                                                                    <Info className="h-3.5 w-3.5 text-primary hover:text-primary/80 cursor-help" />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="max-w-sm">
+                                                                <div className="space-y-1">
+                                                                    <p className="font-semibold text-xs">Experience Score Calculation</p>
+                                                                    <p className="text-xs">{scoreCalc.experience_reasoning}</p>
+                                                                    {scoreCalc.weighted_calculation_breakdown?.experience_contribution && (
+                                                                        <p className="text-xs text-primary font-bold mt-1">
+                                                                            Contribution: {scoreCalc.weighted_calculation_breakdown.experience_contribution}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+                                                </div>
+                                                <span className="font-bold">{scoreCalc.experience_score || experienceMatch.score || 0}/100</span>
+                                            </div>
+                                            <Progress value={scoreCalc.experience_score || experienceMatch.score || 0} className="h-2" />
                                         </div>
-                                        <Progress value={scoreCalc.experience_score || experienceMatch.score || 0} className="h-2" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="font-medium">Education (15%)</span>
-                                            <span className="font-bold">{scoreCalc.education_score || educationMatch.score || 0}/100</span>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-medium">Education (15%)</span>
+                                                    {scoreCalc.education_reasoning && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <button className="inline-flex items-center">
+                                                                    <Info className="h-3.5 w-3.5 text-primary hover:text-primary/80 cursor-help" />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="max-w-sm">
+                                                                <div className="space-y-1">
+                                                                    <p className="font-semibold text-xs">Education Score Calculation</p>
+                                                                    <p className="text-xs">{scoreCalc.education_reasoning}</p>
+                                                                    {scoreCalc.weighted_calculation_breakdown?.education_contribution && (
+                                                                        <p className="text-xs text-primary font-bold mt-1">
+                                                                            Contribution: {scoreCalc.weighted_calculation_breakdown.education_contribution}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+                                                </div>
+                                                <span className="font-bold">{scoreCalc.education_score || educationMatch.score || 0}/100</span>
+                                            </div>
+                                            <Progress value={scoreCalc.education_score || educationMatch.score || 0} className="h-2" />
                                         </div>
-                                        <Progress value={scoreCalc.education_score || educationMatch.score || 0} className="h-2" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="font-medium">Soft Skills (15%)</span>
-                                            <span className="font-bold">{scoreCalc.soft_skills_score || softSkillsMatch.score || 0}/100</span>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-medium">Soft Skills (15%)</span>
+                                                    {scoreCalc.soft_skills_reasoning && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <button className="inline-flex items-center">
+                                                                    <Info className="h-3.5 w-3.5 text-primary hover:text-primary/80 cursor-help" />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="max-w-sm">
+                                                                <div className="space-y-1">
+                                                                    <p className="font-semibold text-xs">Soft Skills Score Calculation</p>
+                                                                    <p className="text-xs">{scoreCalc.soft_skills_reasoning}</p>
+                                                                    {scoreCalc.weighted_calculation_breakdown?.soft_skills_contribution && (
+                                                                        <p className="text-xs text-primary font-bold mt-1">
+                                                                            Contribution: {scoreCalc.weighted_calculation_breakdown.soft_skills_contribution}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+                                                </div>
+                                                <span className="font-bold">{scoreCalc.soft_skills_score || softSkillsMatch.score || 0}/100</span>
+                                            </div>
+                                            <Progress value={scoreCalc.soft_skills_score || softSkillsMatch.score || 0} className="h-2" />
                                         </div>
-                                        <Progress value={scoreCalc.soft_skills_score || softSkillsMatch.score || 0} className="h-2" />
                                     </div>
-                                </div>
+                                </TooltipProvider>
 
                                 {/* Calculation Details */}
                                 <Separator />
@@ -419,7 +516,41 @@ const CandidateAnalysisPage = () => {
                                         </div>
                                     )}
                                     <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                                        <span>Final Match Score:</span>
+                                        <TooltipProvider>
+                                            <div className="flex items-center gap-1">
+                                                <span>Final Match Score:</span>
+                                                {scoreCalc.final_reasoning && (
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <button className="inline-flex items-center">
+                                                                <Info className="h-4 w-4 text-primary hover:text-primary/80 cursor-help" />
+                                                            </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="max-w-md">
+                                                            <div className="space-y-1">
+                                                                <p className="font-semibold text-xs">Final Score Reasoning</p>
+                                                                <p className="text-xs">{scoreCalc.final_reasoning}</p>
+                                                                <div className="mt-2 pt-2 border-t text-xs">
+                                                                    <p className="font-medium mb-1">Complete Calculation:</p>
+                                                                    {scoreCalc.weighted_calculation_breakdown && (
+                                                                        <div className="space-y-0.5 text-xs">
+                                                                            <p>{scoreCalc.weighted_calculation_breakdown.technical_contribution}</p>
+                                                                            <p>{scoreCalc.weighted_calculation_breakdown.experience_contribution}</p>
+                                                                            <p>{scoreCalc.weighted_calculation_breakdown.education_contribution}</p>
+                                                                            <p>{scoreCalc.weighted_calculation_breakdown.soft_skills_contribution}</p>
+                                                                            <p className="font-bold pt-1">= {scoreCalc.weighted_base_score}</p>
+                                                                            {scoreCalc.total_penalties > 0 && (
+                                                                                <p className="text-red-600 font-bold">- {scoreCalc.total_penalties} (penalties) = {candidate.matchScore}%</p>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                )}
+                                            </div>
+                                        </TooltipProvider>
                                         <span className={cn(
                                             candidate.matchScore >= 76 ? "text-green-600" :
                                             candidate.matchScore >= 56 ? "text-amber-600" : "text-red-600"
@@ -548,23 +679,46 @@ const CandidateAnalysisPage = () => {
                                     <CardDescription>Detailed skill proficiency and recency</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
-                                    {technicalMatch.required_skills_matched.map((skill: any, idx: number) => (
-                                        <div key={idx} className="p-3 bg-muted/30 rounded-lg space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-semibold text-sm">{skill.skill}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={
-                                                        skill.match_quality === 'exact' ? 'default' :
-                                                        skill.match_quality === 'strong' ? 'secondary' :
-                                                        'outline'
-                                                    } className="text-xs">
-                                                        {skill.match_quality}
-                                                    </Badge>
-                                                    <Badge variant="outline" className="text-xs">
-                                                        {skill.proficiency_level}
-                                                    </Badge>
+                                    <TooltipProvider>
+                                        {technicalMatch.required_skills_matched.map((skill: any, idx: number) => (
+                                            <div key={idx} className="p-3 bg-muted/30 rounded-lg space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold text-sm">{skill.skill}</span>
+                                                        {skill.scoring_reason && (
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <button className="inline-flex items-center">
+                                                                        <Info className="h-4 w-4 text-primary hover:text-primary/80 cursor-help" />
+                                                                    </button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent className="max-w-xs">
+                                                                    <div className="space-y-1">
+                                                                        <p className="font-semibold text-xs">Scoring Breakdown</p>
+                                                                        <p className="text-xs">{skill.scoring_reason}</p>
+                                                                        {skill.points_earned !== undefined && (
+                                                                            <p className="text-xs font-bold text-green-600">
+                                                                                Points earned: +{skill.points_earned}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant={
+                                                            skill.match_quality === 'exact' ? 'default' :
+                                                            skill.match_quality === 'strong' ? 'secondary' :
+                                                            'outline'
+                                                        } className="text-xs">
+                                                            {skill.match_quality}
+                                                        </Badge>
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {skill.proficiency_level}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
-                                            </div>
                                             <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
                                                 <div>
                                                     <span className="font-medium">Experience:</span> {skill.years_experience} years
@@ -590,27 +744,50 @@ const CandidateAnalysisPage = () => {
                                         </div>
                                     ))}
 
-                                    {technicalMatch.required_skills_missing && technicalMatch.required_skills_missing.length > 0 && (
-                                        <div className="mt-4 pt-4 border-t">
-                                            <p className="font-semibold text-sm text-red-700 mb-3">Missing Skills</p>
-                                            <div className="space-y-2">
-                                                {technicalMatch.required_skills_missing.map((missing: any, idx: number) => (
-                                                    <div key={idx} className="p-2 bg-red-50 rounded border border-red-200">
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <span className="font-semibold text-sm">{missing.skill}</span>
-                                                            <Badge variant="destructive" className="text-xs">{missing.importance}</Badge>
+                                        {technicalMatch.required_skills_missing && technicalMatch.required_skills_missing.length > 0 && (
+                                            <div className="mt-4 pt-4 border-t">
+                                                <p className="font-semibold text-sm text-red-700 mb-3">Missing Skills</p>
+                                                <div className="space-y-2">
+                                                    {technicalMatch.required_skills_missing.map((missing: any, idx: number) => (
+                                                        <div key={idx} className="p-2 bg-red-50 rounded border border-red-200">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-semibold text-sm">{missing.skill}</span>
+                                                                    {missing.scoring_reason && (
+                                                                        <Tooltip>
+                                                                            <TooltipTrigger asChild>
+                                                                                <button className="inline-flex items-center">
+                                                                                    <Info className="h-4 w-4 text-red-600 hover:text-red-500 cursor-help" />
+                                                                                </button>
+                                                                            </TooltipTrigger>
+                                                                            <TooltipContent className="max-w-xs">
+                                                                                <div className="space-y-1">
+                                                                                    <p className="font-semibold text-xs">Penalty Breakdown</p>
+                                                                                    <p className="text-xs">{missing.scoring_reason}</p>
+                                                                                    {missing.points_deducted !== undefined && (
+                                                                                        <p className="text-xs font-bold text-red-600">
+                                                                                            Points deducted: -{missing.points_deducted}
+                                                                                        </p>
+                                                                                    )}
+                                                                                </div>
+                                                                            </TooltipContent>
+                                                                        </Tooltip>
+                                                                    )}
+                                                                </div>
+                                                                <Badge variant="destructive" className="text-xs">{missing.importance}</Badge>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground">{missing.impact_on_score}</p>
+                                                            {missing.alternatives_found && missing.alternatives_found.length > 0 && (
+                                                                <p className="text-xs text-green-700 mt-1">
+                                                                    Has: {missing.alternatives_found.join(', ')}
+                                                                </p>
+                                                            )}
                                                         </div>
-                                                        <p className="text-xs text-muted-foreground">{missing.impact_on_score}</p>
-                                                        {missing.alternatives_found && missing.alternatives_found.length > 0 && (
-                                                            <p className="text-xs text-green-700 mt-1">
-                                                                Has: {missing.alternatives_found.join(', ')}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </TooltipProvider>
                                 </CardContent>
                             </Card>
                         )}

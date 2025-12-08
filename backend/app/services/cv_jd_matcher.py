@@ -167,7 +167,9 @@ Return ONLY this JSON:
         "years_experience": number,
         "last_used": "YYYY-MM",
         "match_quality": "exact/strong/partial/weak",
-        "recency_concern": "if skill is outdated (>2 years old)"
+        "recency_concern": "if skill is outdated (>2 years old)",
+        "points_earned": number,
+        "scoring_reason": "Detailed explanation: why this many points (e.g., '3+ years recent experience = +3 points')"
       }}
     ],
     "required_skills_missing": [
@@ -175,7 +177,9 @@ Return ONLY this JSON:
         "skill": "skill name",
         "importance": "critical/important/nice-to-have",
         "impact_on_score": "Explain impact",
-        "alternatives_found": ["related skills"]
+        "alternatives_found": ["related skills"],
+        "points_deducted": number,
+        "scoring_reason": "Detailed explanation: why this deduction (e.g., 'Missing critical skill = -5 points')"
       }}
     ],
     "bonus_skills": ["additional relevant skills"]
@@ -245,13 +249,24 @@ Return ONLY this JSON:
 
   "score_calculation": {{
     "technical_skills_score": 0-100,
+    "technical_skills_reasoning": "Explain: Started at 40, added X points for skills, deducted Y for missing",
     "experience_score": 0-100,
+    "experience_reasoning": "Explain: Candidate has X years vs Y required, ratio Z%",
     "education_score": 0-100,
+    "education_reasoning": "Explain: Level match, field relevance",
     "soft_skills_score": 0-100,
+    "soft_skills_reasoning": "Explain: Leadership, communication evidence",
     "weighted_base_score": "calculation: (tech×0.4 + exp×0.3 + edu×0.15 + soft×0.15)",
+    "weighted_calculation_breakdown": {{
+      "technical_contribution": "tech_score × 0.40 = X",
+      "experience_contribution": "exp_score × 0.30 = Y",
+      "education_contribution": "edu_score × 0.15 = Z",
+      "soft_skills_contribution": "soft_score × 0.15 = W"
+    }},
     "total_penalties": number,
     "final_score_before_rounding": number,
-    "overall_match_score": 0-100
+    "overall_match_score": 0-100,
+    "final_reasoning": "One sentence: Why this final score makes sense given all factors"
   }},
 
   "overall_match_score": 0-100,
@@ -272,6 +287,20 @@ FINAL VALIDATION:
 - If experience <50% required, score MUST be <50
 - If score >80, you MUST justify why candidate is exceptional
 - Verify overall_match_score = weighted_base_score - total_penalties
+
+CRITICAL: SCORING TRANSPARENCY (MUST INCLUDE):
+Every skill MUST have:
+1. points_earned or points_deducted (exact number)
+2. scoring_reason explaining the calculation (e.g., "React: 5 years recent experience = +3 points, Expert level = bonus +2")
+
+Every component score MUST have detailed reasoning showing the math:
+- Technical: "Started at 40, added +18 for 6 matched skills, deducted -15 for 3 missing = 43"
+- Experience: "7 years vs 5 required = 140% ratio = 75 points (exceeds by 40%)"
+- weighted_calculation_breakdown MUST show exact numbers: "43 × 0.40 = 17.2"
+
+The final_reasoning MUST tie everything together in one clear sentence explaining why the score is trustworthy.
+
+This transparency ensures recruiters understand EXACTLY why we scored this candidate at X%.
 
 Return ONLY valid JSON, no additional text."""
 
