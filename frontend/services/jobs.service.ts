@@ -140,6 +140,11 @@ export const jobsApi = {
         return response.data;
     },
 
+    getCV: async (cvId: string) => {
+        const response = await axiosInstance.get(`/jobs/cvs/${cvId}`);
+        return response.data;
+    },
+
     retryCV: async (cvId: string) => {
         const response = await axiosInstance.post(`/cv-processing/cv/${cvId}/retry`);
         return response.data;
