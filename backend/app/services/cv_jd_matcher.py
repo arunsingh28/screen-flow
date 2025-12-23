@@ -4,6 +4,7 @@ Matches parsed CV data against Job Descriptions using LLM
 """
 
 import json
+import os
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 from app.services.llm_factory import llm_factory
@@ -493,6 +494,23 @@ class CVJDMatcherService:
             Matching result dictionary with score and analysis
         """
         try:
+            # Check if we should use LangChain scoring method
+            scoring_method = os.getenv("CV_SCORING_METHOD", "default").lower()
+
+            if scoring_method == "langchain":
+                logger.info(f"Using LangChain weighted scoring for CV {cv_id}")
+                from app.services.langchain_cv_scorer import langchain_cv_scoring_service
+
+                return await langchain_cv_scoring_service.evaluate_candidate(
+                    cv_parsed_data=cv_parsed_data,
+                    job_description=job_description,
+                    db=db,
+                    user_id=user_id,
+                    cv_id=cv_id,
+                )
+
+            # Default: Use existing strict scoring method
+            logger.info(f"Using default strict scoring for CV {cv_id}")
             # Get JD text (prefer structured_jd, fallback to original_jd_text)
             if job_description.structured_jd:
                 jd_text = json.dumps(job_description.structured_jd, indent=2)

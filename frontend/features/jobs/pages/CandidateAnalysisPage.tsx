@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import LangChainScoreBreakdown from '../components/LangChainScoreBreakdown';
+import PlatformInsights from '../components/PlatformInsights';
 
 interface CandidateData {
     id: string;
@@ -428,6 +430,10 @@ const CandidateAnalysisPage = () => {
                                     )}
 
                                     {/* SCORE BREAKDOWN - TRANSPARENCY */}
+                                    {/* Check if LangChain scoring was used */}
+                                    {candidate.jdMatchData?.scoring_breakdown ? (
+                                        <LangChainScoreBreakdown matchData={candidate.jdMatchData} />
+                                    ) : (
                                     <Card>
                                         <CardHeader className="pb-3">
                                             <CardTitle className="text-lg flex items-center gap-2">
@@ -661,6 +667,7 @@ const CandidateAnalysisPage = () => {
                                             )}
                                         </CardContent>
                                     </Card>
+                                    )}
 
                                     {/* STRENGTHS */}
                                     {strengths.length > 0 && (
@@ -1045,6 +1052,13 @@ const CandidateAnalysisPage = () => {
                                             </CardContent>
                                         </Card>
                                     )}
+
+                                    {/* Platform Insights - GitHub, LinkedIn, etc. */}
+                                    <PlatformInsights
+                                        githubData={candidate.githubData}
+                                        githubInsights={matchData?.github_insights}
+                                        comprehensiveInsights={matchData?.comprehensive_insights}
+                                    />
 
                                 </div>
                             </ScrollArea>
