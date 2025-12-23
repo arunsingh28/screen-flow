@@ -52,4 +52,11 @@ aiohttp==3.9.1
 # TOON - Token-Oriented Object Notation for LLM optimization
 git+https://github.com/toon-format/toon-python.git
 
+# OpenAI
 openai>=1.0.0
+
+# LangChain - AI Scoring Framework
+langchain==0.1.0
+langchain-openai==0.0.2
+langchain-core==0.1.10
+langchain-community==0.0.13
