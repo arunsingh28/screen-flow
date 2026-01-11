@@ -14,20 +14,24 @@ exports.app = (0, fastify_1.default)({
 exports.app.setValidatorCompiler(fastify_type_provider_zod_1.validatorCompiler);
 exports.app.setSerializerCompiler(fastify_type_provider_zod_1.serializerCompiler);
 exports.app.register(cors_1.default, {
-    origin: '*', // Adjust for production
+    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 });
 exports.app.register(require('@fastify/multipart'));
 // Register routes
 const auth_routes_1 = require("./routes/auth.routes");
 const job_routes_1 = require("./routes/job.routes");
 const upload_routes_1 = require("./routes/upload.routes");
+const user_routes_1 = require("./routes/user.routes");
+const jd_builder_routes_1 = require("./routes/jd-builder.routes");
+const misc_routes_1 = require("./routes/misc.routes");
 exports.app.register(auth_routes_1.authRoutes, { prefix: '/api/v1/auth' });
 exports.app.register(job_routes_1.jobRoutes, { prefix: '/api/v1/jobs' });
 exports.app.register(upload_routes_1.uploadRoutes, { prefix: '/api/v1/uploads' });
-// Stub for jd-builder
-exports.app.post('/api/v1/jd-builder/build', async (req, reply) => {
-    return { content: 'Generated JD' }; // Stub
-});
+exports.app.register(user_routes_1.userRoutes, { prefix: '/api/v1/users' });
+exports.app.register(jd_builder_routes_1.jdBuilderRoutes, { prefix: '/api/v1/jd-builder' });
+exports.app.register(misc_routes_1.miscRoutes, { prefix: '/api/v1' }); // Root prefix for mixed routes
 // Stub for stats
 exports.app.get('/api/v1/jobs/stats', async (req, reply) => {
     return {

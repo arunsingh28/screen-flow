@@ -13,7 +13,9 @@ app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
 app.register(cors, {
-    origin: '*', // Adjust for production
+    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 });
 
 app.register(require('@fastify/multipart'));
@@ -23,15 +25,16 @@ app.register(require('@fastify/multipart'));
 import { authRoutes } from './routes/auth.routes';
 import { jobRoutes } from './routes/job.routes';
 import { uploadRoutes } from './routes/upload.routes';
+import { userRoutes } from './routes/user.routes';
+import { jdBuilderRoutes } from './routes/jd-builder.routes';
+import { miscRoutes } from './routes/misc.routes';
 
 app.register(authRoutes, { prefix: '/api/v1/auth' });
 app.register(jobRoutes, { prefix: '/api/v1/jobs' });
 app.register(uploadRoutes, { prefix: '/api/v1/uploads' });
-
-// Stub for jd-builder
-app.post('/api/v1/jd-builder/build', async (req, reply) => {
-    return { content: 'Generated JD' }; // Stub
-});
+app.register(userRoutes, { prefix: '/api/v1/users' });
+app.register(jdBuilderRoutes, { prefix: '/api/v1/jd-builder' });
+app.register(miscRoutes, { prefix: '/api/v1' }); // Root prefix for mixed routes
 
 // Stub for stats
 app.get('/api/v1/jobs/stats', async (req, reply) => {
@@ -41,4 +44,3 @@ app.get('/api/v1/jobs/stats', async (req, reply) => {
         credits_used: 50
     };
 });
-
