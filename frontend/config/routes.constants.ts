@@ -19,6 +19,7 @@ export const ROUTES = {
   LOGIN: '/auth/login',
   SIGNUP: '/auth/signup',
   FORGOT_PASSWORD: '/auth/forgot',
+  PLANS: '/plans',
 } as const;
 
 export const getJobDetailsPath = (id: string | number) => `/jobs/${id}`;

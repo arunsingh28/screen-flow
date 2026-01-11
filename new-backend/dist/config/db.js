@@ -6,13 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectDB = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const env_1 = require("./env");
+const logger_1 = require("./logger");
 const connectDB = async () => {
     try {
         await mongoose_1.default.connect(env_1.env.MONGO_URI);
-        console.log('MongoDB connected successfully');
+        logger_1.logger.info('MongoDB connected successfully');
     }
     catch (error) {
-        console.error('MongoDB connection failed:', error);
+        logger_1.logger.error({ err: error }, 'MongoDB connection failed');
         process.exit(1);
     }
 };

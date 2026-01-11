@@ -1,13 +1,17 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
-import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod';
-import { env } from './config/env';
+import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
 import { FastifyInstance } from 'fastify';
 
+import { errorHandler } from './middleware/error-handler';
+
 export const app: FastifyInstance = fastify({
-    logger: env.NODE_ENV === 'development',
+    logger: true,
 });
+
+app.setErrorHandler(errorHandler);
+
 
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
@@ -18,7 +22,7 @@ app.register(cors, {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 });
 
-app.register(require('@fastify/multipart'));
+app.register(require('@fastify/cookie'));
 
 
 // Register routes
@@ -28,19 +32,13 @@ import { uploadRoutes } from './routes/upload.routes';
 import { userRoutes } from './routes/user.routes';
 import { jdBuilderRoutes } from './routes/jd-builder.routes';
 import { miscRoutes } from './routes/misc.routes';
+import { planRoutes } from './routes/plan.routes';
 
 app.register(authRoutes, { prefix: '/api/v1/auth' });
 app.register(jobRoutes, { prefix: '/api/v1/jobs' });
 app.register(uploadRoutes, { prefix: '/api/v1/uploads' });
 app.register(userRoutes, { prefix: '/api/v1/users' });
 app.register(jdBuilderRoutes, { prefix: '/api/v1/jd-builder' });
+app.register(planRoutes, { prefix: '/api/v1/plans' });
 app.register(miscRoutes, { prefix: '/api/v1' }); // Root prefix for mixed routes
 
-// Stub for stats
-app.get('/api/v1/jobs/stats', async (req, reply) => {
-    return {
-        total_jobs: 10,
-        total_cvs: 100,
-        credits_used: 50
-    };
-});

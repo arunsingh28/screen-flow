@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 export const createBatchSchema = z.object({
-    title: z.string(),
+    job_title: z.string(),
+    department: z.string().optional(),
     description: z.string().optional(),
-    user_id: z.string().optional(), // Inferred from token usually, but payload might have it
-    // other fields matching frontend createJob
+    user_id: z.string().optional(),
     employment_type: z.string().optional(),
     seniority_level: z.string().optional(),
     experience_range: z.array(z.number()).optional(),

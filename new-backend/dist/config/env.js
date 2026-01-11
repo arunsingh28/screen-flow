@@ -19,5 +19,7 @@ const envSchema = zod_1.z.object({
     S3_BUCKET_NAME: zod_1.z.string().default('screenflow-uploads'),
     // OpenAI
     OPENAI_API_KEY: zod_1.z.string().optional(),
+    // Logging
+    LOG_LEVEL: zod_1.z.string().default('info').optional(),
 });
 exports.env = envSchema.parse(process.env);

@@ -11,7 +11,8 @@ async function test() {
       email: 'test@example.com',
       password: 'password123'
     });
-    const { access_token } = loginRes.data;
+    // Updated to match legacy structure: token is nested
+    const { access_token } = loginRes.data.token;
     console.log('Logged in. Token acquired.');
     const headers = { Authorization: `Bearer ${access_token}` };
 

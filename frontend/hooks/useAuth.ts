@@ -13,7 +13,11 @@ export const useLogin = () => {
         mutationFn: (credentials: LoginCredentials) => authApi.login(credentials),
         onSuccess: (data: AuthResponse) => {
             setAuthData(data.user, data.token.access_token);
-            navigate(ROUTES.DASHBOARD);
+            if (!data.user.organization_id) {
+                navigate(ROUTES.PLANS);
+            } else {
+                navigate(ROUTES.DASHBOARD);
+            }
         },
     });
 };
@@ -26,7 +30,7 @@ export const useSignup = () => {
         mutationFn: (data: SignupData) => authApi.signup(data),
         onSuccess: (data: AuthResponse) => {
             setAuthData(data.user, data.token.access_token);
-            navigate(ROUTES.DASHBOARD);
+            navigate(ROUTES.PLANS);
         },
     });
 };

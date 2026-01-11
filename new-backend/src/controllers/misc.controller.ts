@@ -1,6 +1,8 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { User } from '../models/user.model';
+import { Organization } from '../models/organization.model';
+import { Plan } from '../models/plan.model';
 import { CreditTransaction, CreditTransactionType } from '../models/credit.model';
 import { Referral, ReferralStatus } from '../models/referral.model';
 import { creditPurchaseSchema, referralValidateSchema, pageVisitSchema } from '../schemas/misc.schema';
@@ -8,8 +10,23 @@ import { creditPurchaseSchema, referralValidateSchema, pageVisitSchema } from '.
 // Credits
 export const getCredits = async (req: FastifyRequest, reply: FastifyReply) => {
     const user = (req as any).user;
-    const userData = await User.findById(user.id);
-    return { balance: userData?.credits || 0 };
+    const userData = await User.findById(user.id).populate('organization_id');
+
+    if (!userData?.organization_id) {
+        return { credits: 0, max_credits: 0 };
+    }
+
+    const org = await Organization.findById(userData.organization_id).populate('plan_id');
+    if (!org) {
+        return { credits: 0, max_credits: 0 };
+    }
+
+    const plan = org.plan_id as any;
+
+    return {
+        credits: org.credits || 0,
+        max_credits: plan?.defaults?.credits || 100
+    };
 };
 
 export const getCreditHistory = async (req: FastifyRequest, reply: FastifyReply) => {
@@ -88,6 +105,6 @@ export const getReferralStats = async (req: FastifyRequest, reply: FastifyReply)
 // Analytics
 export const trackPageVisit = async (req: FastifyRequest<{ Body: z.infer<typeof pageVisitSchema> }>, reply: FastifyReply) => {
     // Just log for now, or store in a separate collection 'PageView'
-    console.log('Page Visit:', req.body, 'User:', (req as any).user?.id);
+    req.log.info({ pageVisit: req.body, user: (req as any).user?.id }, 'Page Visit');
     return { success: true };
 };

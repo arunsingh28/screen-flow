@@ -25,7 +25,8 @@ export const getMe = async (req: FastifyRequest, reply: FastifyReply) => {
     return {
         ...user.toObject(),
         id: user._id,
-        profile_image_url: profileUrl
+        profile_image_url: profileUrl,
+        has_selected_plan: !!user.organization_id
     };
 };
 

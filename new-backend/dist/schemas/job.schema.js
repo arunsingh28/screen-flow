@@ -3,10 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.confirmUploadSchema = exports.requestUploadSchema = exports.createBatchSchema = void 0;
 const zod_1 = require("zod");
 exports.createBatchSchema = zod_1.z.object({
-    title: zod_1.z.string(),
+    job_title: zod_1.z.string(),
+    department: zod_1.z.string().optional(),
     description: zod_1.z.string().optional(),
-    user_id: zod_1.z.string().optional(), // Inferred from token usually, but payload might have it
-    // other fields matching frontend createJob
+    user_id: zod_1.z.string().optional(),
     employment_type: zod_1.z.string().optional(),
     seniority_level: zod_1.z.string().optional(),
     experience_range: zod_1.z.array(zod_1.z.number()).optional(),

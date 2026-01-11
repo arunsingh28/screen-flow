@@ -16,6 +16,9 @@ const envSchema = z.object({
 
     // OpenAI
     OPENAI_API_KEY: z.string().optional(),
+
+    // Logging
+    LOG_LEVEL: z.string().default('info').optional(),
 });
 
 export const env = envSchema.parse(process.env);

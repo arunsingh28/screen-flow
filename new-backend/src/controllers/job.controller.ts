@@ -10,9 +10,11 @@ import { s3Service } from '../services/s3.service';
 
 export const createBatch = async (req: FastifyRequest<{ Body: z.infer<typeof createBatchSchema> }>, reply: FastifyReply) => {
     const user = (req as any).user;
+    const { job_title, ...rest } = req.body;
     const job = await Job.create({
         user_id: user.id,
-        ...req.body,
+        title: job_title,
+        ...rest,
         status: BatchStatus.PROCESSING
     });
     return job;
@@ -119,11 +121,33 @@ export const getCV = async (req: FastifyRequest<{ Params: { cvId: string } }>, r
     return cv;
 };
 
-export const parseJd = async (req: FastifyRequest, reply: FastifyReply) => {
-    const data = await (req as any).file();
-    if (!data) return reply.status(400).send({ message: 'File is required' });
+export const getActivities = async (req: FastifyRequest, reply: FastifyReply) => {
+    // Mock activities for now or fetch from Activity collection if created
+    return [];
+};
 
-    // Here we would parse PDF/Docx.
-    // Placeholder response for now, can implement parsing logic using pdf-parse later if requested.
-    return { content: "Parsed JD content placeholder" };
+export const parseJd = async (req: FastifyRequest, reply: FastifyReply) => {
+    // Legacy placeholder if needed - usually handled by the alias route in job.routes calling jdBuilderService directly
+    // But if called directly:
+    return reply.status(400).send({ message: 'Use POST /jobs/parse-jd with multipart/form-data or /jd-builder/upload' });
+};
+
+export const getDownloadUrl = async (req: FastifyRequest<{ Params: { cvId: string } }>, reply: FastifyReply) => {
+    const { cvId } = req.params;
+    const cv = await CV.findById(cvId);
+    if (!cv) return reply.status(404).send({ message: 'CV not found' });
+
+    // Generate presigned URL
+    const url = await s3Service.generatePresignedUrl(cv.s3_key, 'getObject', undefined, 3600);
+    return { download_url: url };
+};
+
+export const updateCVStatus = async (req: FastifyRequest<{ Params: { cv_id: string }, Body: { status: string } }>, reply: FastifyReply) => {
+    const { cv_id } = req.params;
+    const { status } = req.body;
+
+    const cv = await CV.findByIdAndUpdate(cv_id, { status }, { new: true });
+    if (!cv) return reply.status(404).send({ message: 'CV not found' });
+
+    return cv;
 };

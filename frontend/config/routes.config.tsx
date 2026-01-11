@@ -15,9 +15,11 @@ import { ReferralPage } from '@/features/referrals/ReferralPage';
 import LoginPage from '@/features/auth/pages/LoginPage';
 import SignupPage from '@/features/auth/pages/SignupPage';
 import ForgotPasswordPage from '@/features/auth/pages/ForgotPasswordPage';
+import PlanSelectionPage from '@/features/auth/pages/PlanSelectionPage';
 import AuthLayout from '@/components/layout/AuthLayout';
 import PublicRoute from '@/components/auth/PublicRoute';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import PlanGuard from '@/components/auth/PlanGuard';
 import MainLayout from '@/components/layout/MainLayout';
 import AdminLayout from '@/components/layout/AdminLayout';
 import AdminRoute from '@/components/auth/AdminRoute';
@@ -53,61 +55,75 @@ export const routes: RouteObject[] = [
       },
     ],
   },
-  // Protected Routes
+  // Plan Selection - Standalone page (no MainLayout)
+  {
+    path: ROUTES.PLANS,
+    element: (
+      <ProtectedRoute>
+        <PlanSelectionPage />
+      </ProtectedRoute>
+    ),
+  },
+  // Protected Routes with PlanGuard
   {
     element: (
       <ProtectedRoute>
-        <MainLayout />
+        <PlanGuard />
       </ProtectedRoute>
     ),
     children: [
       {
-        path: ROUTES.DASHBOARD,
-        element: <DashboardPage />,
-      },
-      {
-        path: ROUTES.JOBS_LIST,
-        element: <JobsListPage />,
-      },
-      {
-        path: ROUTES.JOB_DETAILS,
-        element: <JobDetailsPage />,
-      },
-      {
-        path: ROUTES.CANDIDATE_DETAILS,
-        element: <CandidateAnalysisPage />,
-      },
-      {
-        path: ROUTES.CREATE_JOB,
-        element: <CreateJobPage />,
-      },
-      {
-        path: ROUTES.SETTINGS,
-        element: <SettingsPage />,
-      },
-      {
-        path: ROUTES.SEARCH,
-        element: <SearchPage />,
-      },
-      {
-        path: ROUTES.LIBRARY,
-        element: <CVLibraryPage />,
-      },
-      {
-        path: ROUTES.ACTIVITY_LOG,
-        element: <ActivityLogPage />,
-      },
-      {
-        path: ROUTES.PROFILE,
-        element: <ProfilePage />,
-      },
-      {
-        path: ROUTES.CREDITS,
-        element: <CreditsPage />,
-      },
-      {
-        path: ROUTES.REFERRALS,
-        element: <ReferralPage />,
+        element: <MainLayout />,
+        children: [
+          {
+            path: ROUTES.DASHBOARD,
+            element: <DashboardPage />,
+          },
+          {
+            path: ROUTES.JOBS_LIST,
+            element: <JobsListPage />,
+          },
+          {
+            path: ROUTES.JOB_DETAILS,
+            element: <JobDetailsPage />,
+          },
+          {
+            path: ROUTES.CANDIDATE_DETAILS,
+            element: <CandidateAnalysisPage />,
+          },
+          {
+            path: ROUTES.CREATE_JOB,
+            element: <CreateJobPage />,
+          },
+          {
+            path: ROUTES.SETTINGS,
+            element: <SettingsPage />,
+          },
+          {
+            path: ROUTES.SEARCH,
+            element: <SearchPage />,
+          },
+          {
+            path: ROUTES.LIBRARY,
+            element: <CVLibraryPage />,
+          },
+          {
+            path: ROUTES.ACTIVITY_LOG,
+            element: <ActivityLogPage />,
+          },
+          {
+            path: ROUTES.PROFILE,
+            element: <ProfilePage />,
+          },
+          {
+            path: ROUTES.CREDITS,
+            element: <CreditsPage />,
+          },
+          {
+            path: ROUTES.REFERRALS,
+            element: <ReferralPage />,
+          },
+        ],
       },
     ],
   },

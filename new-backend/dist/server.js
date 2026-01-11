@@ -3,11 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = require("./app");
 const db_1 = require("./config/db");
 const env_1 = require("./config/env");
+const bootstrap_service_1 = require("./services/bootstrap.service");
 const start = async () => {
     try {
         await (0, db_1.connectDB)();
+        await (0, bootstrap_service_1.seedDefaultPlans)();
         await app_1.app.listen({ port: parseInt(env_1.env.PORT), host: '0.0.0.0' });
-        console.log(`Server running on port ${env_1.env.PORT}`);
+        app_1.app.log.info(`Server running on port ${env_1.env.PORT}`);
     }
     catch (err) {
         app_1.app.log.error(err);

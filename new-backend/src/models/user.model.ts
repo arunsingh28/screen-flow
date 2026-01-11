@@ -21,6 +21,7 @@ export interface IUser extends Document {
     created_at: Date;
     updated_at: Date;
     last_login?: Date;
+    organization_id?: mongoose.Types.ObjectId;
 }
 
 const UserSchema: Schema = new Schema({
@@ -41,7 +42,8 @@ const UserSchema: Schema = new Schema({
     job_title: { type: String },
     department: { type: String },
     profile_image_url: { type: String },
-    last_login: { type: Date }
+    last_login: { type: Date },
+    organization_id: { type: Schema.Types.ObjectId, ref: 'Organization' }
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });

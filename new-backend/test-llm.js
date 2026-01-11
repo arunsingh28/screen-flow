@@ -10,7 +10,7 @@ async function testLLM() {
             email: 'test@example.com',
             password: 'password123'
         });
-        const { access_token } = loginRes.data;
+        const { access_token } = loginRes.data.token; // Updated for nested structure
         const headers = { Authorization: `Bearer ${access_token}` };
         console.log('Login successful.');
 
