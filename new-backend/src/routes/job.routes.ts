@@ -9,6 +9,7 @@ import {
     confirmUpload,
     getBatchCVs,
     getCV,
+    getAllCVs,
     parseJd,
     getDownloadUrl,
     updateCVStatus,
@@ -19,6 +20,16 @@ import { authenticate } from '../middleware/auth.middleware';
 
 export const jobRoutes = async (app: FastifyInstance) => {
     app.addHook('preHandler', authenticate);
+
+    // Get all CVs for user
+    app.withTypeProvider<ZodTypeProvider>().get('/cvs', {
+        schema: {
+            querystring: z.object({
+                page: z.coerce.number().optional(),
+                page_size: z.coerce.number().optional(),
+            })
+        }
+    }, getAllCVs);
 
     app.withTypeProvider<ZodTypeProvider>().post('/batches', {
         schema: {

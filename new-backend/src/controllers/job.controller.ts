@@ -121,6 +121,26 @@ export const getCV = async (req: FastifyRequest<{ Params: { cvId: string } }>, r
     return cv;
 };
 
+export const getAllCVs = async (req: FastifyRequest<{ Querystring: { page?: number, page_size?: number } }>, reply: FastifyReply) => {
+    const user = (req as any).user;
+    const page = req.query.page || 1;
+    const pageSize = req.query.page_size || 20;
+
+    const total = await CV.countDocuments({ user_id: user.id });
+    const cvs = await CV.find({ user_id: user.id })
+        .sort({ created_at: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+
+    return {
+        items: cvs,
+        total,
+        page,
+        page_size: pageSize,
+        total_pages: Math.ceil(total / pageSize)
+    };
+};
+
 export const getActivities = async (req: FastifyRequest, reply: FastifyReply) => {
     // Mock activities for now or fetch from Activity collection if created
     return [];
