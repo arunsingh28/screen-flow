@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     # LLM Configuration
     LLM_PROVIDER: str = "bedrock"  # Options: "bedrock", "openai"
     OPENAI_API_KEY: Optional[str] = None
+    
+    # CV Scoring Configuration
+    CV_SCORING_METHOD: str = "default"  # Options: "default", "langchain"
+    OPENAI_MODEL: str = "gpt-4o-mini"  # Model for LangChain scoring
 
     class Config:
         env_file = ".env"

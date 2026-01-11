@@ -9,6 +9,7 @@ import traceback
 from app.api.deps import get_db, get_current_user
 from app.models.user import User
 from app.models.job import CV, CVBatch, CVStatus
+from app.models.jd_builder import JobDescription, CVParseDetail
 from app.schemas.cv_schemas import CVParseDetailResponse, QueueStatusResponse, CVProcessResponse
 from app.tasks.cv_tasks import process_cv_task, get_queue_status
 from app.core.websocket import manager
@@ -279,6 +280,75 @@ async def retry_cv_processing(
         raise
     except Exception as e:
         logger.error(f"Error retrying CV: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/cv/{cv_id}/match", response_model=CVProcessResponse)
+async def match_existing_parsed_cv(
+    cv_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Run JD matching for an already-parsed CV using the batch's linked Job Description.
+
+    This bypasses re-parsing and is useful to (re)generate scoring when JD linkage was added later.
+    """
+    try:
+        # Fetch CV and ensure ownership
+        cv = db.query(CV).filter(
+            CV.id == cv_id,
+            CV.user_id == current_user.id,
+        ).first()
+
+        if not cv:
+            raise HTTPException(status_code=404, detail="CV not found")
+
+        # Fetch batch and linked Job Description
+        batch = db.query(CVBatch).filter(CVBatch.id == cv.batch_id).first()
+        if not batch or not batch.job_description_id:
+            raise HTTPException(status_code=400, detail="Job Description not linked to this batch")
+
+        job_description = db.query(JobDescription).filter(JobDescription.id == batch.job_description_id).first()
+        if not job_description:
+            raise HTTPException(status_code=404, detail="Linked Job Description not found")
+
+        # Get parsed CV data
+        parse_detail = db.query(CVParseDetail).filter(CVParseDetail.cv_id == cv.id).first()
+        if not parse_detail or not parse_detail.parsed_data:
+            raise HTTPException(status_code=400, detail="Parsed CV data not found for this CV")
+
+        # Perform matching using existing parsed data
+        from app.services.cv_jd_matcher import cv_jd_matcher_service
+
+        match_result = await cv_jd_matcher_service.match_cv_to_jd(
+            cv_parsed_data=parse_detail.parsed_data,
+            job_description=job_description,
+            db=db,
+            user_id=str(current_user.id),
+            cv_id=cv_id,
+        )
+
+        if not match_result.get("success"):
+            raise HTTPException(status_code=500, detail=f"Matching failed: {match_result.get('error')}")
+
+        # Persist score and match data on CV
+        cv.jd_match_score = match_result.get("match_score")
+        cv.jd_match_data = match_result.get("match_data")
+        db.commit()
+
+        return CVProcessResponse(
+            success=True,
+            message="CV matched successfully",
+            batch_id=str(cv.batch_id),
+            total_cvs=1,
+            task_ids=[],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error matching CV: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
